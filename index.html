@@ -9303,8 +9303,7 @@ function newTripSave(){
     packId: newPackId,
     memberIds: invitedIds,
     leaderId: _sbUser?.id || 'me',
-    dismissedFlags: [],
-    _confirmedMembers: []
+    dismissedFlags: []
   });
   activeTripId = tripId;
 
@@ -11772,13 +11771,6 @@ async function sbPushSharedTrip(trip){
     console.error('Trip push error:', error); return;
   }
 
-  // On first push (trip has no _confirmedMembers yet), clear any stale rows
-  // so leftover test data from previous trips can never ghost-confirm someone
-  if(!trip._confirmedMembers || trip._confirmedMembers.length === 0){
-    await sb.from('shared_trip_members')
-      .delete().eq('trip_id', trip.id).neq('user_id', _sbUser.id);
-  }
-
   // Upsert owner as confirmed member (prevents 409 on repeated saves)
   await sb.from('shared_trip_members').upsert(
     {trip_id: trip.id, user_id: _sbUser.id, role: 'owner'},
@@ -11798,15 +11790,12 @@ async function sbPushSharedTrip(trip){
   }
   console.log('✅ Trip pushed to Supabase:', trip.title);
 
-  // Fetch confirmed members (only owner role counts as confirmed until others accept)
-  // Filter to owner only — editors only appear after accepting invite
+  // Fetch confirmed members and store on trip for pending column display
   const { data: confirmedRows } = await sb.from('shared_trip_members')
-    .select('user_id, role').eq('trip_id', trip.id);
+    .select('user_id').eq('trip_id', trip.id);
   if(confirmedRows){
     const t = TRIPS.find(x=>x.id===trip.id);
-    if(t) t._confirmedMembers = confirmedRows
-      .filter(r => r.role === 'owner' || r.role === 'editor')
-      .map(r => r.user_id);
+    if(t) t._confirmedMembers = confirmedRows.map(r=>r.user_id);
     renderTripsPage();
   }
 }
