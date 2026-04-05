@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v1.9 — Gear Organizer</title>
+<title>BaseCamp v2.1 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v1.9</div>
+      <div class="logo-sub">Gear Organizer · v2.1</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9224,6 +9224,8 @@ function tripStartRename(tripId){
 }
 
 function openTripArchive(){
+  // Archive is only available when signed in — deleted trips are user-specific
+  if(!_sbUser) return;
   // Remove existing archive modal
   document.getElementById('trip-archive-modal')?.remove();
 
@@ -10623,8 +10625,9 @@ function renderTripsPage(){
   if(!TRIPS.length && !_tripInvitesIn.length){
     const nb=document.createElement('button'); nb.className='trip-new-btn'; nb.textContent='＋ New Trip'; nb.onclick=createTrip;
     root.appendChild(nb);
-    // Show archive button even when no active trips
-    if(DELETED_TRIPS.length){
+    // Show archive button only when signed in — deleted trips from localStorage
+    // should not be visible/restorable to signed-out visitors
+    if(DELETED_TRIPS.length && _sbUser){
       const archBtn=document.createElement('button');
       archBtn.className='trip-new-btn';
       archBtn.style.cssText='background:rgba(139,115,85,0.1);border-color:rgba(139,115,85,0.4);color:var(--bark);';
@@ -10747,7 +10750,7 @@ function renderTripsPage(){
   });
   const nb=document.createElement('button'); nb.className='trip-new-btn'; nb.textContent='＋ New Trip'; nb.onclick=createTrip;
   sel.appendChild(nb);
-  if(DELETED_TRIPS.length){
+  if(DELETED_TRIPS.length && _sbUser){
     const archBtn=document.createElement('button');
     archBtn.className='trip-new-btn';
     archBtn.style.cssText='background:rgba(139,115,85,0.1);border-color:rgba(139,115,85,0.4);color:var(--bark);';
