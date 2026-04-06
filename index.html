@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.24 — Gear Organizer</title>
+<title>BaseCamp v3.25 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.24</div>
+      <div class="logo-sub">Gear Organizer · v3.25</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6785,7 +6785,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.24) ──
+// ── Persistence layer (rebuilt v3.25) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -10113,10 +10113,11 @@ function renderTripsPage(){
       if(memberId === (_sbUser?.id||'me')) continue;
       if(isMemberPending(trip.id, memberId)){
         const friend = _friends.find(f=>f.id===memberId);
+        const pendingName = friend?.full_name || 'Invited';
         pendingInvites.push({
           id: memberId,
-          name: friend?.full_name || 'Invited',
-          avatar: friend?.photo ? `<img src="${friend.photo}" style="width:100%;height:100%;object-fit:cover;filter:grayscale(1);">` : null,
+          name: pendingName,
+          avatar: `<span style="font-size:1.1rem;font-weight:800;color:white;opacity:0.5;">${pendingName[0].toUpperCase()}</span>`,
           color: '#aaa',
           cats: [], food: [], isMe: false, isPending: true,
           packId: trip.packId
