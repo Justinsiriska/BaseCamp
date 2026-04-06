@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.3 — Gear Organizer</title>
+<title>BaseCamp v3.4 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.3</div>
+      <div class="logo-sub">Gear Organizer · v3.4</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10819,7 +10819,18 @@ function renderTripsPage(){
       invBanner.appendChild(card);
     });
     root.appendChild(invBanner);
-    if(!TRIPS.length) return;
+    if(!TRIPS.length){
+      // Still render archive button even when only invites exist, no active trips
+      if(DELETED_TRIPS.length){
+        const archBtn=document.createElement('button');
+        archBtn.className='trip-new-btn';
+        archBtn.style.cssText='background:rgba(139,115,85,0.1);border-color:rgba(139,115,85,0.4);color:var(--bark);';
+        archBtn.textContent='🗂 Archive ('+DELETED_TRIPS.length+')';
+        archBtn.onclick=openTripArchive;
+        root.appendChild(archBtn);
+      }
+      return;
+    }
   }
 
   const trip = TRIPS.find(t=>t.id===activeTripId)||TRIPS[0];
@@ -12294,6 +12305,10 @@ async function acceptTripInvite(inviteId, tripId){
   );
   _tripInvitesIn = _tripInvitesIn.filter(i=>i.id !== inviteId);
   await sbPullSharedTrips();
+  // Create pack config for the joined trip so gear can be tagged to it
+  initTripPacks();
+  renderPackPills();
+  scheduleSave();
   renderTripsPage();
   toast('✅ Joined trip!');
 }
@@ -12363,7 +12378,7 @@ async function sbPullSharedTrips(){
       if(idx !== -1){ TRIPS.splice(idx, 1); changed = true; }
     }
   }
-  if(changed){ renderTripsPage(); scheduleSave(); }
+  if(changed){ initTripPacks(); renderPackPills(); renderTripsPage(); scheduleSave(); }
 }
 
 // Real-time subscription — refresh a trip when any member pushes an update
