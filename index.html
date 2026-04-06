@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.9 — Gear Organizer</title>
+<title>BaseCamp v3.10 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1014,43 +1014,34 @@ html.dark .trip-profile-name-inp{color:#a8d89a;border-bottom-color:#4a8f5a;}
 .trip-new-btn:hover{border-color:var(--sage);color:var(--forest);}
 
 /* ── Trip switcher ── */
-.trip-switcher{position:relative;display:inline-block;margin-bottom:0.75rem;}
+.trip-switcher{position:relative;display:inline-block;margin-bottom:0.2rem;}
 .trip-switcher-btn{
-  display:flex;align-items:center;gap:0;
-  background:var(--paper);border:2px solid var(--lichen);border-radius:10px;
-  overflow:hidden;cursor:pointer;transition:border-color 0.15s;
-  font-family:'Nunito',sans-serif;
+  display:inline-flex;align-items:baseline;gap:0.5rem;
+  background:none;border:none;border-bottom:2.5px solid var(--lichen);
+  padding:0 0 4px 0;cursor:pointer;transition:border-color 0.15s;
 }
-.trip-switcher-btn:hover{border-color:var(--sage);}
-.trip-switcher-btn.open{border-color:var(--forest);border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent;}
-html.dark .trip-switcher-btn{background:rgba(10,18,8,0.88);border-color:rgba(55,85,40,0.5);}
-html.dark .trip-switcher-btn:hover{border-color:var(--sage);}
-html.dark .trip-switcher-btn.open{border-color:rgba(74,143,168,0.7);border-bottom-color:transparent;}
-.trip-switcher-label{
-  font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:700;
-  text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);
-  background:rgba(184,201,163,0.22);padding:0.32rem 0.65rem;
-  border-right:1.5px solid var(--lichen);white-space:nowrap;
-}
-html.dark .trip-switcher-label{background:rgba(40,70,30,0.4);border-right-color:rgba(55,85,40,0.5);color:#6a8f5a;}
+.trip-switcher-btn:hover{border-bottom-color:var(--forest);}
+.trip-switcher-btn.open{border-bottom-color:var(--forest);border-bottom-left-radius:0;border-bottom-right-radius:0;}
+html.dark .trip-switcher-btn{border-bottom-color:rgba(60,90,50,0.6);}
+html.dark .trip-switcher-btn:hover,html.dark .trip-switcher-btn.open{border-bottom-color:rgba(74,143,168,0.7);}
 .trip-switcher-active{
-  font-family:'Nunito',sans-serif;font-weight:800;font-size:0.75rem;
-  color:var(--forest);padding:0.32rem 0.65rem;
+  font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;
+  color:var(--forest);line-height:1.1;
 }
 html.dark .trip-switcher-active{color:#a8d89a;}
-.trip-switcher-caret{
-  padding:0.32rem 0.55rem;font-size:0.6rem;color:var(--stone);
-  border-left:1.5px solid var(--lichen);transition:transform 0.2s;
-  background:rgba(184,201,163,0.1);
+.trip-switcher-hint{
+  font-family:'Space Mono',monospace;font-size:0.42rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  color:var(--stone);opacity:0.6;margin-bottom:4px;white-space:nowrap;
 }
-html.dark .trip-switcher-caret{border-left-color:rgba(55,85,40,0.5);background:rgba(20,35,15,0.5);}
-.trip-switcher-caret.open{transform:rotate(180deg);}
+html.dark .trip-switcher-hint{color:#6a8f5a;}
+.trip-switcher-caret{display:none;}
 
 /* ── Switcher dropdown ── */
 .trip-switcher-dd{
   position:absolute;top:100%;left:0;min-width:260px;
   background:var(--paper);border:2px solid var(--forest);
-  border-top:none;border-radius:0 10px 10px 10px;
+  border-top:none;border-radius:0 12px 12px 12px;
   box-shadow:0 8px 24px rgba(45,74,45,0.18);
   z-index:500;overflow:hidden;display:none;
 }
@@ -1095,7 +1086,6 @@ html.dark .trip-dd-new:hover{background:rgba(74,143,168,0.1);}
 html.dark .trip-dd-archive{background:rgba(20,35,15,0.4);color:#6a8f5a;}
 .trip-dd-archive:hover{background:rgba(184,201,163,0.18);}
 html.dark .trip-dd-archive:hover{background:rgba(40,70,30,0.35);}
-
 /* Gear/Food toggle */
 .trip-mode-toggle{
   display:flex;background:var(--cream);border:2px solid var(--lichen);
@@ -1894,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.9</div>
+      <div class="logo-sub">Gear Organizer · v3.10</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10994,7 +10984,7 @@ function renderTripsPage(){
   const MAP_H = 300; // single source of truth for height
 
   const topRow = document.createElement('div');
-  topRow.style.cssText = 'display:flex;flex-direction:row;gap:1.2rem;align-items:flex-start;margin-bottom:0.75rem;';
+  topRow.style.cssText = 'display:flex;flex-direction:row;gap:1.2rem;align-items:flex-start;margin-bottom:0.75rem;justify-content:space-between;';
 
   // LEFT: pills, title, flags, toggle
   const content = document.createElement('div');
@@ -11005,13 +10995,12 @@ function renderTripsPage(){
   switcher.className = 'trip-switcher';
   switcher.id = 'trip-switcher-wrap';
 
-  const switcherBtn = document.createElement('div');
+  const switcherBtn = document.createElement('button');
   switcherBtn.className = 'trip-switcher-btn';
   switcherBtn.id = 'trip-switcher-btn';
   switcherBtn.innerHTML = `
-    <span class="trip-switcher-label">🏕️ TRIPS</span>
-    <span class="trip-switcher-active">${escH(trip.title)}</span>
-    <span class="trip-switcher-caret" id="trip-switcher-caret">▾</span>`;
+    <span class="trip-switcher-active">${(trip._shared?'👥 ':'🏕️ ')+escH(trip.title)}</span>
+    <span class="trip-switcher-hint" id="trip-switcher-caret">▾ switch trip</span>`;
 
   const dd = document.createElement('div');
   dd.className = 'trip-switcher-dd';
@@ -11064,14 +11053,14 @@ function renderTripsPage(){
   switcher.appendChild(dd);
   content.appendChild(switcher);
 
-  // Trip header
+  // Meta line + invite button — sits below the switcher title
   const hdr=document.createElement('div'); hdr.className='trip-header';
-  hdr.innerHTML=`<div class="trip-title">🏕️ ${escH(trip.title)}</div>
-    <div class="trip-meta">${trip.date?trip.date+' · ':''}${trip.location||''} · ${members.length} people · Group: ${dwTrip(totalGroupW)} · ${totalGroupKcal.toLocaleString()} kcal</div>`;
+  hdr.style.marginBottom='0.3rem';
+  hdr.innerHTML=`<div class="trip-meta" style="margin-bottom:0.4rem;">${trip.date?trip.date+' · ':''}${trip.location?trip.location+' · ':''}${members.length} people · Group: ${dwTrip(totalGroupW)} · ${totalGroupKcal.toLocaleString()} kcal</div>`;
 
-  // Invite friends button — sits inline in the title row
+  // Invite friends button
   const inviteBtn=document.createElement('button');
-  inviteBtn.style.cssText='font-family:"Space Mono",monospace;font-size:0.48rem;border:1.5px solid rgba(74,143,168,0.5);background:rgba(74,143,168,0.08);color:#2a6a88;border-radius:20px;padding:0.22rem 0.7rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;margin-top:0.4rem;';
+  inviteBtn.style.cssText='font-family:"Space Mono",monospace;font-size:0.48rem;border:1.5px solid rgba(74,143,168,0.5);background:rgba(74,143,168,0.08);color:#2a6a88;border-radius:20px;padding:0.22rem 0.7rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;';
   inviteBtn.innerHTML='👥 Invite Friends';
   inviteBtn.onmouseover=()=>inviteBtn.style.background='rgba(74,143,168,0.18)';
   inviteBtn.onmouseout=()=>inviteBtn.style.background='rgba(74,143,168,0.08)';
