@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v1.9 — Gear Organizer</title>
+<title>BaseCamp v2.3 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v1.9</div>
+      <div class="logo-sub">Gear Organizer · v2.3</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11507,6 +11507,7 @@ async function sbInit(){
     _sbUser = stored.user;
     authUpdateUI(stored.user);
     await Promise.all([sbPullData(), sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
+    await sbLoadConfirmedMembers();
     sbSubscribeTrips();
   }
 
@@ -11516,6 +11517,7 @@ async function sbInit(){
       _sbUser = session.user;
       authUpdateUI(session.user);
       await Promise.all([sbPullData(), sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
+      await sbLoadConfirmedMembers();
       sbSubscribeTrips();
       renderAll(); renderCrewPage(); renderTripsPage();
     } else if(event === 'SIGNED_OUT'){
@@ -11706,10 +11708,38 @@ async function sbPushData(){
     const el = document.getElementById('auth-sync-status');
     if(el) el.textContent = '✓ Synced ' + new Date().toLocaleTimeString();
   }
-  // Also push any shared trips
-  for(const t of TRIPS.filter(t=>t.memberIds && t.memberIds.length && !t._shared)){
+  // Also push any shared trips (only when they actually have unsaved changes)
+  for(const t of TRIPS.filter(t=>t.memberIds && t.memberIds.length && !t._shared && t._dirty)){
     await sbPushSharedTrip(t);
+    t._dirty = false;
   }
+}
+
+// Read-only: load confirmed member status for owned trips without re-pushing anything.
+// Called on login so the UI shows correct pending/confirmed state immediately.
+async function sbLoadConfirmedMembers(){
+  const sb = sbClient();
+  if(!sb || !_sbUser) return;
+  const ownedTrips = TRIPS.filter(t=>t.memberIds && t.memberIds.length && !t._shared);
+  if(!ownedTrips.length) return;
+  for(const trip of ownedTrips){
+    // Fetch invite statuses
+    const { data: inviteRows } = await sb.from('trip_invites')
+      .select('invited_user, status')
+      .eq('trip_id', trip.id)
+      .in('invited_user', trip.memberIds);
+    const acceptedIds = new Set(
+      (inviteRows||[]).filter(r=>r.status==='accepted').map(r=>r.invited_user)
+    );
+    // Fetch editor rows
+    const { data: editorRows } = await sb.from('shared_trip_members')
+      .select('user_id').eq('trip_id', trip.id).eq('role', 'editor');
+    // Only confirmed if BOTH editor row exists AND invite is accepted
+    trip._confirmedMembers = (editorRows||[])
+      .map(r=>r.user_id)
+      .filter(uid=>acceptedIds.has(uid));
+  }
+  renderTripsPage();
 }
 
 async function sbPullData(){
