@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.7 — Gear Organizer</title>
+<title>BaseCamp v3.8 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1825,7 +1825,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.7</div>
+      <div class="logo-sub">Gear Organizer · v3.8</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10839,7 +10839,7 @@ function renderTripsPage(){
           </div>
         </div>
         <div style="display:flex;gap:0.35rem;flex-shrink:0;">
-          <button class="gw-confirm-btn" style="font-size:0.52rem;padding:0.2rem 0.55rem;" onclick="acceptTripInvite('${inv.id}','${inv.trip_id}')">✓ Join</button>
+          <button class="gw-confirm-btn" style="font-size:0.52rem;padding:0.2rem 0.55rem;" onclick="openAcceptInviteModal('${inv.id}','${inv.trip_id}','${escH(inv.trip_title)}')">✓ Join</button>
           <button class="gw-cancel-btn" style="font-size:0.52rem;padding:0.2rem 0.55rem;" onclick="declineTripInvite('${inv.id}')">✕</button>
         </div>`;
       invBanner.appendChild(card);
@@ -12317,7 +12317,65 @@ async function sbLoadTripInvites(){
 }
 
 // Accept a trip invite: mark accepted → upsert member row → pull trip data
-async function acceptTripInvite(inviteId, tripId){
+function openAcceptInviteModal(inviteId, tripId, tripTitle){
+  // Remove any existing instance
+  document.getElementById('accept-invite-modal-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'accept-invite-modal-overlay';
+  overlay.style.zIndex = '2000';
+
+  const box = document.createElement('div');
+  box.className = 'modal';
+  box.style.maxWidth = '420px';
+
+  box.innerHTML = `
+    <div class="modal-title">🏕️ Join ${escH(tripTitle)}</div>
+    <div class="modal-sub">You're joining as a crew member. Your gear for this trip lives in a separate pack config in My Kit so it stays organised.</div>
+
+    <div style="margin:0.85rem 0 0.4rem;">
+      <label style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);display:block;margin-bottom:0.3rem;">
+        Start pack from… <span style="opacity:0.5">(optional)</span>
+      </label>
+      <select class="gw-field-inp" id="accept-invite-src-pack" style="width:100%;box-sizing:border-box;">
+        <option value="">— Start blank —</option>
+        ${PACKS.map(p=>`<option value="${escH(p.id)}">${escH(p.icon)} ${escH(p.name)}</option>`).join('')}
+      </select>
+      <div style="font-family:'Space Mono',monospace;font-size:0.44rem;color:var(--stone);margin-top:0.35rem;line-height:1.6;opacity:0.8;">
+        Copies gear items from an existing pack config into this trip's pack. You can add, remove, or change anything after joining — this is just a starting point.
+      </div>
+    </div>
+  `;
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'gw-confirm-row';
+  btnRow.style.marginTop = '0.9rem';
+
+  const joinBtn = document.createElement('button');
+  joinBtn.className = 'gw-confirm-btn';
+  joinBtn.textContent = '✓ Join Trip';
+  joinBtn.onclick = ()=>{
+    const srcPackId = document.getElementById('accept-invite-src-pack')?.value || '';
+    overlay.remove();
+    acceptTripInvite(inviteId, tripId, srcPackId);
+  };
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'gw-cancel-btn';
+  cancelBtn.textContent = '✕ Cancel';
+  cancelBtn.onclick = ()=>overlay.remove();
+
+  btnRow.appendChild(joinBtn);
+  btnRow.appendChild(cancelBtn);
+  box.appendChild(btnRow);
+
+  overlay.onclick = e=>{ if(e.target===overlay) overlay.remove(); };
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+async function acceptTripInvite(inviteId, tripId, srcPackId){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
   const { error: ue } = await sb.from('trip_invites')
@@ -12333,6 +12391,22 @@ async function acceptTripInvite(inviteId, tripId){
   await sbPullSharedTrips();
   // Create pack config for the joined trip so gear can be tagged to it
   initTripPacks();
+  // If user chose a source pack, copy its items into the new trip pack
+  if(srcPackId){
+    const trip = TRIPS.find(t=>t.id===tripId);
+    const newPackId = trip?.packId;
+    if(newPackId && newPackId !== srcPackId){
+      CATS.forEach(cat=>{
+        if(!cat.packs) cat.packs = PACKS.map(p=>p.id);
+        else if(!cat.packs.includes(newPackId) && cat.packs.includes(srcPackId)){
+          cat.packs.push(newPackId);
+        }
+        cat.items.filter(i=>i.s.includes(srcPackId)).forEach(item=>{
+          if(!item.s.includes(newPackId)) item.s = [...item.s, newPackId];
+        });
+      });
+    }
+  }
   renderPackPills();
   scheduleSave();
   renderTripsPage();
