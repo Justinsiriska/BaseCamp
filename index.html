@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.5 — Gear Organizer</title>
+<title>BaseCamp v2.6 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.5</div>
+      <div class="logo-sub">Gear Organizer · v2.6</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9066,7 +9066,7 @@ function getTripMembers(trip, confirmedIds){
 
   const friends = (trip.memberIds||[])
     .filter(id => id !== (_sbUser?.id||'me') && id !== 'me')
-    .filter(id => !confirmedIds.size || confirmedIds.has(id))
+    .filter(id => confirmedIds.has(id))
     .map(id=>friendPool.find(f=>f.id===id)).filter(Boolean);
   return [me, ...friends];
 }
@@ -12011,12 +12011,11 @@ async function sbLoadTripMemberStatus(){
   const ownedTrips = TRIPS.filter(t => t.memberIds?.length && !t._shared);
   if(!ownedTrips.length) return;
 
-  _tripMemberStatus = {};
+  // Update per-trip — never wipe the whole map (avoids race with sbSyncTrip)
   for(const trip of ownedTrips){
     if(!trip.memberIds?.length) continue;
-    _tripMemberStatus[trip.id] = {};
+    if(!_tripMemberStatus[trip.id]) _tripMemberStatus[trip.id] = {};
 
-    // Get invite statuses for all invited members
     const { data: invites } = await sb.from('trip_invites')
       .select('invited_user, status')
       .eq('trip_id', trip.id)
@@ -12026,7 +12025,6 @@ async function sbLoadTripMemberStatus(){
       _tripMemberStatus[trip.id][inv.invited_user] =
         inv.status === 'accepted' ? 'accepted' : 'pending';
     }
-    // Anyone in memberIds with no invite row yet = pending (just added)
     for(const uid of trip.memberIds){
       if(!_tripMemberStatus[trip.id][uid]){
         _tripMemberStatus[trip.id][uid] = 'pending';
@@ -12113,17 +12111,19 @@ async function sbSyncTrip(trip){
 
   // 5. Read back actual invite statuses from DB — never guess client-side
   if(!_tripMemberStatus[trip.id]) _tripMemberStatus[trip.id] = {};
+  const statusSlot = _tripMemberStatus[trip.id]; // capture ref before any async
   const { data: invites } = await sb.from('trip_invites')
     .select('invited_user, status')
     .eq('trip_id', trip.id)
     .in('invited_user', trip.memberIds);
+  // Re-ensure slot still exists after await (guard against concurrent reset)
+  if(!_tripMemberStatus[trip.id]) _tripMemberStatus[trip.id] = {};
   console.log('sbSyncTrip: invite statuses for', trip.title, invites);
   for(const inv of (invites||[])){
     const st = inv.status === 'accepted' ? 'accepted' : 'pending';
     _tripMemberStatus[trip.id][inv.invited_user] = st;
     console.log(' →', inv.invited_user, '=', st);
   }
-  // Anyone with no invite row = pending (shouldn't happen, but defensive)
   for(const uid of trip.memberIds){
     if(!_tripMemberStatus[trip.id][uid]){
       _tripMemberStatus[trip.id][uid] = 'pending';
