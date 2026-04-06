@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.26 — Gear Organizer</title>
+<title>BaseCamp v3.27 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.26</div>
+      <div class="logo-sub">Gear Organizer · v3.27</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6785,7 +6785,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.26) ──
+// ── Persistence layer (rebuilt v3.27) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -6810,8 +6810,35 @@ function markDirty(){
     clearTimeout(_sbCloudDebounce);
     _sbCloudDebounce = setTimeout(()=>{
       if(_isDirty || _lastCloudPushAt < _lastSavedAt) sbPushData();
-    }, 2000);
+    }, 800); // short debounce — push quickly after mutations settle
   }
+}
+
+// Synchronous-safe cloud push for beforeunload/visibilitychange.
+// Uses fetch with keepalive:true so the browser keeps the request alive
+// even after the page starts unloading. Falls back to regular sbPushData.
+function sbPushDataSync(){
+  if(!_sbUser) return;
+  saveState();
+  const payload = getPayload();
+  if(!payload.profile.photo && MY_PROFILE._userUploadedPhoto){
+    payload.profile.photo = MY_PROFILE._userUploadedPhoto;
+  }
+  const body = JSON.stringify({ id: _sbUser.id, gear_data: payload });
+  const url = 'https://hibvetgynyakgeriajty.supabase.co/rest/v1/profiles?on_conflict=id';
+  try {
+    fetch(url, {
+      method: 'POST',
+      keepalive: true, // survives page unload
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpYnZldGd5bnlha2dlcmlhanR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxOTAwNDAsImV4cCI6MjA5MDc2NjA0MH0._lsWxZkhD1SaZZFyRscEHP2TZ6fWkU-fRsaejAY5rMU',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpYnZldGd5bnlha2dlcmlhanR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxOTAwNDAsImV4cCI6MjA5MDc2NjA0MH0._lsWxZkhD1SaZZFyRscEHP2TZ6fWkU-fRsaejAY5rMU',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body
+    });
+  } catch(e){ /* keepalive fetch failed — localStorage still has the data */ }
 }
 
 // LEGACY — Remove this function once backend is live.
@@ -10673,17 +10700,21 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   });
 
   // ── Aggressive cloud persistence ──
-  // Always flush localStorage on hide/close.
-  // Also push to Supabase if there are unsaved changes (_isDirty).
+  // Always flush localStorage + push to Supabase on hide/close.
+  // visibilitychange fires reliably on tab switch, mobile background, etc.
+  // beforeunload fires on refresh/close. Both use keepalive fetch so the
+  // request survives page teardown.
   document.addEventListener('visibilitychange', ()=>{
-    saveState(); // always flush localStorage
-    if(document.visibilityState === 'hidden' && _sbUser && _isDirty){
-      sbPushData();
+    if(_isDirty){
+      saveState();
+      if(_sbUser) sbPushDataSync();
     }
   });
   window.addEventListener('beforeunload', ()=>{
-    saveState(); // always flush localStorage
-    if(_sbUser && _isDirty) sbPushData();
+    if(_isDirty){
+      saveState(); // always flush localStorage first
+      if(_sbUser) sbPushDataSync(); // keepalive fetch survives page unload
+    }
   });
 });;
 
