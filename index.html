@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.0 — Gear Organizer</title>
+<title>BaseCamp v3.1 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.0</div>
+      <div class="logo-sub">Gear Organizer · v3.1</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -12182,22 +12182,36 @@ async function sbLoadTripInvites(){
     .eq('invited_user', _sbUser.id)
     .eq('status', 'pending');
   if(error){ console.error('sbLoadTripInvites error:', error); return; }
+  if(!data?.length){ _tripInvitesIn = []; return; }
 
-  // Filter out invites whose trip has already been deleted
-  const tripIds = [...new Set((data||[]).map(i=>i.trip_id))];
-  let validTripIds = new Set(tripIds);
-  if(tripIds.length){
-    const { data: existingTrips } = await sb.from('shared_trips')
-      .select('id').in('id', tripIds);
-    validTripIds = new Set((existingTrips||[]).map(t=>t.id));
-    // Delete orphaned invites from DB so they don't linger
-    const orphaned = (data||[]).filter(i=>!validTripIds.has(i.trip_id)).map(i=>i.id);
+  // Check which trips still exist — but only delete orphans if we got a positive
+  // result back (non-empty array). An empty result could mean RLS blocked the read,
+  // not that all trips are gone. We never delete based on a failed/empty check.
+  const tripIds = [...new Set(data.map(i=>i.trip_id))];
+  const { data: existingTrips, error: te } = await sb.from('shared_trips')
+    .select('id').in('id', tripIds);
+
+  let validTripIds;
+  if(te || !existingTrips){
+    // Can't confirm — keep all invites, don't delete anything
+    validTripIds = new Set(tripIds);
+  } else if(existingTrips.length === 0){
+    // Got a response but zero rows — could be RLS blocking reads pre-membership.
+    // Keep all invites rather than risk nuking valid ones.
+    validTripIds = new Set(tripIds);
+  } else {
+    // We got some rows back — safe to identify true orphans
+    const foundIds = new Set(existingTrips.map(t=>t.id));
+    validTripIds = foundIds;
+    // Only delete invites for trips that are definitively missing
+    // (i.e. some trips returned but this one didn't — not a blanket empty response)
+    const orphaned = data.filter(i=>!foundIds.has(i.trip_id)).map(i=>i.id);
     if(orphaned.length){
       await sb.from('trip_invites').delete().in('id', orphaned);
     }
   }
 
-  const validInvites = (data||[]).filter(i=>validTripIds.has(i.trip_id));
+  const validInvites = data.filter(i=>validTripIds.has(i.trip_id));
   _tripInvitesIn = await Promise.all(validInvites.map(async inv=>{
     const { data: p } = await sb.from('profiles')
       .select('full_name').eq('id', inv.invited_by).single();
