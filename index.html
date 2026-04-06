@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.21 — Gear Organizer</title>
+<title>BaseCamp v3.22 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.21</div>
+      <div class="logo-sub">Gear Organizer · v3.22</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3389,6 +3389,13 @@ function uid(){return Math.random().toString(36).slice(2,9);}
 let TRIPS = [];
 let activeTripId = null;
 let DELETED_TRIPS = [];
+// ── Persistence globals (must be declared before any function that uses them) ──
+let _isDirty = false;
+let _lastSavedAt = 0;
+let _lastCloudPushAt = 0;
+let _sbCloudDebounce = null;
+let _sbUser = null;  // forward-declare so markDirty can reference it safely
+let _sb = null;
 
 const CATS=[
   {id:'sleep',         name:'Sleep System',    icon:'🌙',color:'#4a6741',pc:'pill-sleep',    cc:'cc-sleep',    hasExtra:true, extraLabel:'Temp / R-Value', items:[],packs:null},
@@ -6848,15 +6855,12 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.21) ──
+// ── Persistence layer (rebuilt v3.22) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
 // in the background ONLY if localStorage is empty (new device/browser).
 // This eliminates all race conditions between pull and local state.
-
-let _isDirty = false;  // true when in-memory state differs from last localStorage write
-let _lastSavedAt = 0;  // timestamp of last successful localStorage write
 
 function saveState(){
   try {
@@ -11732,8 +11736,7 @@ function toggleTheme() {
 const SUPABASE_URL = 'https://hibvetgynyakgeriajty.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpYnZldGd5bnlha2dlcmlhanR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxOTAwNDAsImV4cCI6MjA5MDc2NjA0MH0._lsWxZkhD1SaZZFyRscEHP2TZ6fWkU-fRsaejAY5rMU';
 
-let _sb = null;
-let _sbUser = null;
+// _sb and _sbUser are forward-declared near the top globals
 let _authMode = 'signin'; // 'signin' | 'signup'
 
 function sbClient(){
@@ -11973,9 +11976,6 @@ async function authSignOut(){
 }
 
 // ── Cloud sync ──
-let _lastCloudPushAt = 0;  // timestamp of last successful Supabase push
-let _sbCloudDebounce = null;
-
 async function sbPushData(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
