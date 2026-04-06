@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.1 — Gear Organizer</title>
+<title>BaseCamp v3.2 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.1</div>
+      <div class="logo-sub">Gear Organizer · v3.2</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9282,8 +9282,12 @@ function tripDelete(tripId){
     TRIPS.splice(TRIPS.indexOf(t), 1);
     if(activeTripId===tripId) activeTripId = TRIPS[0]?.id || null;
     delete _tripMemberStatus[tripId];
+    // If active season was this trip's pack, fall back to first visible pack
+    if(t.packId && season === t.packId) season = PACKS.find(p=>p.id!==t.packId)?.id || 'winter';
+    if(t.packId && foodSeason === t.packId) foodSeason = PACKS.find(p=>p.id!==t.packId)?.id || 'winter';
     scheduleSave();
     renderTripsPage();
+    renderPackPills();
     toast('🗂 "'+t.title+'" moved to archive');
   });
 }
@@ -9385,12 +9389,18 @@ function openTripArchive(){
       restoreBtn.textContent = '↩ Restore';
       restoreBtn.onclick = ()=>{
         const {deletedAt, ...tripData} = t;
+        // Re-ensure the pack exists in PACKS in case it was cleaned up
+        if(tripData.packId && !PACKS.find(p=>p.id===tripData.packId)){
+          PACKS.push({id:tripData.packId, name:tripData.title, icon:'🏕️'});
+          CATS.forEach(c=>{ if(c.packs && !c.packs.includes(tripData.packId)) c.packs.push(tripData.packId); });
+        }
         TRIPS.push(tripData);
         DELETED_TRIPS.splice(i, 1);
         activeTripId = tripData.id;
         scheduleSave();
         rebuildList();
         renderTripsPage();
+        renderPackPills();
         toast('✅ "'+tripData.title+'" restored!');
       };
       row.appendChild(restoreBtn);
@@ -9402,10 +9412,20 @@ function openTripArchive(){
       permBtn.title = 'Permanently delete — cannot be undone';
       permBtn.onclick = ()=>{
         showConfirm({title:'Permanently Delete',msg:'Permanently delete "'+t.title+'"? This cannot be undone.',confirmLabel:'Delete Forever',danger:true},()=>{
+          // Also permanently remove the matching pack config from PACKS + CATS
+          if(t.packId){
+            const pkIdx = PACKS.findIndex(p=>p.id===t.packId);
+            if(pkIdx !== -1) PACKS.splice(pkIdx, 1);
+            CATS.forEach(c=>{ if(c.packs) c.packs = c.packs.filter(p=>p!==t.packId); });
+            // If the active season was this pack, fall back to first available
+            if(season === t.packId) season = PACKS[0]?.id || 'winter';
+            if(foodSeason === t.packId) foodSeason = PACKS[0]?.id || 'winter';
+          }
           DELETED_TRIPS.splice(i, 1);
           scheduleSave();
           rebuildList();
           renderTripsPage();
+          renderPackPills();
         });
       };
       row.appendChild(permBtn);
@@ -12413,7 +12433,7 @@ function sbSubscribeTrips(){
 </div>
 
 <!-- CONFIRM MODAL -->
-<div class="modal-overlay" id="confirm-modal">
+<div class="modal-overlay" id="confirm-modal" style="z-index:2000;">
   <div class="modal" style="max-width:360px;text-align:center;">
     <div id="confirm-modal-icon" style="font-size:2rem;margin-bottom:0.5rem;"></div>
     <div class="modal-title" id="confirm-modal-title" style="margin-bottom:0.4rem;"></div>
