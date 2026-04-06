@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.1 — Gear Organizer</title>
+<title>BaseCamp v1.9 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.1</div>
+      <div class="logo-sub">Gear Organizer · v1.9</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -1876,9 +1876,99 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
         <div class="season-bar-top">
           <span class="season-lbl">Pack Configurations</span>
         </div>
-        <div class="season-pills" id="season-pills-row"></div>
+        <div class="season-pills" id="season-pills-row"><button class="s-pill" data-s="winter">❄️ <span class="s-pill-name">Winter Alpine</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('winter',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('winter')">✕</button></button><button class="s-pill" data-s="shoulder">🍂 <span class="s-pill-name">Shoulder Season</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('shoulder',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('shoulder')">✕</button></button><button class="s-pill" data-s="summer">☀️ <span class="s-pill-name">Summer Fast</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('summer',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('summer')">✕</button></button><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775334408956',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775334408956')">✕</button></button><button class="add-pack-btn">+ New Config</button></div>
       </div>
-      <div id="cats"></div>
+      <div id="cats"><div class="cat-card cc-sleep " data-cid="sleep">
+      <div class="cat-drag-handle" data-cid="sleep">· · · · ·</div>
+      <div class="cat-head-wrap">
+        <div class="cat-head" onclick="toggleCat('sleep')">
+          <div class="cat-head-l">
+            <span class="cat-icon">🌙</span>
+            <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('sleep',this)">Sleep System</span>
+            <span class="cat-meta">(0)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.3rem">
+            <div class="cat-pill pill-sleep" data-cid="sleep">0g</div>
+            <button class="caret">▼</button>
+          </div>
+        </div>
+        <div class="cat-body">
+          <p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items in this pack — add from Gear Wall or:</p>
+              <button class="add-btn-ghost" onclick="addItemFromPack('sleep')">＋ Add new item to pack &amp; Gear Wall</button>
+        </div>
+      </div></div><div class="cat-card cc-pack collapsed" data-cid="pack">
+      <div class="cat-drag-handle" data-cid="pack">· · · · ·</div>
+      <div class="cat-head-wrap">
+        <div class="cat-head" onclick="toggleCat('pack')">
+          <div class="cat-head-l">
+            <span class="cat-icon">🎒</span>
+            <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('pack',this)">Pack</span>
+            <span class="cat-meta">(0)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.3rem">
+            <div class="cat-pill pill-pack" data-cid="pack">0g</div>
+            <button class="caret">▼</button>
+          </div>
+        </div>
+        <div class="cat-body">
+          <p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items in this pack — add from Gear Wall or:</p>
+              <button class="add-btn-ghost" onclick="addItemFromPack('pack')">＋ Add new item to pack &amp; Gear Wall</button>
+        </div>
+      </div></div><div class="cat-card cc-cooking collapsed" data-cid="cooking">
+      <div class="cat-drag-handle" data-cid="cooking">· · · · ·</div>
+      <div class="cat-head-wrap">
+        <div class="cat-head" onclick="toggleCat('cooking')">
+          <div class="cat-head-l">
+            <span class="cat-icon">🔥</span>
+            <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('cooking',this)">Cooking &amp; Water</span>
+            <span class="cat-meta">(0)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.3rem">
+            <div class="cat-pill pill-cooking" data-cid="cooking">0g</div>
+            <button class="caret">▼</button>
+          </div>
+        </div>
+        <div class="cat-body">
+          <p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items in this pack — add from Gear Wall or:</p>
+              <button class="add-btn-ghost" onclick="addItemFromPack('cooking')">＋ Add new item to pack &amp; Gear Wall</button>
+        </div>
+      </div></div><div class="cat-card cc-clothes collapsed" data-cid="clothes">
+      <div class="cat-drag-handle" data-cid="clothes">· · · · ·</div>
+      <div class="cat-head-wrap">
+        <div class="cat-head" onclick="toggleCat('clothes')">
+          <div class="cat-head-l">
+            <span class="cat-icon">🧥</span>
+            <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('clothes',this)">Clothes</span>
+            <span class="cat-meta">(0)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.3rem">
+            <div class="cat-pill pill-clothes" data-cid="clothes">0g</div>
+            <button class="caret">▼</button>
+          </div>
+        </div>
+        <div class="cat-body">
+          <p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items in this pack — add from Gear Wall or:</p>
+              <button class="add-btn-ghost" onclick="addItemFromPack('clothes')">＋ Add new item to pack &amp; Gear Wall</button>
+        </div>
+      </div></div><div class="cat-card cc-uncategorised collapsed" data-cid="uncategorised">
+      <div class="cat-drag-handle" data-cid="uncategorised">· · · · ·</div>
+      <div class="cat-head-wrap">
+        <div class="cat-head" onclick="toggleCat('uncategorised')">
+          <div class="cat-head-l">
+            <span class="cat-icon">📦</span>
+            <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('uncategorised',this)">Uncategorised</span>
+            <span class="cat-meta">(0)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.3rem">
+            <div class="cat-pill pill-uncategorised" data-cid="uncategorised">0g</div>
+            <button class="caret">▼</button>
+          </div>
+        </div>
+        <div class="cat-body">
+          <p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items in this pack — add from Gear Wall or:</p>
+              <button class="add-btn-ghost" onclick="addItemFromPack('uncategorised')">＋ Add new item to pack &amp; Gear Wall</button>
+        </div>
+      </div></div></div>
       <div id="hidden-cats-bar"></div>
       <button class="add-cat-btn" onclick="catEditOpenNew()">＋ New Category</button>
     </div>
@@ -1891,7 +1981,62 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
             <div class="gw-subtitle">Everything you own · drag in/out of your pack</div>
           </div>
         </div>
-        <div class="gw-body" id="gear-wall-body"></div>
+        <div class="gw-body" id="gear-wall-body"><div style="padding:1.5rem 1rem;text-align:center;color:var(--stone);">
+      <div style="font-size:1.8rem;margin-bottom:0.5rem;">🪝</div>
+      <div style="font-family:'Playfair Display',serif;font-size:0.88rem;margin-bottom:0.3rem;color:var(--bark);">Your Gear Wall is empty</div>
+      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;line-height:1.6;opacity:0.7;">Use the category add buttons<br>below to start building your kit</div>
+    </div><div class="gw-cat"><div class="gw-cat-hd" style="border-left-color: rgb(74, 103, 65);">
+      <div class="gw-cat-label">
+        <span class="gw-cat-icon">🌙</span>
+        <span>Sleep System</span>
+        <span class="gw-cat-count">(0)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <button class="gw-cat-del-btn" title="Delete category from Gear Wall" onclick="event.stopPropagation();confirmDeleteCat('sleep')" style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
+        <span class="gw-cat-caret">▾</span>
+      </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="sleep">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Sleep System item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(139, 115, 85);">
+      <div class="gw-cat-label">
+        <span class="gw-cat-icon">🎒</span>
+        <span>Pack</span>
+        <span class="gw-cat-count">(0)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <button class="gw-cat-del-btn" title="Delete category from Gear Wall" onclick="event.stopPropagation();confirmDeleteCat('pack')" style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
+        <span class="gw-cat-caret">▾</span>
+      </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="pack">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Pack item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(200, 90, 42);">
+      <div class="gw-cat-label">
+        <span class="gw-cat-icon">🔥</span>
+        <span>Cooking &amp; Water</span>
+        <span class="gw-cat-count">(0)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <button class="gw-cat-del-btn" title="Delete category from Gear Wall" onclick="event.stopPropagation();confirmDeleteCat('cooking')" style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
+        <span class="gw-cat-caret">▾</span>
+      </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="cooking">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Cooking &amp; Water item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(123, 167, 188);">
+      <div class="gw-cat-label">
+        <span class="gw-cat-icon">🧥</span>
+        <span>Clothes</span>
+        <span class="gw-cat-count">(0)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <button class="gw-cat-del-btn" title="Delete category from Gear Wall" onclick="event.stopPropagation();confirmDeleteCat('clothes')" style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
+        <span class="gw-cat-caret">▾</span>
+      </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="clothes">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Clothes item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(139, 139, 139);">
+      <div class="gw-cat-label">
+        <span class="gw-cat-icon">📦</span>
+        <span>Uncategorised</span>
+        <span class="gw-cat-count">(0)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <button class="gw-cat-del-btn" title="Delete category from Gear Wall" onclick="event.stopPropagation();confirmDeleteCat('uncategorised')" style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
+        <span class="gw-cat-caret">▾</span>
+      </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="uncategorised">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Uncategorised item</button></div></div><div class="gw-cat gw-recently-deleted"><div class="gw-cat-hd" style="border-left-color: rgba(200, 90, 42, 0.4); cursor: pointer;">
+    <div class="gw-cat-label">
+      <span class="gw-cat-icon" style="font-size:0.85rem;">🗑️</span>
+      <span>Recently Deleted</span>
+      <span class="gw-cat-count">(0)</span>
+    </div>
+    <span class="gw-cat-caret" style="transform:rotate(-90deg)">▾</span></div></div></div>
       </div>
       <button class="add-cat-btn" onclick="catEditOpenNew()">＋ New Category</button>
     </div>
@@ -3002,65 +3147,6 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 
 <!-- PAGE 3 — DEMO -->
 <div id="page-trips" class="page">
-  <div id="trips-root" style="max-width:1700px;margin:0 auto;padding:0.75rem 2rem;"></div>
-</div>
-
-<div id="page-crew" class="page">
-  <div id="crew-root" style="max-width:1100px;margin:0 auto;padding:0.75rem 2rem;"></div>
-</div>
-
-<div id="page-demo" class="page">
-  <!-- Step overlay — sits above everything -->
-  <div id="demo-overlay" style="display:none;">
-    <div id="demo-spotlight"></div>
-    <div id="demo-tooltip">
-      <div id="demo-tt-step"></div>
-      <div id="demo-tt-title"></div>
-      <div id="demo-tt-body"></div>
-      <div id="demo-tt-hint"></div>
-      <div style="display:flex;gap:0.5rem;margin-top:0.8rem;align-items:center;">
-        <button id="demo-skip-btn" onclick="demoSkip()">Skip →</button>
-        <div id="demo-tt-dots"></div>
-      </div>
-    </div>
-  </div>
-  <!-- Real My Kit layout, populated with demo data -->
-  <div class="p1" id="demo-p1">
-    <div class="p1-left" id="demo-left">
-      <div class="my-packs-title">
-        <div>My Packs<span class="my-packs-title-sub">Active Kit by Configuration</span></div>
-      </div>
-      <div class="season-bar">
-        <div class="season-bar-top"><span class="season-lbl">Pack Configurations</span></div>
-        <div class="season-pills" id="demo-pills"></div>
-      </div>
-      <div id="demo-cats"></div>
-    </div>
-    <div class="gear-wall" id="demo-gearwall-col">
-      <div class="gw-panel">
-        <div class="gw-hd">
-          <div>
-            <div class="gw-title">🪝 Gear Wall</div>
-            <div class="gw-subtitle">Everything you own</div>
-          </div>
-        </div>
-        <div class="gw-body" id="demo-gw-body"></div>
-      </div>
-    </div>
-    <div class="p1-right" id="demo-right-col">
-      <div class="panel">
-        <div class="panel-hd"><div class="panel-title">⚖️ Weight Breakdown</div></div>
-        <div class="panel-bd">
-          <div class="chart-wrap"><canvas id="demoWeightChart"></canvas></div>
-          <div class="stats-row" id="demo-stats-row"></div>
-          <div class="legend-list" id="demo-leg-list"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
 <!-- API KEY MODAL -->
 <div class="modal-overlay" id="apikey-modal">
   <div class="modal" style="max-width:380px;">
@@ -6674,63 +6760,54 @@ function saveState(){
 // It patches the page's own HTML to bake data in, which is incompatible with
 // server-side accounts. Replace with: PUT /user/data + getPayload()
 async function saveToFile(){
-  // ─── CRITICAL ───────────────────────────────────────────────────────────
-  // We MUST fetch the original source HTML, NOT use document.outerHTML.
-  // document.outerHTML is the live rendered DOM — it contains all your
-  // personal data painted into it (trip names, profile photo, pack pills…).
-  // fetch(location.href) gives us the clean template file from the server.
-  // We then swap only the __TW_DATA__ block with clean defaults before saving.
-  // ────────────────────────────────────────────────────────────────────────
+  // Fetch the ORIGINAL source HTML from the server — NOT document.outerHTML.
+  // document.outerHTML is the live rendered DOM and contains all your personal
+  // data painted into it (trips, profile photo, pack pills, etc).
+  // Fetching the source gives us the clean template HTML.
   const btn = document.getElementById('save-file-btn');
-  if(btn){ btn.textContent='⏳…'; btn.disabled=true; }
-
-  let sourceHtml;
+  if(btn){ btn.textContent='⏳ Saving…'; btn.disabled=true; }
   try {
-    const resp = await fetch(location.href, {cache:'no-store'});
-    if(!resp.ok) throw new Error('fetch failed: ' + resp.status);
-    sourceHtml = await resp.text();
+    const resp = await fetch(location.href);
+    let html = await resp.text();
+
+    // Replace __TW_DATA__ with clean defaults — no personal data ever goes in
+    const cleanPayload = {
+      schema: 6,
+      season: 'winter',
+      unit: 'g',
+      packs: [
+        {id:'winter', name:'Winter Alpine', icon:'❄️'},
+        {id:'shoulder', name:'Shoulder Season', icon:'🍂'},
+        {id:'summer', name:'Summer Fast', icon:'☀️'}
+      ],
+      cats: [
+        {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', hasExtra:true, extraLabel:'Temp / R-Value', items:[], packs:['winter','shoulder','summer']},
+        {id:'pack', name:'Pack', icon:'🎒', color:'#8b7355', hasExtra:true, extraLabel:'Volume (L)', items:[], packs:['winter','shoulder','summer']},
+        {id:'cooking', name:'Cooking & Water', icon:'🔥', color:'#c85a2a', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']},
+        {id:'clothes', name:'Clothes', icon:'🧥', color:'#7ba7bc', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']},
+        {id:'uncategorised', name:'Uncategorised', icon:'📦', color:'#8b8b8b', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']}
+      ],
+      foodSeason: 'winter',
+      foodItems: [], foodCatsCustom: [], fridgeCustom: [], fridgeHistory: [],
+      trailLibrary: [], trips: [], deletedTrips: [], activeTripId: null,
+      profile: {name:'', bio:'', color:'#4a8fa8', photo:null}
+    };
+    const json = JSON.stringify(cleanPayload);
+    html = html.replace(/<script id="tw-data">window\.__TW_DATA__=[\s\S]*?;<\/script>/,
+      '<script id="tw-data">window.__TW_DATA__=' + json + ';<\/script>');
+
+    const blob = new Blob([html], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'index.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    if(btn){ btn.textContent='✓ Saved!'; btn.disabled=false; btn.style.background='rgba(130,200,100,0.25)'; setTimeout(()=>{btn.textContent='💾 Save';btn.style.background='';},1800); }
   } catch(e) {
-    console.error('[BaseCamp] saveToFile fetch error:', e);
+    console.error('saveToFile failed:', e);
     if(btn){ btn.textContent='💾 Save'; btn.disabled=false; }
-    alert('Could not fetch source file.\nMake sure you are viewing from GitHub Pages (not a local file), then try again.');
-    return;
+    alert('Save failed — are you viewing from GitHub Pages? Try again.');
   }
-
-  // Clean defaults — zero personal data
-  const cleanPayload = {
-    schema: 6, season: 'winter', unit: 'g',
-    packs: [
-      {id:'winter',   name:'Winter Alpine',   icon:'❄️'},
-      {id:'shoulder', name:'Shoulder Season', icon:'🍂'},
-      {id:'summer',   name:'Summer Fast',     icon:'☀️'}
-    ],
-    cats: [
-      {id:'sleep',         name:'Sleep System',    icon:'🌙', color:'#4a6741', hasExtra:true,  extraLabel:'Temp / R-Value', items:[], packs:['winter','shoulder','summer']},
-      {id:'pack',          name:'Pack',            icon:'🎒', color:'#8b7355', hasExtra:true,  extraLabel:'Volume (L)',     items:[], packs:['winter','shoulder','summer']},
-      {id:'cooking',       name:'Cooking & Water', icon:'🔥', color:'#c85a2a', hasExtra:false, extraLabel:'',              items:[], packs:['winter','shoulder','summer']},
-      {id:'clothes',       name:'Clothes',         icon:'🧥', color:'#7ba7bc', hasExtra:false, extraLabel:'',              items:[], packs:['winter','shoulder','summer']},
-      {id:'uncategorised', name:'Uncategorised',   icon:'📦', color:'#8b8b8b', hasExtra:false, extraLabel:'',              items:[], packs:['winter','shoulder','summer']}
-    ],
-    foodSeason:'winter', foodItems:[], foodCatsCustom:[], fridgeCustom:[], fridgeHistory:[],
-    trailLibrary:[], trips:[], deletedTrips:[], activeTripId:null,
-    profile:{name:'', bio:'', color:'#4a8fa8', photo:null}
-  };
-
-  // Swap __TW_DATA__ in the fetched source (not the live DOM)
-  const cleanJson = JSON.stringify(cleanPayload);
-  const updated = sourceHtml.replace(
-    /<script id="tw-data">window\.__TW_DATA__=[\s\S]*?;<\/script>/,
-    '<script id="tw-data">window.__TW_DATA__=' + cleanJson + ';<\/script>'
-  );
-
-  const blob = new Blob([updated], {type:'text/html'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'index.html';
-  a.click();
-  URL.revokeObjectURL(a.href);
-
-  if(btn){ btn.textContent='✓ Saved!'; btn.disabled=false; btn.style.background='rgba(130,200,100,0.25)'; setTimeout(()=>{btn.textContent='💾 Save';btn.style.background='';},1800); }
 }
 
 function loadState(){
@@ -9224,8 +9301,6 @@ function tripStartRename(tripId){
 }
 
 function openTripArchive(){
-  // Archive is only available when signed in — deleted trips are user-specific
-  if(!_sbUser) return;
   // Remove existing archive modal
   document.getElementById('trip-archive-modal')?.remove();
 
@@ -10625,9 +10700,8 @@ function renderTripsPage(){
   if(!TRIPS.length && !_tripInvitesIn.length){
     const nb=document.createElement('button'); nb.className='trip-new-btn'; nb.textContent='＋ New Trip'; nb.onclick=createTrip;
     root.appendChild(nb);
-    // Show archive button only when signed in — deleted trips from localStorage
-    // should not be visible/restorable to signed-out visitors
-    if(DELETED_TRIPS.length && _sbUser){
+    // Show archive button even when no active trips
+    if(DELETED_TRIPS.length){
       const archBtn=document.createElement('button');
       archBtn.className='trip-new-btn';
       archBtn.style.cssText='background:rgba(139,115,85,0.1);border-color:rgba(139,115,85,0.4);color:var(--bark);';
@@ -10750,7 +10824,7 @@ function renderTripsPage(){
   });
   const nb=document.createElement('button'); nb.className='trip-new-btn'; nb.textContent='＋ New Trip'; nb.onclick=createTrip;
   sel.appendChild(nb);
-  if(DELETED_TRIPS.length && _sbUser){
+  if(DELETED_TRIPS.length){
     const archBtn=document.createElement('button');
     archBtn.className='trip-new-btn';
     archBtn.style.cssText='background:rgba(139,115,85,0.1);border-color:rgba(139,115,85,0.4);color:var(--bark);';
@@ -11926,7 +12000,8 @@ async function sbPushSharedTrip(trip){
     {onConflict: 'trip_id,user_id', ignoreDuplicates: true}
   );
 
-  // Send invites to each invited member
+  // Send invites to each invited member — only INSERT if no row exists yet.
+  // Never overwrite an already-accepted (or declined) invite back to 'pending'.
   for(const memberId of trip.memberIds){
     const { error: ie } = await sb.from('trip_invites').upsert({
       trip_id: trip.id,
@@ -11934,17 +12009,32 @@ async function sbPushSharedTrip(trip){
       invited_by: _sbUser.id,
       trip_title: trip.title,
       status: 'pending'
-    }, { onConflict: 'trip_id,invited_user' });
+    }, { onConflict: 'trip_id,invited_user', ignoreDuplicates: true });
     if(ie && ie.code !== '23505') console.error('Invite insert error:', ie);
   }
   console.log('✅ Trip pushed to Supabase:', trip.title);
 
-  // Only count editor rows as confirmed — editors are members who accepted their invite
+  // A member is confirmed only if their shared_trip_members row exists AND
+  // their trip_invites row is 'accepted' (not pending/declined).
+  // This prevents stale editor rows from making an invitee appear confirmed
+  // before they have actually accepted.
+  const { data: inviteRows } = await sb.from('trip_invites')
+    .select('invited_user, status')
+    .eq('trip_id', trip.id)
+    .in('invited_user', trip.memberIds);
+  const acceptedInviteeIds = new Set(
+    (inviteRows||[]).filter(r=>r.status==='accepted').map(r=>r.invited_user)
+  );
   const { data: confirmedRows } = await sb.from('shared_trip_members')
     .select('user_id, role').eq('trip_id', trip.id).eq('role', 'editor');
   const t = TRIPS.find(x=>x.id===trip.id);
   if(t){
-    t._confirmedMembers = (confirmedRows||[]).map(r=>r.user_id);
+    // Only mark as confirmed if BOTH conditions hold:
+    // 1. They have an editor row in shared_trip_members
+    // 2. Their trip_invites status is 'accepted'
+    t._confirmedMembers = (confirmedRows||[])
+      .map(r=>r.user_id)
+      .filter(uid=>acceptedInviteeIds.has(uid));
     renderTripsPage();
   }
 }
