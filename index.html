@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.6 — Gear Organizer</title>
+<title>BaseCamp v2.7 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.6</div>
+      <div class="logo-sub">Gear Organizer · v2.7</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3156,7 +3156,9 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 </div>
 
 <!-- PAGE 6 — DEMO -->
-<div id="page-demo" class="page">
+<div id="page-demo" class="page"></div>
+
+<!-- MODALS — body level so they work on all pages -->
 <!-- API KEY MODAL -->
 <div class="modal-overlay" id="apikey-modal">
   <div class="modal" style="max-width:380px;">
@@ -9230,9 +9232,12 @@ async function tripDeleteShared(tripId){
     const sb = sbClient();
     if(sb && _sbUser){
       await sb.from('shared_trips').delete().eq('id', tripId).eq('owner_id', _sbUser.id);
+      await sb.from('shared_trip_members').delete().eq('trip_id', tripId);
+      await sb.from('trip_invites').delete().eq('trip_id', tripId);
     }
     TRIPS.splice(TRIPS.findIndex(x=>x.id===tripId), 1);
     if(activeTripId===tripId) activeTripId = TRIPS[0]?.id || null;
+    delete _tripMemberStatus[tripId];
     scheduleSave();
     renderTripsPage();
     toast('🗑️ Trip deleted for everyone');
@@ -9242,28 +9247,39 @@ async function tripDeleteShared(tripId){
 function tripLeave(tripId){
   const t = TRIPS.find(x=>x.id===tripId);
   if(!t) return;
-  showConfirm({title:'Leave Trip',msg:`Leave "${t.title}"? You can be re-invited by the leader.`,icon:'🚪',confirmLabel:'Leave'},()=>{
+  showConfirm({title:'Leave Trip',msg:`Leave "${t.title}"? You can be re-invited by the leader.`,icon:'🚪',confirmLabel:'Leave'},async ()=>{
     const sb = sbClient();
     if(sb && _sbUser){
-      sb.from('shared_trip_members')
-        .delete().eq('trip_id', tripId).eq('user_id', _sbUser.id)
-        .then(()=>toast('👋 Left "'+t.title+'"'));
+      await sb.from('shared_trip_members')
+        .delete().eq('trip_id', tripId).eq('user_id', _sbUser.id);
+      await sb.from('trip_invites')
+        .update({status:'declined'})
+        .eq('trip_id', tripId).eq('invited_user', _sbUser.id);
     }
     DELETED_TRIPS.push({...t, deletedAt: Date.now(), _left: true});
     TRIPS.splice(TRIPS.findIndex(x=>x.id===tripId), 1);
     if(activeTripId===tripId) activeTripId = TRIPS[0]?.id || null;
+    delete _tripMemberStatus[tripId];
     scheduleSave();
     renderTripsPage();
+    toast('👋 Left "'+t.title+'"');
   });
 }
 
 function tripDelete(tripId){
   const t = TRIPS.find(x=>x.id===tripId);
   if(!t) return;
-  showConfirm({title:'Delete Trip',msg:`Delete "${t.title}"?`,confirmLabel:'Delete',danger:true},()=>{
+  showConfirm({title:'Delete Trip',msg:`Delete "${t.title}"?`,confirmLabel:'Delete',danger:true},async ()=>{
+    const sb = sbClient();
+    if(sb && _sbUser && t.memberIds?.length){
+      await sb.from('shared_trips').delete().eq('id', tripId).eq('owner_id', _sbUser.id);
+      await sb.from('shared_trip_members').delete().eq('trip_id', tripId);
+      await sb.from('trip_invites').delete().eq('trip_id', tripId);
+    }
     DELETED_TRIPS.push({...t, deletedAt: Date.now()});
     TRIPS.splice(TRIPS.indexOf(t), 1);
     if(activeTripId===tripId) activeTripId = TRIPS[0]?.id || null;
+    delete _tripMemberStatus[tripId];
     scheduleSave();
     renderTripsPage();
     toast('🗂 "'+t.title+'" moved to archive');
@@ -9529,6 +9545,12 @@ function newTripSave(){
     dismissedFlags: []
   });
   activeTripId = tripId;
+
+  // Pre-populate status map so ghost cards show immediately (sbSyncTrip will confirm from DB)
+  if(invitedIds.length && _sbUser){
+    _tripMemberStatus[tripId] = {};
+    for(const uid of invitedIds) _tripMemberStatus[tripId][uid] = 'pending';
+  }
 
   setSeason(newPackId, null);
   renderAll();
@@ -12234,17 +12256,26 @@ function sbSubscribeTrips(){
         const { data: membership } = await sb.from('shared_trip_members')
           .select('role').eq('trip_id', tripId).eq('user_id', _sbUser.id).single();
         if(!membership) return;
+
+        const isOwner = membership.role === 'owner';
         const { data } = await sb.from('shared_trips')
           .select('id, owner_id, title, trip_data, updated_at').eq('id', tripId).single();
         if(!data) return;
-        const d = {...data.trip_data, _shared:true, _ownerId:data.owner_id,
-          _updatedAt: new Date(data.updated_at).getTime()};
-        delete d._confirmedMembers;
+
         const idx = TRIPS.findIndex(t=>t.id===tripId);
-        if(idx >= 0) TRIPS[idx] = d; else TRIPS.push(d);
-        await sbLoadTripMemberStatus();
-        renderTripsPage();
-        toast('🔄 Trip updated');
+        if(isOwner){
+          // Owner: refresh status map only — don't overwrite the local trip with _shared flag
+          await sbLoadTripMemberStatus();
+          renderTripsPage();
+        } else {
+          // Member: update our local copy of the shared trip
+          const d = {...data.trip_data, _shared:true, _ownerId:data.owner_id,
+            _updatedAt: new Date(data.updated_at).getTime()};
+          delete d._confirmedMembers;
+          if(idx >= 0) TRIPS[idx] = d; else TRIPS.push(d);
+          renderTripsPage();
+          toast('🔄 Trip updated');
+        }
       })
     .subscribe();
 }
