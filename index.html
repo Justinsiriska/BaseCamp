@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.8 — Gear Organizer</title>
+<title>BaseCamp v2.9 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.8</div>
+      <div class="logo-sub">Gear Organizer · v2.9</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -12265,14 +12265,21 @@ function sbSubscribeTrips(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
   if(_realtimeChannel) _realtimeChannel.unsubscribe();
-  _realtimeChannel = sb.channel('shared_trips_changes')
+
+  _realtimeChannel = sb.channel('basecamp_changes')
+    // Watch shared_trips for trip data updates (members + owner)
     .on('postgres_changes', { event:'*', schema:'public', table:'shared_trips' },
       async (payload)=>{
         const tripId = payload.new?.id || payload.old?.id;
         if(!tripId) return;
         const { data: membership } = await sb.from('shared_trip_members')
           .select('role').eq('trip_id', tripId).eq('user_id', _sbUser.id).single();
-        if(!membership) return;
+
+        // No membership row yet = this might be a new invite for us — check
+        if(!membership){
+          await sbLoadTripInvites();
+          return;
+        }
 
         const isOwner = membership.role === 'owner';
         const { data } = await sb.from('shared_trips')
@@ -12281,7 +12288,7 @@ function sbSubscribeTrips(){
 
         const idx = TRIPS.findIndex(t=>t.id===tripId);
         if(isOwner){
-          // Owner: refresh status map only — don't overwrite the local trip with _shared flag
+          // Owner: refresh status map only — never overwrite local trip with _shared flag
           await sbLoadTripMemberStatus();
           renderTripsPage();
         } else {
@@ -12293,6 +12300,26 @@ function sbSubscribeTrips(){
           renderTripsPage();
           toast('🔄 Trip updated');
         }
+      })
+    // Watch trip_invites — invitee sees banner instantly when invite is created
+    .on('postgres_changes', {
+        event:'INSERT', schema:'public', table:'trip_invites',
+        filter:`invited_user=eq.${_sbUser.id}`
+      },
+      async (payload)=>{
+        const inv = payload.new;
+        if(!inv || inv.status !== 'pending') return;
+        // Verify trip still exists (wasn't deleted immediately after invite)
+        const { data: tripRow } = await sb.from('shared_trips')
+          .select('id').eq('id', inv.trip_id).single();
+        if(!tripRow) return;
+        // Skip if already in local list
+        if(_tripInvitesIn.find(i=>i.id===inv.id)) return;
+        const { data: p } = await sb.from('profiles')
+          .select('full_name').eq('id', inv.invited_by).single();
+        _tripInvitesIn.push({...inv, inviter_name: p?.full_name || 'Someone'});
+        renderTripsPage();
+        toast('🏕️ New trip invite from ' + (p?.full_name || 'Someone') + '!');
       })
     .subscribe();
 }
