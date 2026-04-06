@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.27 — Gear Organizer</title>
+<title>BaseCamp v3.28 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.27</div>
+      <div class="logo-sub">Gear Organizer · v3.28</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4718,7 +4718,12 @@ function showPage(pg, el){
 
   if(pg==='lab') renderLab();
   if(pg==='food') renderFoodPage();
-  if(pg==='trips') renderTripsPage();
+  if(pg==='trips'){
+    // Sync season to active trip's pack so any My Kit add buttons target the right pack
+    const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
+    if(tripPack && PACKS.find(p=>p.id===tripPack)){ season = tripPack; foodSeason = tripPack; }
+    renderTripsPage();
+  }
   if(pg==='crew') renderCrewPage();
   if(pg!=='demo') document.getElementById('demo-finish-banner')?.remove();
   requestAnimationFrame(()=>window.scrollTo(0,0));
@@ -5193,8 +5198,9 @@ function addItem(cid){
   }, 80);
 }
 
-function addItemFromPack(cid){
+function addItemFromPack(cid, targetPackId){
   // Show inline quick-add form directly inside the pack cat-body
+  // targetPackId: explicit pack to add to (defaults to current season)
   const cat = CATS.find(c=>c.id===cid);
   if(!cat) return;
 
@@ -5216,6 +5222,7 @@ function addItemFromPack(cid){
 
   const form = document.createElement('div');
   form.className = 'pack-inline-add';
+  if(targetPackId) form.dataset.targetPack = targetPackId;
   form.style.cssText = 'margin-top:0.55rem;background:rgba(184,201,163,0.1);border:1.5px solid rgba(184,201,163,0.4);border-radius:10px;padding:0.6rem 0.7rem;display:flex;flex-direction:column;gap:0.4rem;';
   form.innerHTML = `
     <div style="display:flex;align-items:center;gap:0.4rem;">
@@ -5263,8 +5270,13 @@ function packInlineAddSave(cid, iid){
   }
   const w = toGrams(document.getElementById(`pia-weight-${iid}`)?.value||0);
   const extra = (document.getElementById(`pia-extra-${iid}`)?.value||'').trim();
-  // Add to gear wall AND active pack season
-  const newItem = {id:uid(), name, w, extra, link:'', s:[season]};
+  // Use explicit targetPack if set (e.g. from trips page), otherwise fall back to active season
+  const catCard2 = document.querySelector(`.cat-card[data-cid="${cid}"]`);
+  const targetPack = catCard2?.querySelector('.pack-inline-add')?.dataset?.targetPack || season;
+  const newItem = {id:uid(), name, w, extra, link:'', s:[targetPack]};
+  // Also ensure the cat includes this pack
+  const catObj = CATS.find(c=>c.id===cid);
+  if(catObj && catObj.packs && !catObj.packs.includes(targetPack)) catObj.packs.push(targetPack);
   cat.items.push(newItem);
   renderAll();
   scheduleSave();
@@ -6785,7 +6797,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.27) ──
+// ── Persistence layer (rebuilt v3.28) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -10199,6 +10211,8 @@ function renderTripsPage(){
       <button class="trip-dd-options" title="Trip options" data-tid="${t.id}">⋯</button>`;
     item.querySelector('.trip-dd-item-info').onclick = ()=>{
       activeTripId=t.id;
+      // Keep season in sync with the selected trip's pack
+      if(t.packId && PACKS.find(p=>p.id===t.packId)){ season=t.packId; foodSeason=t.packId; }
       _closeTripSwitcher();
       renderTripsPage();
     };
@@ -10567,7 +10581,7 @@ function renderMemberGear(body, member, trip){
   if(!allItems.length){
     body.innerHTML=`<div style="font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);opacity:0.6;padding:0.8rem 0.2rem;text-align:center;">No items in this pack config</div>`;
   }
-}
+}}
 
 function renderMemberFood(body, member, trip, members){
   const food = member.isMe
