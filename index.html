@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.7 — Gear Organizer</title>
+<title>BaseCamp v2.8 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.7</div>
+      <div class="logo-sub">Gear Organizer · v2.8</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9271,10 +9271,11 @@ function tripDelete(tripId){
   if(!t) return;
   showConfirm({title:'Delete Trip',msg:`Delete "${t.title}"?`,confirmLabel:'Delete',danger:true},async ()=>{
     const sb = sbClient();
-    if(sb && _sbUser && t.memberIds?.length){
-      await sb.from('shared_trips').delete().eq('id', tripId).eq('owner_id', _sbUser.id);
-      await sb.from('shared_trip_members').delete().eq('trip_id', tripId);
+    if(sb && _sbUser){
+      // Always attempt cleanup — deletes are no-ops if no rows exist
       await sb.from('trip_invites').delete().eq('trip_id', tripId);
+      await sb.from('shared_trip_members').delete().eq('trip_id', tripId);
+      await sb.from('shared_trips').delete().eq('id', tripId).eq('owner_id', _sbUser.id);
     }
     DELETED_TRIPS.push({...t, deletedAt: Date.now()});
     TRIPS.splice(TRIPS.indexOf(t), 1);
@@ -12168,7 +12169,23 @@ async function sbLoadTripInvites(){
     .eq('invited_user', _sbUser.id)
     .eq('status', 'pending');
   if(error){ console.error('sbLoadTripInvites error:', error); return; }
-  _tripInvitesIn = await Promise.all((data||[]).map(async inv=>{
+
+  // Filter out invites whose trip has already been deleted
+  const tripIds = [...new Set((data||[]).map(i=>i.trip_id))];
+  let validTripIds = new Set(tripIds);
+  if(tripIds.length){
+    const { data: existingTrips } = await sb.from('shared_trips')
+      .select('id').in('id', tripIds);
+    validTripIds = new Set((existingTrips||[]).map(t=>t.id));
+    // Delete orphaned invites from DB so they don't linger
+    const orphaned = (data||[]).filter(i=>!validTripIds.has(i.trip_id)).map(i=>i.id);
+    if(orphaned.length){
+      await sb.from('trip_invites').delete().in('id', orphaned);
+    }
+  }
+
+  const validInvites = (data||[]).filter(i=>validTripIds.has(i.trip_id));
+  _tripInvitesIn = await Promise.all(validInvites.map(async inv=>{
     const { data: p } = await sb.from('profiles')
       .select('full_name').eq('id', inv.invited_by).single();
     return {...inv, inviter_name: p?.full_name || 'Someone'};
