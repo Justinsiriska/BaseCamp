@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.4 — Gear Organizer</title>
+<title>BaseCamp v2.5 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.4</div>
+      <div class="logo-sub">Gear Organizer · v2.5</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -12065,26 +12065,70 @@ async function sbSyncTrip(trip){
     { onConflict: 'trip_id,user_id', ignoreDuplicates: true }
   );
 
-  // 3. Send invites — ignoreDuplicates means we never overwrite accepted/declined
+  // 3. Send invites.
+  // For each member: if an accepted/declined invite row already exists, leave it alone.
+  // If NO row exists yet, insert pending. If a pending row exists, leave it alone.
+  // We do this with a read-first approach to avoid clobbering accepted invites.
+  const { data: existingInvites } = await sb.from('trip_invites')
+    .select('invited_user, status')
+    .eq('trip_id', trip.id)
+    .in('invited_user', trip.memberIds);
+  const existingByUser = {};
+  for(const r of (existingInvites||[])) existingByUser[r.invited_user] = r.status;
+
   for(const memberId of trip.memberIds){
-    await sb.from('trip_invites').upsert({
-      trip_id: trip.id,
-      invited_user: memberId,
-      invited_by: _sbUser.id,
-      trip_title: trip.title,
-      status: 'pending'
-    }, { onConflict: 'trip_id,invited_user', ignoreDuplicates: true });
+    if(existingByUser[memberId]){
+      // Row exists — only update if it was previously declined (re-invite flow)
+      if(existingByUser[memberId] === 'declined'){
+        await sb.from('trip_invites')
+          .update({ status:'pending', trip_title: trip.title, invited_by: _sbUser.id })
+          .eq('trip_id', trip.id).eq('invited_user', memberId);
+      }
+      // accepted or pending → leave untouched
+    } else {
+      // No row yet — insert fresh pending invite
+      await sb.from('trip_invites').insert({
+        trip_id: trip.id,
+        invited_user: memberId,
+        invited_by: _sbUser.id,
+        trip_title: trip.title,
+        status: 'pending'
+      });
+    }
   }
 
-  // 4. Update local status map from DB (read-only, no more guessing)
+  // 4. Remove stale shared_trip_members editor rows for anyone whose invite is
+  // still pending — these are leftovers from previous testing and would make
+  // the member appear confirmed even though they haven't accepted yet.
+  const pendingMemberIds = (existingInvites||[])
+    .filter(r => r.status !== 'accepted')
+    .map(r => r.invited_user);
+  if(pendingMemberIds.length){
+    await sb.from('shared_trip_members')
+      .delete()
+      .eq('trip_id', trip.id)
+      .in('user_id', pendingMemberIds)
+      .eq('role', 'editor');
+  }
+
+  // 5. Read back actual invite statuses from DB — never guess client-side
   if(!_tripMemberStatus[trip.id]) _tripMemberStatus[trip.id] = {};
   const { data: invites } = await sb.from('trip_invites')
     .select('invited_user, status')
     .eq('trip_id', trip.id)
     .in('invited_user', trip.memberIds);
+  console.log('sbSyncTrip: invite statuses for', trip.title, invites);
   for(const inv of (invites||[])){
-    _tripMemberStatus[trip.id][inv.invited_user] =
-      inv.status === 'accepted' ? 'accepted' : 'pending';
+    const st = inv.status === 'accepted' ? 'accepted' : 'pending';
+    _tripMemberStatus[trip.id][inv.invited_user] = st;
+    console.log(' →', inv.invited_user, '=', st);
+  }
+  // Anyone with no invite row = pending (shouldn't happen, but defensive)
+  for(const uid of trip.memberIds){
+    if(!_tripMemberStatus[trip.id][uid]){
+      _tripMemberStatus[trip.id][uid] = 'pending';
+      console.log(' → (no row)', uid, '= pending');
+    }
   }
 
   renderTripsPage();
