@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.28 — Gear Organizer</title>
+<title>BaseCamp v3.29 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.28</div>
+      <div class="logo-sub">Gear Organizer · v3.29</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6797,7 +6797,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.28) ──
+// ── Persistence layer (rebuilt v3.29) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -10581,7 +10581,7 @@ function renderMemberGear(body, member, trip){
   if(!allItems.length){
     body.innerHTML=`<div style="font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);opacity:0.6;padding:0.8rem 0.2rem;text-align:center;">No items in this pack config</div>`;
   }
-}}
+}
 
 function renderMemberFood(body, member, trip, members){
   const food = member.isMe
