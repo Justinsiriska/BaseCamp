@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.5 — Gear Organizer</title>
+<title>BaseCamp v3.6 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -129,6 +129,7 @@ header{background:var(--forest);padding:0 1.5rem;position:sticky;top:0;z-index:2
 
 /* PAGES */
 .page{position:relative;z-index:1;display:none;}
+#trips-root{padding:1.2rem 1.5rem;max-width:1200px;}
 .page.active{display:block;}
 
 /* PAGE 1 LAYOUT */
@@ -1824,7 +1825,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.5</div>
+      <div class="logo-sub">Gear Organizer · v3.6</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10968,7 +10969,7 @@ function renderTripsPage(){
   // Days pill — stepper, no full re-render on change
   const daysPill=document.createElement('div');
   daysPill.id='trip-days-pill';
-  daysPill.style.cssText='display:inline-flex;align-items:center;gap:0;margin-bottom:0.5rem;border:1.5px solid var(--meadow);border-radius:20px;overflow:hidden;background:rgba(184,201,163,0.15);font-family:"Space Mono",monospace;font-size:0.62rem;';
+  daysPill.style.cssText='display:inline-flex;align-items:center;gap:0;margin-bottom:0.5rem;border:1.5px solid var(--meadow);border-radius:20px;overflow:hidden;background:rgba(184,201,163,0.15);font-family:"Space Mono",monospace;font-size:0.62rem;align-self:flex-start;width:fit-content;';
 
   function updateDaysUI(){
     const t=TRIPS.find(x=>x.id===trip.id);
