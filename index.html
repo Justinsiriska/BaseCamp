@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.8 — Gear Organizer</title>
+<title>BaseCamp v3.9 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1007,25 +1007,94 @@ html.dark .trip-profile-name-inp{color:#a8d89a;border-bottom-color:#4a8f5a;}
   display:flex;align-items:center;justify-content:flex-start;
   gap:0.75rem;margin-bottom:0.8rem;flex-wrap:wrap;
 }
-.trip-selector{
-  display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;flex:1;
-}
-.trip-pill{
-  display:flex;align-items:center;gap:0.4rem;
-  background:var(--cream);border:2px solid var(--lichen);border-radius:10px;
-  padding:0.35rem 0.75rem;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;
-  cursor:pointer;transition:all 0.2s;color:var(--stone);
-}
-html.dark .trip-pill{background:rgba(8,14,8,0.85);border-color:rgba(55,85,40,0.5);color:#7aaf6a;}
-.trip-pill.active{background:var(--forest);border-color:var(--forest);color:white;}
-html.dark .trip-pill.active{background:rgba(40,80,55,0.85);border-color:rgba(74,143,168,0.7);color:#c8eab8;}
-.trip-pill:hover:not(.active){border-color:var(--sage);}
-.trip-new-btn{
-  background:none;border:2px dashed rgba(74,103,65,0.3);border-radius:10px;
-  padding:0.35rem 0.75rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.68rem;
-  color:var(--stone);cursor:pointer;transition:all 0.2s;
-}
+.trip-selector{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;flex:1;}
+/* Legacy pill — kept for any edge cases */
+.trip-pill{display:flex;align-items:center;gap:0.4rem;background:var(--cream);border:2px solid var(--lichen);border-radius:10px;padding:0.35rem 0.75rem;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;transition:all 0.2s;color:var(--stone);}
+.trip-new-btn{background:none;border:2px dashed rgba(74,103,65,0.3);border-radius:10px;padding:0.35rem 0.75rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.68rem;color:var(--stone);cursor:pointer;transition:all 0.2s;}
 .trip-new-btn:hover{border-color:var(--sage);color:var(--forest);}
+
+/* ── Trip switcher ── */
+.trip-switcher{position:relative;display:inline-block;margin-bottom:0.75rem;}
+.trip-switcher-btn{
+  display:flex;align-items:center;gap:0;
+  background:var(--paper);border:2px solid var(--lichen);border-radius:10px;
+  overflow:hidden;cursor:pointer;transition:border-color 0.15s;
+  font-family:'Nunito',sans-serif;
+}
+.trip-switcher-btn:hover{border-color:var(--sage);}
+.trip-switcher-btn.open{border-color:var(--forest);border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent;}
+html.dark .trip-switcher-btn{background:rgba(10,18,8,0.88);border-color:rgba(55,85,40,0.5);}
+html.dark .trip-switcher-btn:hover{border-color:var(--sage);}
+html.dark .trip-switcher-btn.open{border-color:rgba(74,143,168,0.7);border-bottom-color:transparent;}
+.trip-switcher-label{
+  font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);
+  background:rgba(184,201,163,0.22);padding:0.32rem 0.65rem;
+  border-right:1.5px solid var(--lichen);white-space:nowrap;
+}
+html.dark .trip-switcher-label{background:rgba(40,70,30,0.4);border-right-color:rgba(55,85,40,0.5);color:#6a8f5a;}
+.trip-switcher-active{
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:0.75rem;
+  color:var(--forest);padding:0.32rem 0.65rem;
+}
+html.dark .trip-switcher-active{color:#a8d89a;}
+.trip-switcher-caret{
+  padding:0.32rem 0.55rem;font-size:0.6rem;color:var(--stone);
+  border-left:1.5px solid var(--lichen);transition:transform 0.2s;
+  background:rgba(184,201,163,0.1);
+}
+html.dark .trip-switcher-caret{border-left-color:rgba(55,85,40,0.5);background:rgba(20,35,15,0.5);}
+.trip-switcher-caret.open{transform:rotate(180deg);}
+
+/* ── Switcher dropdown ── */
+.trip-switcher-dd{
+  position:absolute;top:100%;left:0;min-width:260px;
+  background:var(--paper);border:2px solid var(--forest);
+  border-top:none;border-radius:0 10px 10px 10px;
+  box-shadow:0 8px 24px rgba(45,74,45,0.18);
+  z-index:500;overflow:hidden;display:none;
+}
+html.dark .trip-switcher-dd{background:rgba(10,18,8,0.97);border-color:rgba(74,143,168,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.trip-switcher-dd.open{display:block;}
+.trip-dd-item{
+  display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.75rem;
+  cursor:pointer;border-bottom:1px solid rgba(184,201,163,0.3);
+  transition:background 0.1s;
+}
+html.dark .trip-dd-item{border-bottom-color:rgba(55,85,40,0.3);}
+.trip-dd-item:hover{background:rgba(184,201,163,0.18);}
+html.dark .trip-dd-item:hover{background:rgba(40,70,30,0.35);}
+.trip-dd-item.active{background:rgba(45,74,45,0.06);}
+html.dark .trip-dd-item.active{background:rgba(40,80,55,0.2);}
+.trip-dd-item-info{flex:1;min-width:0;}
+.trip-dd-item-name{font-family:'Nunito',sans-serif;font-size:0.75rem;font-weight:800;color:var(--bark);}
+html.dark .trip-dd-item-name{color:#b8dea8;}
+.trip-dd-item-sub{font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);margin-top:1px;}
+html.dark .trip-dd-item-sub{color:#6a8f5a;}
+.trip-dd-check{font-size:0.65rem;color:var(--forest);font-weight:800;flex-shrink:0;}
+html.dark .trip-dd-check{color:#6ddb50;}
+.trip-dd-options{font-size:0.75rem;color:var(--stone);flex-shrink:0;padding:0.1rem 0.2rem;background:none;border:none;cursor:pointer;opacity:0.6;line-height:1;}
+.trip-dd-options:hover{opacity:1;}
+.trip-dd-divider{height:1px;background:rgba(184,201,163,0.45);}
+html.dark .trip-dd-divider{background:rgba(55,85,40,0.4);}
+.trip-dd-new{
+  display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.75rem;
+  font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;
+  color:var(--water);cursor:pointer;transition:background 0.1s;
+  border-bottom:1px solid rgba(184,201,163,0.3);
+}
+html.dark .trip-dd-new{color:#7acced;border-bottom-color:rgba(55,85,40,0.3);}
+.trip-dd-new:hover{background:rgba(74,143,168,0.07);}
+html.dark .trip-dd-new:hover{background:rgba(74,143,168,0.1);}
+.trip-dd-archive{
+  display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.75rem;
+  font-family:'Space Mono',monospace;font-size:0.44rem;
+  color:var(--stone);cursor:pointer;background:rgba(184,201,163,0.08);
+  transition:background 0.1s;
+}
+html.dark .trip-dd-archive{background:rgba(20,35,15,0.4);color:#6a8f5a;}
+.trip-dd-archive:hover{background:rgba(184,201,163,0.18);}
+html.dark .trip-dd-archive:hover{background:rgba(40,70,30,0.35);}
 
 /* Gear/Food toggle */
 .trip-mode-toggle{
@@ -1825,7 +1894,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.8</div>
+      <div class="logo-sub">Gear Organizer · v3.9</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10796,6 +10865,28 @@ function buildFlagsPanel(trip, members, flags){
   return fp;
 }
 
+function _openTripSwitcher(){
+  const dd=document.getElementById('trip-switcher-dd');
+  const btn=document.getElementById('trip-switcher-btn');
+  const caret=document.getElementById('trip-switcher-caret');
+  if(dd) dd.classList.add('open');
+  if(btn) btn.classList.add('open');
+  if(caret) caret.classList.add('open');
+}
+function _closeTripSwitcher(){
+  const dd=document.getElementById('trip-switcher-dd');
+  const btn=document.getElementById('trip-switcher-btn');
+  const caret=document.getElementById('trip-switcher-caret');
+  if(dd) dd.classList.remove('open');
+  if(btn) btn.classList.remove('open');
+  if(caret) caret.classList.remove('open');
+}
+// Close switcher when clicking outside
+document.addEventListener('click', e=>{
+  const wrap=document.getElementById('trip-switcher-wrap');
+  if(wrap && !wrap.contains(e.target)) _closeTripSwitcher();
+}, true);
+
 function renderTripsPage(){
   const root = document.getElementById('trips-root');
   if(!root) return;
@@ -10803,17 +10894,19 @@ function renderTripsPage(){
   root.style.position='';
 
   if(!TRIPS.length && !_tripInvitesIn.length){
+    const emptyBar = document.createElement('div');
+    emptyBar.style.cssText='display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;';
     const nb=document.createElement('button'); nb.className='trip-new-btn'; nb.textContent='＋ New Trip'; nb.onclick=createTrip;
-    root.appendChild(nb);
-    // Show archive button even when no active trips
+    emptyBar.appendChild(nb);
     if(DELETED_TRIPS.length){
       const archBtn=document.createElement('button');
       archBtn.className='trip-new-btn';
       archBtn.style.cssText='background:rgba(139,115,85,0.1);border-color:rgba(139,115,85,0.4);color:var(--bark);';
       archBtn.textContent='🗂 Archive ('+DELETED_TRIPS.length+')';
       archBtn.onclick=openTripArchive;
-      root.appendChild(archBtn);
+      emptyBar.appendChild(archBtn);
     }
+    root.appendChild(emptyBar);
     const empty=document.createElement('div'); empty.className='trip-empty';
     empty.innerHTML='<div class="trip-empty-icon">🏕️</div><div class="trip-empty-title">No trips yet</div><div class="trip-empty-sub">Create a trip to start coordinating gear and food with your crew.</div>';
     root.appendChild(empty);
@@ -10907,52 +11000,69 @@ function renderTripsPage(){
   const content = document.createElement('div');
   content.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;';
 
-  // Pills + New Trip
-  const topbar = document.createElement('div');
-  topbar.className = 'trip-topbar';
-  topbar.style.marginBottom = '0.3rem';
-  const sel = document.createElement('div'); sel.className='trip-selector';
+  // ── Trip switcher dropdown ──
+  const switcher = document.createElement('div');
+  switcher.className = 'trip-switcher';
+  switcher.id = 'trip-switcher-wrap';
+
+  const switcherBtn = document.createElement('div');
+  switcherBtn.className = 'trip-switcher-btn';
+  switcherBtn.id = 'trip-switcher-btn';
+  switcherBtn.innerHTML = `
+    <span class="trip-switcher-label">🏕️ TRIPS</span>
+    <span class="trip-switcher-active">${escH(trip.title)}</span>
+    <span class="trip-switcher-caret" id="trip-switcher-caret">▾</span>`;
+
+  const dd = document.createElement('div');
+  dd.className = 'trip-switcher-dd';
+  dd.id = 'trip-switcher-dd';
+
   TRIPS.forEach(t=>{
-    const wrap=document.createElement('div');
-    wrap.style.cssText='display:inline-flex;align-items:center;position:relative;';
-
-    const btn=document.createElement('button');
-    btn.className='trip-pill'+(t.id===trip.id?' active':'');
-    btn.style.paddingRight='3.6rem';
-    btn.textContent=(t._shared?'👥 ':'🏕️ ')+t.title;
-    if(t._shared) btn.title='Shared trip — you were invited';
-    btn.onclick=()=>{activeTripId=t.id;renderTripsPage();};
-    wrap.appendChild(btn);
-
-    const editBtn=document.createElement('button');
-    editBtn.title='Rename trip';
-    editBtn.style.cssText='position:absolute;right:1.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.6rem;padding:0.1rem 0.2rem;opacity:0.55;line-height:1;color:inherit;z-index:1;';
-    editBtn.textContent='✎';
-    editBtn.onclick=e=>{ e.stopPropagation(); tripStartRename(t.id); };
-    if(!t._shared) wrap.appendChild(editBtn);
-
-    const delBtn=document.createElement('button');
-    const isLeader = !t._shared || t.leaderId===(_sbUser?.id||'me');
-    delBtn.title='Trip options';
-    delBtn.style.cssText='position:absolute;right:0.3rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.75rem;padding:0.1rem 0.3rem;opacity:0.55;line-height:1;color:inherit;z-index:1;';
-    delBtn.textContent='⋯';
-    delBtn.onclick=e=>{ e.stopPropagation(); tripShowOptions(t, delBtn); };
-    wrap.appendChild(delBtn);
-
-    sel.appendChild(wrap);
+    const item = document.createElement('div');
+    item.className = 'trip-dd-item' + (t.id===trip.id?' active':'');
+    const memberCount = (t.memberIds||[]).length + 1;
+    const packW = packWeight(t.packId||'');
+    item.innerHTML = `
+      <div class="trip-dd-item-info">
+        <div class="trip-dd-item-name">${(t._shared?'👥 ':'🏕️ ')+escH(t.title)}</div>
+        <div class="trip-dd-item-sub">${t._shared?'shared trip':'your trip'} · ${memberCount} ${memberCount===1?'person':'people'}</div>
+      </div>
+      ${t.id===trip.id?'<span class="trip-dd-check">✓</span>':''}
+      <button class="trip-dd-options" title="Trip options" data-tid="${t.id}">⋯</button>`;
+    item.querySelector('.trip-dd-item-info').onclick = ()=>{
+      activeTripId=t.id;
+      _closeTripSwitcher();
+      renderTripsPage();
+    };
+    item.querySelector('.trip-dd-options').onclick = e=>{
+      e.stopPropagation();
+      _closeTripSwitcher();
+      tripShowOptions(t, e.target);
+    };
+    dd.appendChild(item);
   });
-  const nb=document.createElement('button'); nb.className='trip-new-btn'; nb.textContent='＋ New Trip'; nb.onclick=createTrip;
-  sel.appendChild(nb);
+
+  const ddDivider = document.createElement('div'); ddDivider.className='trip-dd-divider';
+  dd.appendChild(ddDivider);
+  const ddNew = document.createElement('div'); ddNew.className='trip-dd-new';
+  ddNew.innerHTML='＋ New Trip';
+  ddNew.onclick=()=>{ _closeTripSwitcher(); createTrip(); };
+  dd.appendChild(ddNew);
   if(DELETED_TRIPS.length){
-    const archBtn=document.createElement('button');
-    archBtn.className='trip-new-btn';
-    archBtn.style.cssText='background:rgba(139,115,85,0.1);border-color:rgba(139,115,85,0.4);color:var(--bark);';
-    archBtn.textContent='🗂 Archive ('+DELETED_TRIPS.length+')';
-    archBtn.onclick=openTripArchive;
-    sel.appendChild(archBtn);
+    const ddArch = document.createElement('div'); ddArch.className='trip-dd-archive';
+    ddArch.innerHTML='🗂 ARCHIVE ('+DELETED_TRIPS.length+')';
+    ddArch.onclick=()=>{ _closeTripSwitcher(); openTripArchive(); };
+    dd.appendChild(ddArch);
   }
-  topbar.appendChild(sel);
-  content.appendChild(topbar);
+
+  switcherBtn.onclick = ()=>{
+    const isOpen = dd.classList.contains('open');
+    if(isOpen){ _closeTripSwitcher(); } else { _openTripSwitcher(); }
+  };
+
+  switcher.appendChild(switcherBtn);
+  switcher.appendChild(dd);
+  content.appendChild(switcher);
 
   // Trip header
   const hdr=document.createElement('div'); hdr.className='trip-header';
@@ -11132,29 +11242,23 @@ function renderTripsPage(){
     const col=document.createElement('div'); col.className='trip-col';
     const gearW=memberGearWeight(m,trip.packId), foodW=memberFoodWeight(m), totalW=gearW+foodW;
     const barPct=Math.round((totalW/maxW)*100);
+    const roleLabel = m.isMe && trip.leaderId===(_sbUser?.id||'me') ? '⛰️ leader'
+      : m.isMe ? 'you'
+      : m.isLeader ? '⛰️ leader'
+      : (trip.leaderId && m.id===trip.leaderId) ? '⛰️ leader'
+      : 'crew member';
     col.innerHTML=`
-      <div class="trip-mini-bar-wrap">
-        <div class="trip-mini-bar-label">${dwTrip(totalW)}</div>
-        <div class="trip-mini-bar-track"><div class="trip-mini-bar-fill" style="width:${barPct}%;background:${m.color||'var(--sage)'}"></div></div>
-      </div>
       <div class="trip-col-header">
         <div class="trip-col-avatar" style="${m.avatar&&m.avatar.startsWith('<img')?'':'background:'+(m.color||'var(--sage)')}">${m.avatar||m.name[0]}</div>
         <div class="trip-col-header-right">
           <div class="trip-col-name">${escH(m.name)}</div>
-          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;opacity:0.55;margin-top:1px;">${
-            m.isMe && trip.leaderId===(_sbUser?.id||'me') ? '⛰️ leader' :
-            m.isMe ? 'you' :
-            m.isLeader ? '⛰️ leader' :
-            (trip.leaderId && m.id===trip.leaderId) ? '⛰️ leader' :
-            'crew member'
-          }</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;opacity:0.55;margin-top:1px;">${roleLabel}</div>
           <div class="trip-col-stats">
             <span class="trip-col-stat">Total <strong>${dwTrip(totalW)}</strong></span>
             ${tripMode==='gear'?`<span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`:`<span class="trip-col-stat">Carries <strong>${dwTrip(foodW)}</strong></span>`}
           </div>
         </div>
       </div>
-      ${tripMode==='food'?'':''}
       <div class="trip-col-body" id="col-body-${m.id}"></div>`;
     cols.appendChild(col);
   });
