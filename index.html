@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.2 — Gear Organizer</title>
+<title>BaseCamp v3.3 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.2</div>
+      <div class="logo-sub">Gear Organizer · v3.3</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6939,6 +6939,17 @@ function loadState(){
       if(d.profile.photo){
         MY_PROFILE._userUploadedPhoto = d.profile.photo;
         MY_PROFILE.avatarDataUrl = '<img src="' + d.profile.photo + '" style="width:100%;height:100%;object-fit:cover;">';
+        // Keep a dedicated backup so cloud-overwrites cannot lose the photo
+        try{ localStorage.setItem('basecamp_profile_photo', d.profile.photo); }catch(e){}
+      } else {
+        // No photo in payload — check the dedicated backup key (survives cloud wipes)
+        try{
+          const backupPhoto = localStorage.getItem('basecamp_profile_photo');
+          if(backupPhoto){
+            MY_PROFILE._userUploadedPhoto = backupPhoto;
+            MY_PROFILE.avatarDataUrl = '<img src="' + backupPhoto + '" style="width:100%;height:100%;object-fit:cover;">';
+          }
+        }catch(e){}
       }
     }
 
@@ -8181,7 +8192,14 @@ const USER_DIRECTORY = [];
 // ── Profile persistence ──
 // profile now saved inside main payload
 
-function saveProfile(){ saveState(); if(_sbUser) setTimeout(sbPushData, 500); }
+function saveProfile(){
+  // If photo just changed, persist it to the dedicated backup key immediately
+  if(MY_PROFILE._userUploadedPhoto){
+    try{ localStorage.setItem('basecamp_profile_photo', MY_PROFILE._userUploadedPhoto); }catch(e){}
+  }
+  saveState();
+  if(_sbUser) setTimeout(sbPushData, 500);
+}
 
 function loadProfile(){ /* handled in loadState */ }
 
@@ -9837,7 +9855,14 @@ let crewViewFriend = null; // friend id being viewed
 // ── Profile persistence ──
 // profile now saved inside main payload
 
-function saveProfile(){ saveState(); if(_sbUser) setTimeout(sbPushData, 500); }
+function saveProfile(){
+  // If photo just changed, persist it to the dedicated backup key immediately
+  if(MY_PROFILE._userUploadedPhoto){
+    try{ localStorage.setItem('basecamp_profile_photo', MY_PROFILE._userUploadedPhoto); }catch(e){}
+  }
+  saveState();
+  if(_sbUser) setTimeout(sbPushData, 500);
+}
 
 function loadProfile(){ /* handled in loadState */ }
 
@@ -11758,6 +11783,11 @@ async function sbPushData(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
   const payload = getPayload();
+  // Always include the photo in the push payload even if MY_PROFILE._userUploadedPhoto
+  // was set after the last getPayload() snapshot
+  if(!payload.profile.photo && MY_PROFILE._userUploadedPhoto){
+    payload.profile.photo = MY_PROFILE._userUploadedPhoto;
+  }
   const { error } = await sb.from('profiles')
     .upsert({ id: _sbUser.id, gear_data: payload }, { onConflict: 'id' });
   if(error) console.error('Push error:', error);
@@ -11802,8 +11832,17 @@ async function sbPullData(){
     loadState();
     renderAll();
     renderTripsPage();
-    // Push cleaned state back so deletedTrips persists in cloud
-    setTimeout(()=>sbPushData(), 1000);
+    // Push cleaned state back so deletedTrips persists in cloud.
+    // Use a longer delay so any in-flight user edits (scheduleSave) win.
+    setTimeout(()=>{
+      // Only push if no local edit has happened since we loaded
+      const nowLocal = (() => { try{ const r=localStorage.getItem(SAVE_KEY); return r?JSON.parse(r):null; }catch(_){return null;} })();
+      if(!nowLocal || (nowLocal.savedAt||0) <= (migratedCloud.savedAt||0)){
+        sbPushData();
+      }
+      // Always push if deletedTrips changed (RLS-safe cleanup)
+      else if(deletedIds.size > 0){ sbPushData(); }
+    }, 2000);
     if((migratedCloud.trips||[]).length > 0) toast('☁️ Data loaded from cloud');
   } else {
     // Local is newer — push up to sync cloud with latest deletedTrips
@@ -12286,7 +12325,16 @@ async function sbPullSharedTrips(){
     .from('shared_trips')
     .select('id, owner_id, title, trip_data, updated_at')
     .in('id', tripIds);
-  if(te || !trips) return;
+
+  // RLS silence rule: empty result is INCONCLUSIVE — never remove trips based on it.
+  // Only proceed if we got rows back; if fetch errored or returned truly empty,
+  // preserve any existing shared trips in memory rather than wiping them.
+  if(te){ console.warn('sbPullSharedTrips fetch error:', te); return; }
+  if(!trips || trips.length === 0){
+    // No rows returned — could be RLS blocking, not necessarily no trips.
+    // Keep existing in-memory shared trips untouched.
+    return;
+  }
 
   const deletedIds = new Set(DELETED_TRIPS.map(t=>t.id));
   let changed = false;
@@ -12302,6 +12350,17 @@ async function sbPullSharedTrips(){
     else if(new Date(st.updated_at).getTime() > (TRIPS[idx]._updatedAt||0)){
       TRIPS[idx] = {...d, _updatedAt: new Date(st.updated_at).getTime()};
       changed = true;
+    }
+  }
+  // Only remove a shared trip from TRIPS if we got rows back AND the trip is
+  // provably absent (memberRows had it but shared_trips did not return it).
+  // This means the owner deleted the trip — it is safe to remove.
+  const returnedIds = new Set(trips.map(t=>t.id));
+  for(const tripId of tripIds){
+    if(!returnedIds.has(tripId) && !deletedIds.has(tripId)){
+      // Trip was in our member list but not in shared_trips results — owner deleted it.
+      const idx = TRIPS.findIndex(t=>t.id===tripId && t._shared);
+      if(idx !== -1){ TRIPS.splice(idx, 1); changed = true; }
     }
   }
   if(changed){ renderTripsPage(); scheduleSave(); }
