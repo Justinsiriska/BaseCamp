@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.17 — Gear Organizer</title>
+<title>BaseCamp v3.18 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1887,7 +1887,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.17</div>
+      <div class="logo-sub">Gear Organizer · v3.18</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3331,6 +3331,7 @@ function deletePackConfig(packId){
     PACKS.splice(idx,1);
     CATS.forEach(c=>{ if(c.packs) c.packs = c.packs.filter(p=>p!==packId); });
     if(season===packId) season=PACKS[0].id;
+    scheduleSave();
     renderAll();
   });
 }
@@ -3356,6 +3357,7 @@ function startRenamePack(packId, pillEl){
   const commit=()=>{
     const v=inp.value.trim()||pack.name;
     pack.name=v;
+    scheduleSave();
     renderPackPills();
     renderAll();
   };
@@ -4891,6 +4893,7 @@ function addCatToPack(catId){
   if(!cat) return;
   if(!cat.packs) cat.packs = PACKS.map(p=>p.id);
   if(!cat.packs.includes(season)) cat.packs.push(season);
+  scheduleSave();
   renderAll();
   toast(`✅ "${cat.name}" added to this pack`);
 }
@@ -4968,6 +4971,7 @@ function _catOnUp(e){
       toIdx=CATS.findIndex(c=>c.id===CD.overCard);
       const insertAt=CD.overPos==='above'?toIdx:toIdx+1;
       CATS.splice(insertAt,0,moved);
+      scheduleSave();
       renderAll();
     }
   }
@@ -5066,6 +5070,7 @@ function catEditSave(){
     toast(`✅ "${name}" category created for this pack`);
   }
   catEditClose();
+  scheduleSave();
   renderAll();
 }
 
@@ -5146,6 +5151,7 @@ function saveCatInline(catId){
   if(!name){ inp.style.borderColor='var(--ember)'; return; }
   cat.name = name;
   closeCatInline();
+  scheduleSave();
   renderAll();
   toast(`✅ Renamed to "${name}"`);
 }
@@ -5188,6 +5194,7 @@ function removeCatFromPack(catId){
   const cat = CATS.find(c=>c.id===catId);
   if(!cat) return;
   cat.packs = (cat.packs||PACKS.map(p=>p.id)).filter(p=>p!==season);
+  scheduleSave();
   renderAll();
   toast(`📤 "${cat.name}" hidden from this pack — still on Gear Wall`);
 }
@@ -5310,6 +5317,7 @@ function packInlineAddSave(cid, iid){
   const newItem = {id:uid(), name, w, extra, link:'', s:[season]};
   cat.items.push(newItem);
   renderAll();
+  scheduleSave();
   toast(`✅ "${name}" added to pack & Gear Wall`);
 }
 
@@ -5352,6 +5360,7 @@ function saveDrawer(cid, iid, btn){
   setTimeout(()=>{
     wrap.classList.remove('open');
     renderAll();
+    scheduleSave();
     toast(`✅ "${name}" saved`);
   }, 450);
 }
@@ -5407,6 +5416,7 @@ function delItem(cid,iid){
   const item=cat.items.find(i=>i.id===iid);
   if(!item)return;
   item.s=item.s.filter(ss=>ss!==season);
+  scheduleSave();
   renderAll();toast(`🗑️ Removed from ${season} pack — still on gear wall`);
 }
 
@@ -5438,6 +5448,7 @@ function gwUpd(cid,iid,field,val){
   // Refresh chart, stats, pack table weights
   renderCats();renderChart();renderStats();renderThermal();renderLegend();renderLab();
   document.getElementById('total-disp').textContent=dw(total());
+  scheduleSave();
 }
 
 function updLink(cid,iid,val){
