@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.16 — Gear Organizer</title>
+<title>BaseCamp v3.17 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1887,7 +1887,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.16</div>
+      <div class="logo-sub">Gear Organizer · v3.17</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7041,7 +7041,7 @@ function scheduleSave(){
     _sbCloudDebounce = setTimeout(()=>{
       sbPushData();
       TRIPS.filter(t=>t.memberIds&&t.memberIds.length&&!t._shared).forEach(t=>sbPushSharedTrip(t));
-    }, 3000);
+    }, 1500);
   }
 }
 
@@ -11524,6 +11524,20 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   document.addEventListener('keydown', e=>{
     if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveState(); toast('💾 Saved!'); }
   });
+
+  // ── Aggressive cloud persistence ──
+  // Push to Supabase when the tab is hidden or closed so data survives
+  // version updates (new index.html deployed) even if the debounce hasn't fired.
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'hidden' && _sbUser){
+      saveState();
+      sbPushData();
+    }
+  });
+  window.addEventListener('beforeunload', ()=>{
+    saveState();
+    if(_sbUser) sbPushData();
+  });
 });;
 
 
@@ -11727,6 +11741,9 @@ async function sbInit(){
   if(stored?.user){
     _sbUser = stored.user;
     authUpdateUI(stored.user);
+    // Push local state first so any offline edits reach the cloud before we pull
+    // (sbPullData will then merge correctly and push back if cloud is newer)
+    await sbPushData();
     await Promise.all([sbPullData(), sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
     await sbLoadTripMemberStatus();
     sbSubscribeTrips();
