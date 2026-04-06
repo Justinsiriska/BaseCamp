@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.4 — Gear Organizer</title>
+<title>BaseCamp v3.5 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.4</div>
+      <div class="logo-sub">Gear Organizer · v3.5</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9279,6 +9279,12 @@ function tripLeave(tripId){
     TRIPS.splice(TRIPS.findIndex(x=>x.id===tripId), 1);
     if(activeTripId===tripId) activeTripId = TRIPS[0]?.id || null;
     delete _tripMemberStatus[tripId];
+    // Belt-and-suspenders: write dismiss key so refresh cannot resurrect this trip
+    try{
+      const ds = localStorage.getItem('basecamp_dismissed_shared');
+      const arr = ds ? JSON.parse(ds) : [];
+      if(!arr.includes(tripId)){ arr.push(tripId); localStorage.setItem('basecamp_dismissed_shared', JSON.stringify(arr)); }
+    }catch(e){}
     scheduleSave();
     renderTripsPage();
     toast('👋 Left "'+t.title+'"');
@@ -9429,7 +9435,7 @@ function openTripArchive(){
       permBtn.textContent = '🗑 Delete';
       permBtn.title = 'Permanently delete — cannot be undone';
       permBtn.onclick = ()=>{
-        showConfirm({title:'Permanently Delete',msg:'Permanently delete "'+t.title+'"? This cannot be undone.',confirmLabel:'Delete Forever',danger:true},()=>{
+        showConfirm({title:'Permanently Delete',msg:'Permanently delete "'+t.title+'"? This cannot be undone.',confirmLabel:'Delete Forever',danger:true},async ()=>{
           // Also permanently remove the matching pack config from PACKS + CATS
           if(t.packId){
             const pkIdx = PACKS.findIndex(p=>p.id===t.packId);
@@ -9438,6 +9444,21 @@ function openTripArchive(){
             // If the active season was this pack, fall back to first available
             if(season === t.packId) season = PACKS[0]?.id || 'winter';
             if(foodSeason === t.packId) foodSeason = PACKS[0]?.id || 'winter';
+          }
+          // If this was a shared/left trip, remove Supabase member row so it
+          // cannot be resurrected by sbPullSharedTrips on next refresh.
+          // Also write to a dismissed list as belt-and-suspenders.
+          if(t._shared || t._left){
+            try{
+              const ds = localStorage.getItem('basecamp_dismissed_shared');
+              const arr = ds ? JSON.parse(ds) : [];
+              if(!arr.includes(t.id)){ arr.push(t.id); localStorage.setItem('basecamp_dismissed_shared', JSON.stringify(arr)); }
+            }catch(e){}
+            const sb = sbClient();
+            if(sb && _sbUser){
+              await sb.from('shared_trip_members').delete().eq('trip_id', t.id).eq('user_id', _sbUser.id);
+              await sb.from('trip_invites').update({status:'declined'}).eq('trip_id', t.id).eq('invited_user', _sbUser.id);
+            }
           }
           DELETED_TRIPS.splice(i, 1);
           scheduleSave();
@@ -12351,10 +12372,15 @@ async function sbPullSharedTrips(){
     return;
   }
 
+  // Build set of ALL dismissed trip IDs (owned deleted + left/dismissed shared trips)
   const deletedIds = new Set(DELETED_TRIPS.map(t=>t.id));
+  // Also track IDs the user has permanently dismissed from archive (not in DELETED_TRIPS anymore)
+  // These are stored in a separate localStorage key so refresh doesn't resurrect them
+  let _dismissedShared = new Set();
+  try{ const ds = localStorage.getItem('basecamp_dismissed_shared'); if(ds) _dismissedShared = new Set(JSON.parse(ds)); }catch(e){}
   let changed = false;
   for(const st of trips){
-    if(!st.trip_data || deletedIds.has(st.id)) continue;
+    if(!st.trip_data || deletedIds.has(st.id) || _dismissedShared.has(st.id)) continue;
     const d = {...st.trip_data, _shared:true, _ownerId:st.owner_id};
     delete d._confirmedMembers;
     const { data: op } = await sb.from('profiles')
