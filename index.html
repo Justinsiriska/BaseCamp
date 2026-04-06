@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.18 — Gear Organizer</title>
+<title>BaseCamp v3.21 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -351,11 +351,8 @@ body.dragging-active, body.dragging-active *{
 .gw-item-right{display:flex;align-items:center;gap:0.3rem;flex-shrink:0;}
 .gw-item-weight{font-family:'Nunito',sans-serif;font-size:0.68rem;color:var(--stone);font-weight:800;}
 .gw-season-dots{display:flex;gap:2px;align-items:center;}
-.gw-sdot{width:4px;height:4px;border-radius:50%;opacity:0.35;}
+.gw-sdot{width:4px;height:4px;border-radius:50%;opacity:0.35;background:var(--moss);}
 .gw-sdot.on{opacity:1;}
-.gw-sdot[data-ss="winter"]{background:#7ba7bc;}
-.gw-sdot[data-ss="shoulder"]{background:var(--tan);}
-.gw-sdot[data-ss="summer"]{background:var(--sage);}
 .gw-toggle-btn{
   background:none;border:1.5px solid currentColor;border-radius:50%;
   cursor:pointer;font-size:0.75rem;padding:0 3px;
@@ -1887,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.18</div>
+      <div class="logo-sub">Gear Organizer · v3.21</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3278,7 +3275,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 // STATE
 // ============================================================
 const U={v:'g'};
-let season='winter';
+let season=PACKS[0]?.id||'winter';
 
 // Pack configurations — id matches the strings already in item.s arrays
 const PACKS=[
@@ -3366,6 +3363,7 @@ function startRenamePack(packId, pillEl){
 }
 function setSeason(s,el){
   season=s;
+  foodSeason=s; // keep food bag in sync
   renderPackPills();
   renderCats();
   renderChart();renderStats();renderThermal();renderLegend();renderLab();renderGearWall();renderChartLabel();
@@ -4766,6 +4764,21 @@ function showPage(pg, el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+pg).classList.add('active');
   el.classList.add('active');
+
+  // ── Keep active pack in sync across pages ──
+  // When entering Food Bag from Kit (or Trips), match foodSeason to the current kit season
+  // When entering Kit from Food Bag (or Trips), match season to foodSeason
+  // When entering from Trips, use the active trip's packId if available
+  if(pg === 'food'){
+    const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
+    const target = tripPack || season;
+    if(PACKS.find(p=>p.id===target)) { foodSeason = target; }
+  } else if(pg === 'kit'){
+    const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
+    const target = tripPack || foodSeason;
+    if(PACKS.find(p=>p.id===target)) { season = target; }
+  }
+
   if(pg==='lab') renderLab();
   if(pg==='food') renderFoodPage();
   if(pg==='trips') renderTripsPage();
@@ -4790,7 +4803,7 @@ function renderAll(){
   renderTripsPage();
   renderCrewPage();
   document.getElementById('total-disp').textContent=dw(total());
-  scheduleSave();
+  // NOTE: renderAll does NOT save — call markDirty() explicitly after mutations
 }
 
 // ============================================================
@@ -6297,8 +6310,8 @@ function renderGearWall(){
         wrap.dataset.cid=cat.id;
 
         // season indicator dots
-        const sdots=['winter','shoulder','summer'].map(ss=>`
-          <span class="gw-sdot${item.s.includes(ss)?' on':''}" data-ss="${ss}" title="${ss}"></span>`).join('');
+        const sdots=PACKS.slice(0,6).map(p=>`
+          <span class="gw-sdot${item.s.includes(p.id)?' on':''}" data-ss="${p.id}" title="${p.name}"></span>`).join('');
 
         const extraTag=item.extra?`<span class="gw-item-extra">${item.extra}</span>`:'';
         const hasLink=item.link&&item.link.trim();
@@ -6835,11 +6848,36 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
+// ── Persistence layer (rebuilt v3.21) ──
+// localStorage is the primary store — synchronous, always written immediately.
+// Supabase is the backup/cross-device sync layer — push-only from the client.
+// On startup: load from localStorage first (instant), then pull from Supabase
+// in the background ONLY if localStorage is empty (new device/browser).
+// This eliminates all race conditions between pull and local state.
+
+let _isDirty = false;  // true when in-memory state differs from last localStorage write
+let _lastSavedAt = 0;  // timestamp of last successful localStorage write
+
 function saveState(){
   try {
     const payload = getPayload();
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
-  } catch(e){ /* cache unavailable — file save still works */ }
+    _lastSavedAt = payload.savedAt;
+    _isDirty = false;
+  } catch(e){ console.warn('[BaseCamp] localStorage write failed:', e); }
+}
+
+// Call after every mutation — writes to localStorage immediately (no debounce),
+// and queues a Supabase push after a short settling delay.
+function markDirty(){
+  _isDirty = true;
+  saveState(); // synchronous — no debounce, no data loss on fast refresh
+  if(_sbUser){
+    clearTimeout(_sbCloudDebounce);
+    _sbCloudDebounce = setTimeout(()=>{
+      if(_isDirty || _lastCloudPushAt < _lastSavedAt) sbPushData();
+    }, 2000);
+  }
 }
 
 // LEGACY — Remove this function once backend is live.
@@ -6937,7 +6975,7 @@ function loadState(){
       if(d.packs) d.packs = d.packs.filter(p => DEFAULT_PACK_IDS.has(p.id));
       if(d.trips) d.trips = [];
       if(d.deletedTrips) d.deletedTrips = [];
-      if(d.season && !DEFAULT_PACK_IDS.has(d.season)) d.season = 'winter';
+      if(d.season && !DEFAULT_PACK_IDS.has(d.season)) d.season = PACKS[0]?.id || 'winter';
       if(d.activeTripId) d.activeTripId = null;
       // Strip trip pack refs from cats
       if(d.cats) d.cats.forEach(c => {
@@ -7043,18 +7081,8 @@ const cache = {
 };
 
 // Auto-save on any data mutation — debounced
-let _saveTimer = null;
-function scheduleSave(){
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(saveState, 800);
-  if(_sbUser){
-    clearTimeout(_sbCloudDebounce);
-    _sbCloudDebounce = setTimeout(()=>{
-      sbPushData();
-      TRIPS.filter(t=>t.memberIds&&t.memberIds.length&&!t._shared).forEach(t=>sbPushSharedTrip(t));
-    }, 1500);
-  }
-}
+let _saveTimer = null; // kept for any legacy callers — routes to markDirty
+function scheduleSave(){ markDirty(); }
 
 
 // ============================================================
@@ -7227,7 +7255,7 @@ let TRAIL_LIBRARY = []; // [{id, name, savedAt, ...trailData}] // [{fridgeId, na
 // Food bag items per season: [{id, fridgeId, name, amount, unit, kcal_total, w_total, protein, carbs, fat, sodium, catId, s:[]}]
 let FOOD_ITEMS = [];
 
-let foodSeason = 'winter'; // mirrors PACKS
+let foodSeason = PACKS[0]?.id||'winter';
 let foodCatCollapsed = {};
 
 // Pending serving modal state
@@ -7262,7 +7290,7 @@ function renderFoodPills(){
     const btn = document.createElement('button');
     btn.className = 's-pill' + (p.id===foodSeason?' active':'');
     btn.innerHTML = `${p.icon} <span class="s-pill-name">${escH(p.name)}</span><span class="s-pill-weight">${dw(w)}</span>`;
-    btn.onclick = ()=>{ foodSeason=p.id; renderFoodPage(); scheduleSave(); };
+    btn.onclick = ()=>{ foodSeason=p.id; season=p.id; renderFoodPage(); scheduleSave(); };
     bar.appendChild(btn);
   });
 }
@@ -8267,12 +8295,10 @@ const USER_DIRECTORY = [];
 // profile now saved inside main payload
 
 function saveProfile(){
-  // If photo just changed, persist it to the dedicated backup key immediately
   if(MY_PROFILE._userUploadedPhoto){
     try{ localStorage.setItem('basecamp_profile_photo', MY_PROFILE._userUploadedPhoto); }catch(e){}
   }
-  saveState();
-  if(_sbUser) setTimeout(sbPushData, 500);
+  markDirty();
 }
 
 function loadProfile(){ /* handled in loadState */ }
@@ -9387,8 +9413,8 @@ function tripDelete(tripId){
     if(activeTripId===tripId) activeTripId = TRIPS[0]?.id || null;
     delete _tripMemberStatus[tripId];
     // If active season was this trip's pack, fall back to first visible pack
-    if(t.packId && season === t.packId) season = PACKS.find(p=>p.id!==t.packId)?.id || 'winter';
-    if(t.packId && foodSeason === t.packId) foodSeason = PACKS.find(p=>p.id!==t.packId)?.id || 'winter';
+    if(t.packId && season === t.packId) season = PACKS.find(p=>p.id!==t.packId)?.id || PACKS[0]?.id;
+    if(t.packId && foodSeason === t.packId) foodSeason = PACKS.find(p=>p.id!==t.packId)?.id || PACKS[0]?.id;
     scheduleSave();
     renderTripsPage();
     renderPackPills();
@@ -9522,8 +9548,8 @@ function openTripArchive(){
             if(pkIdx !== -1) PACKS.splice(pkIdx, 1);
             CATS.forEach(c=>{ if(c.packs) c.packs = c.packs.filter(p=>p!==t.packId); });
             // If the active season was this pack, fall back to first available
-            if(season === t.packId) season = PACKS[0]?.id || 'winter';
-            if(foodSeason === t.packId) foodSeason = PACKS[0]?.id || 'winter';
+            if(season === t.packId) season = PACKS[0]?.id;
+            if(foodSeason === t.packId) foodSeason = PACKS[0]?.id;
           }
           // If this was a shared/left trip, remove Supabase member row so it
           // cannot be resurrected by sbPullSharedTrips on next refresh.
@@ -9957,12 +9983,10 @@ let crewViewFriend = null; // friend id being viewed
 // profile now saved inside main payload
 
 function saveProfile(){
-  // If photo just changed, persist it to the dedicated backup key immediately
   if(MY_PROFILE._userUploadedPhoto){
     try{ localStorage.setItem('basecamp_profile_photo', MY_PROFILE._userUploadedPhoto); }catch(e){}
   }
-  saveState();
-  if(_sbUser) setTimeout(sbPushData, 500);
+  markDirty();
 }
 
 function loadProfile(){ /* handled in loadState */ }
@@ -11537,17 +11561,17 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   });
 
   // ── Aggressive cloud persistence ──
-  // Push to Supabase when the tab is hidden or closed so data survives
-  // version updates (new index.html deployed) even if the debounce hasn't fired.
+  // Always flush localStorage on hide/close.
+  // Also push to Supabase if there are unsaved changes (_isDirty).
   document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState === 'hidden' && _sbUser){
-      saveState();
+    saveState(); // always flush localStorage
+    if(document.visibilityState === 'hidden' && _sbUser && _isDirty){
       sbPushData();
     }
   });
   window.addEventListener('beforeunload', ()=>{
-    saveState();
-    if(_sbUser) sbPushData();
+    saveState(); // always flush localStorage
+    if(_sbUser && _isDirty) sbPushData();
   });
 });;
 
@@ -11752,10 +11776,11 @@ async function sbInit(){
   if(stored?.user){
     _sbUser = stored.user;
     authUpdateUI(stored.user);
-    // Push local state first so any offline edits reach the cloud before we pull
-    // (sbPullData will then merge correctly and push back if cloud is newer)
-    await sbPushData();
-    await Promise.all([sbPullData(), sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
+    // Pull handles the push-or-restore decision:
+    // - If localStorage has data → push to cloud (backup), return
+    // - If localStorage is empty → fetch from cloud and restore
+    await sbPullData();
+    await Promise.all([sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
     await sbLoadTripMemberStatus();
     sbSubscribeTrips();
   }
@@ -11765,7 +11790,8 @@ async function sbInit(){
     if(event === 'SIGNED_IN' && session?.user && session.user.id !== _sbUser?.id){
       _sbUser = session.user;
       authUpdateUI(session.user);
-      await Promise.all([sbPullData(), sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
+      await sbPullData(); // push-or-restore
+      await Promise.all([sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
       await sbLoadTripMemberStatus();
       sbSubscribeTrips();
       renderAll(); renderCrewPage(); renderTripsPage();
@@ -11895,6 +11921,7 @@ async function authSubmit(){
       if(result.error) throw result.error;
     }
     // Signed in — push local data up then show user panel
+    saveState();
     await sbPushData();
     closeAuthModal();
     toast('✅ Signed in — gear synced to cloud!');
@@ -11946,92 +11973,81 @@ async function authSignOut(){
 }
 
 // ── Cloud sync ──
+let _lastCloudPushAt = 0;  // timestamp of last successful Supabase push
+let _sbCloudDebounce = null;
+
 async function sbPushData(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
+  // Always snapshot current state (don't use a cached payload)
+  saveState(); // ensure localStorage is current first
   const payload = getPayload();
-  // Always include the photo in the push payload even if MY_PROFILE._userUploadedPhoto
-  // was set after the last getPayload() snapshot
   if(!payload.profile.photo && MY_PROFILE._userUploadedPhoto){
     payload.profile.photo = MY_PROFILE._userUploadedPhoto;
   }
   const { error } = await sb.from('profiles')
     .upsert({ id: _sbUser.id, gear_data: payload }, { onConflict: 'id' });
-  if(error) console.error('Push error:', error);
-  else {
+  if(error){
+    console.error('[BaseCamp] Push error:', error);
+  } else {
+    _lastCloudPushAt = payload.savedAt;
+    _isDirty = false;
     const el = document.getElementById('auth-sync-status');
     if(el) el.textContent = '✓ Synced ' + new Date().toLocaleTimeString();
   }
 }
 
+// Pull from Supabase — ONLY used when localStorage is empty (new device/browser).
+// Never overwrites existing local data to avoid race conditions.
 async function sbPullData(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
+
+  // If we already have local data, push it up and return — don't pull.
+  const hasLocal = !!localStorage.getItem(SAVE_KEY);
+  if(hasLocal){
+    // Local exists — push to cloud so it's backed up, but don't overwrite local.
+    await sbPushData();
+    return;
+  }
+
+  // No local data — this is a new browser/device. Fetch from cloud.
   const { data, error } = await sb.from('profiles')
     .select('gear_data').eq('id', _sbUser.id).single();
   if(error || !data?.gear_data) return;
+
   const cloud = data.gear_data;
-  const local = (() => { try { const r = localStorage.getItem(SAVE_KEY); return r ? JSON.parse(r) : null; } catch(_){ return null; } })();
-  const migratedCloud = migratePayload({...cloud});
+  const migrated = migratePayload({...cloud});
 
-  // Build combined deleted IDs from BOTH local and cloud — union is ground truth
-  const deletedIds = new Set([
-    ...(local?.deletedTrips||[]).map(t=>t.id),
-    ...(migratedCloud.deletedTrips||[]).map(t=>t.id)
-  ]);
+  // Merge deletedTrips from cloud into the (empty) local state
+  // so permanently-deleted trips stay gone on new devices too.
+  const dismissedShared = (() => {
+    try { const d = localStorage.getItem('basecamp_dismissed_shared'); return d ? JSON.parse(d) : []; } catch(e){ return []; }
+  })();
 
-  // Always filter deleted trips regardless of which source we use
-  if(migratedCloud.trips){
-    migratedCloud.trips = migratedCloud.trips.filter(t => !deletedIds.has(t.id));
+  // Write cloud data to localStorage and load it
+  localStorage.setItem(SAVE_KEY, JSON.stringify(migrated));
+  loadState();
+  renderAll();
+  renderTripsPage();
+  toast('☁️ Data loaded from cloud');
+
+  // Restore photo backup
+  if(migrated.profile?.photo){
+    try{ localStorage.setItem('basecamp_profile_photo', migrated.profile.photo); }catch(e){}
   }
 
-  // Merge deletedTrips lists (deduplicated)
-  const allDeleted = [...(local?.deletedTrips||[]), ...(migratedCloud.deletedTrips||[])];
-  const seenIds = new Set();
-  migratedCloud.deletedTrips = allDeleted.filter(t => {
-    if(seenIds.has(t.id)) return false;
-    seenIds.add(t.id); return true;
-  });
-
-  const useCloud = !local || (cloud.savedAt||0) > (local.savedAt||0);
-  if(useCloud || deletedIds.size > 0){
-    localStorage.setItem(SAVE_KEY, JSON.stringify(migratedCloud));
-    loadState();
-    renderAll();
-    renderTripsPage();
-    // Push cleaned state back so deletedTrips persists in cloud.
-    // Use a longer delay so any in-flight user edits (scheduleSave) win.
-    setTimeout(()=>{
-      // Only push if no local edit has happened since we loaded
-      const nowLocal = (() => { try{ const r=localStorage.getItem(SAVE_KEY); return r?JSON.parse(r):null; }catch(_){return null;} })();
-      if(!nowLocal || (nowLocal.savedAt||0) <= (migratedCloud.savedAt||0)){
-        sbPushData();
-      }
-      // Always push if deletedTrips changed (RLS-safe cleanup)
-      else if(deletedIds.size > 0){ sbPushData(); }
-    }, 2000);
-    if((migratedCloud.trips||[]).length > 0) toast('☁️ Data loaded from cloud');
-  } else {
-    // Local is newer — push up to sync cloud with latest deletedTrips
-    setTimeout(()=>sbPushData(), 500);
-  }
-
-  // If profile name is still blank after loading, seed it from auth metadata
-  // This covers new accounts that signed up but never set a name in the UI
+  // If profile name still blank, seed from auth metadata
   if(!MY_PROFILE.name && _sbUser){
     const meta = _sbUser.user_metadata || {};
     const seedName = meta.full_name || _sbUser.email?.split('@')[0] || '';
-    if(seedName){
-      MY_PROFILE.name = seedName;
-      saveProfile(); // persist to cloud so it's set for next login too
-      renderCrewPage();
-    }
+    if(seedName){ MY_PROFILE.name = seedName; saveState(); renderCrewPage(); }
   }
 }
-
 async function authSyncNow(){
   const el = document.getElementById('auth-sync-status');
   if(el) el.textContent = 'Syncing...';
+  saveState(); // flush to localStorage first
   await sbPushData();
   toast('☁️ Synced!');
 }
@@ -12055,9 +12071,6 @@ function authUpdateUI(user){
     renderTripsPage();
   }
 }
-
-// Hook into scheduleSave to also push to cloud when signed in
-let _sbCloudDebounce = null;
 
 // Close modal on backdrop click
 document.getElementById('auth-modal')?.addEventListener('click', e=>{
