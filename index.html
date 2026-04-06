@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.3 — Gear Organizer</title>
+<title>BaseCamp v2.4 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.3</div>
+      <div class="logo-sub">Gear Organizer · v2.4</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3145,8 +3145,18 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   </div>
 </div>
 
-<!-- PAGE 3 — DEMO -->
+<!-- PAGE 4 — TRIPS -->
 <div id="page-trips" class="page">
+  <div id="trips-root"></div>
+</div>
+
+<!-- PAGE 5 — CREW -->
+<div id="page-crew" class="page">
+  <div id="crew-root"></div>
+</div>
+
+<!-- PAGE 6 — DEMO -->
+<div id="page-demo" class="page">
 <!-- API KEY MODAL -->
 <div class="modal-overlay" id="apikey-modal">
   <div class="modal" style="max-width:380px;">
@@ -10745,11 +10755,14 @@ function renderTripsPage(){
 
   const trip = TRIPS.find(t=>t.id===activeTripId)||TRIPS[0];
 
-  // Build confirmedIds FIRST so getTripMembers can exclude pending invitees
-  // Always build a confirmedIds set — null would bypass the filter entirely
-  const confirmedIds = (!trip._shared && _sbUser)
-    ? new Set([_sbUser.id, ...(trip._confirmedMembers || [])])
-    : new Set();  // empty = no confirmed members (not null)
+  // Build confirmed set from _tripMemberStatus (authoritative, loaded from DB on login)
+  const confirmedIds = new Set();
+  if(!trip._shared && _sbUser){
+    confirmedIds.add(_sbUser.id);
+    for(const uid of (trip.memberIds||[])){
+      if(isMemberConfirmed(trip.id, uid)) confirmedIds.add(uid);
+    }
+  }
 
   const members = getTripMembers(trip, confirmedIds);
 
@@ -10758,7 +10771,7 @@ function renderTripsPage(){
   if(!trip._shared && _sbUser){
     for(const memberId of (trip.memberIds||[])){
       if(memberId === (_sbUser?.id||'me')) continue;
-      if(!confirmedIds.has(memberId)){
+      if(isMemberPending(trip.id, memberId)){
         const friend = _friends.find(f=>f.id===memberId);
         pendingInvites.push({
           id: memberId,
@@ -11507,7 +11520,7 @@ async function sbInit(){
     _sbUser = stored.user;
     authUpdateUI(stored.user);
     await Promise.all([sbPullData(), sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
-    await sbLoadConfirmedMembers();
+    await sbLoadTripMemberStatus();
     sbSubscribeTrips();
   }
 
@@ -11517,7 +11530,7 @@ async function sbInit(){
       _sbUser = session.user;
       authUpdateUI(session.user);
       await Promise.all([sbPullData(), sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
-      await sbLoadConfirmedMembers();
+      await sbLoadTripMemberStatus();
       sbSubscribeTrips();
       renderAll(); renderCrewPage(); renderTripsPage();
     } else if(event === 'SIGNED_OUT'){
@@ -11708,38 +11721,6 @@ async function sbPushData(){
     const el = document.getElementById('auth-sync-status');
     if(el) el.textContent = '✓ Synced ' + new Date().toLocaleTimeString();
   }
-  // Also push any shared trips (only when they actually have unsaved changes)
-  for(const t of TRIPS.filter(t=>t.memberIds && t.memberIds.length && !t._shared && t._dirty)){
-    await sbPushSharedTrip(t);
-    t._dirty = false;
-  }
-}
-
-// Read-only: load confirmed member status for owned trips without re-pushing anything.
-// Called on login so the UI shows correct pending/confirmed state immediately.
-async function sbLoadConfirmedMembers(){
-  const sb = sbClient();
-  if(!sb || !_sbUser) return;
-  const ownedTrips = TRIPS.filter(t=>t.memberIds && t.memberIds.length && !t._shared);
-  if(!ownedTrips.length) return;
-  for(const trip of ownedTrips){
-    // Fetch invite statuses
-    const { data: inviteRows } = await sb.from('trip_invites')
-      .select('invited_user, status')
-      .eq('trip_id', trip.id)
-      .in('invited_user', trip.memberIds);
-    const acceptedIds = new Set(
-      (inviteRows||[]).filter(r=>r.status==='accepted').map(r=>r.invited_user)
-    );
-    // Fetch editor rows
-    const { data: editorRows } = await sb.from('shared_trip_members')
-      .select('user_id').eq('trip_id', trip.id).eq('role', 'editor');
-    // Only confirmed if BOTH editor row exists AND invite is accepted
-    trip._confirmedMembers = (editorRows||[])
-      .map(r=>r.user_id)
-      .filter(uid=>acceptedIds.has(uid));
-  }
-  renderTripsPage();
 }
 
 async function sbPullData(){
@@ -11986,89 +11967,133 @@ function crewAddFriend(userId){ sbSendFriendRequest(userId); }
 
 
 // ================================================================
-// TRIP COLLABORATION — Supabase shared trips
+// TRIP COLLABORATION — Redesigned v2.4
 // ================================================================
+//
+// ARCHITECTURE:
+//   shared_trips       — one row per trip (owner writes, members read)
+//   shared_trip_members — one row per person per trip, role = 'owner'|'editor'
+//   trip_invites       — one row per invite, status = 'pending'|'accepted'|'declined'
+//
+// SINGLE SOURCE OF TRUTH:
+//   _tripMemberStatus  — Map<tripId, Map<userId, 'pending'|'accepted'>>
+//   Populated once on login by sbLoadTripMemberStatus(), never guessed client-side.
+//   renderTripsPage() reads from this map — no _confirmedMembers on trip objects.
+//
+// FLOW (owner):
+//   createTrip() → sbSyncTrip(trip) → insert shared_trips + upsert invites (ignoreDuplicates)
+//   Any subsequent trip edit → sbSyncTrip(trip)  [same function, upsert handles insert vs update]
+//
+// FLOW (invitee):
+//   sbLoadTripInvites() → shows banner → acceptTripInvite() → update invite + insert member row
+//   sbPullSharedTrips() → merges into TRIPS[] with _shared:true flag
+//
+// STATUS DISPLAY:
+//   isMemberConfirmed(tripId, userId) → checks _tripMemberStatus
+//   All rendering reads this — never the old _confirmedMembers array.
+
 let _realtimeChannel = null;
 
-// Push a trip to shared_trips + shared_trip_members when it has real members
-async function sbPushSharedTrip(trip){
+// _tripMemberStatus: { [tripId]: { [userId]: 'pending'|'accepted' } }
+let _tripMemberStatus = {};
+
+function isMemberConfirmed(tripId, userId){
+  return _tripMemberStatus[tripId]?.[userId] === 'accepted';
+}
+function isMemberPending(tripId, userId){
+  return _tripMemberStatus[tripId]?.[userId] === 'pending';
+}
+
+// Load confirmed/pending status for all owned trips — called once on login, read-only.
+async function sbLoadTripMemberStatus(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
-  if(!trip.memberIds || !trip.memberIds.length) return;
+  const ownedTrips = TRIPS.filter(t => t.memberIds?.length && !t._shared);
+  if(!ownedTrips.length) return;
 
-  const payload = {
+  _tripMemberStatus = {};
+  for(const trip of ownedTrips){
+    if(!trip.memberIds?.length) continue;
+    _tripMemberStatus[trip.id] = {};
+
+    // Get invite statuses for all invited members
+    const { data: invites } = await sb.from('trip_invites')
+      .select('invited_user, status')
+      .eq('trip_id', trip.id)
+      .in('invited_user', trip.memberIds);
+
+    for(const inv of (invites||[])){
+      _tripMemberStatus[trip.id][inv.invited_user] =
+        inv.status === 'accepted' ? 'accepted' : 'pending';
+    }
+    // Anyone in memberIds with no invite row yet = pending (just added)
+    for(const uid of trip.memberIds){
+      if(!_tripMemberStatus[trip.id][uid]){
+        _tripMemberStatus[trip.id][uid] = 'pending';
+      }
+    }
+  }
+  renderTripsPage();
+}
+
+// Push a trip to shared_trips + send invites. Safe to call on every save.
+async function sbSyncTrip(trip){
+  const sb = sbClient();
+  if(!sb || !_sbUser) return;
+  if(!trip.memberIds?.length) return;
+
+  // 1. Upsert the trip row (insert or update, no duplicate errors)
+  const tripPayload = {
     id: trip.id,
     owner_id: _sbUser.id,
     title: trip.title,
     trip_data: {
       ...trip,
-      _confirmedMembers: undefined,
+      _shared: undefined,
+      _ownerId: undefined,
       _ownerProfile: { name: MY_PROFILE.name, color: MY_PROFILE.color, photo: MY_PROFILE._userUploadedPhoto || null }
     },
     updated_at: new Date().toISOString()
   };
-  let { error } = await sb.from('shared_trips').insert(payload);
-  if(error && error.code === '23505'){
-    const r = await sb.from('shared_trips').update({
-      title: trip.title, trip_data: {...trip, _confirmedMembers: undefined}, updated_at: payload.updated_at
-    }).eq('id', trip.id).eq('owner_id', _sbUser.id);
-    if(r.error){ console.error('Trip update error:', r.error); return; }
-  } else if(error){
-    console.error('Trip push error:', error); return;
-  }
+  const { error: te } = await sb.from('shared_trips')
+    .upsert(tripPayload, { onConflict: 'id' });
+  if(te){ console.error('sbSyncTrip upsert error:', te); return; }
 
-  // Always purge any non-owner, non-editor rows (stale test data / orphaned rows)
-  // We keep 'editor' rows because those are legitimately accepted invites
-  await sb.from('shared_trip_members')
-    .delete().eq('trip_id', trip.id)
-    .neq('user_id', _sbUser.id)
-    .neq('role', 'editor');
-
-  // Upsert owner as confirmed member (prevents 409 on repeated saves)
+  // 2. Ensure owner has a member row
   await sb.from('shared_trip_members').upsert(
-    {trip_id: trip.id, user_id: _sbUser.id, role: 'owner'},
-    {onConflict: 'trip_id,user_id', ignoreDuplicates: true}
+    { trip_id: trip.id, user_id: _sbUser.id, role: 'owner' },
+    { onConflict: 'trip_id,user_id', ignoreDuplicates: true }
   );
 
-  // Send invites to each invited member — only INSERT if no row exists yet.
-  // Never overwrite an already-accepted (or declined) invite back to 'pending'.
+  // 3. Send invites — ignoreDuplicates means we never overwrite accepted/declined
   for(const memberId of trip.memberIds){
-    const { error: ie } = await sb.from('trip_invites').upsert({
+    await sb.from('trip_invites').upsert({
       trip_id: trip.id,
       invited_user: memberId,
       invited_by: _sbUser.id,
       trip_title: trip.title,
       status: 'pending'
     }, { onConflict: 'trip_id,invited_user', ignoreDuplicates: true });
-    if(ie && ie.code !== '23505') console.error('Invite insert error:', ie);
   }
-  console.log('✅ Trip pushed to Supabase:', trip.title);
 
-  // A member is confirmed only if their shared_trip_members row exists AND
-  // their trip_invites row is 'accepted' (not pending/declined).
-  // This prevents stale editor rows from making an invitee appear confirmed
-  // before they have actually accepted.
-  const { data: inviteRows } = await sb.from('trip_invites')
+  // 4. Update local status map from DB (read-only, no more guessing)
+  if(!_tripMemberStatus[trip.id]) _tripMemberStatus[trip.id] = {};
+  const { data: invites } = await sb.from('trip_invites')
     .select('invited_user, status')
     .eq('trip_id', trip.id)
     .in('invited_user', trip.memberIds);
-  const acceptedInviteeIds = new Set(
-    (inviteRows||[]).filter(r=>r.status==='accepted').map(r=>r.invited_user)
-  );
-  const { data: confirmedRows } = await sb.from('shared_trip_members')
-    .select('user_id, role').eq('trip_id', trip.id).eq('role', 'editor');
-  const t = TRIPS.find(x=>x.id===trip.id);
-  if(t){
-    // Only mark as confirmed if BOTH conditions hold:
-    // 1. They have an editor row in shared_trip_members
-    // 2. Their trip_invites status is 'accepted'
-    t._confirmedMembers = (confirmedRows||[])
-      .map(r=>r.user_id)
-      .filter(uid=>acceptedInviteeIds.has(uid));
-    renderTripsPage();
+  for(const inv of (invites||[])){
+    _tripMemberStatus[trip.id][inv.invited_user] =
+      inv.status === 'accepted' ? 'accepted' : 'pending';
   }
+
+  renderTripsPage();
 }
 
+// Keep sbPushSharedTrip as an alias so existing call sites don't break
+async function sbPushSharedTrip(trip){ return sbSyncTrip(trip); }
+
+// Load pending invites for the current user (trips they were invited to)
 async function sbLoadTripInvites(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
@@ -12077,167 +12102,108 @@ async function sbLoadTripInvites(){
     .eq('invited_user', _sbUser.id)
     .eq('status', 'pending');
   if(error){ console.error('sbLoadTripInvites error:', error); return; }
-  // Fetch inviter names separately
   _tripInvitesIn = await Promise.all((data||[]).map(async inv=>{
     const { data: p } = await sb.from('profiles')
       .select('full_name').eq('id', inv.invited_by).single();
     return {...inv, inviter_name: p?.full_name || 'Someone'};
   }));
-  console.log('Trip invites loaded:', _tripInvitesIn.length);
   if(_tripInvitesIn.length) renderTripsPage();
 }
 
+// Accept a trip invite: mark accepted → upsert member row → pull trip data
 async function acceptTripInvite(inviteId, tripId){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
-
-  // Step 1: Mark invite accepted FIRST (needed for the RLS policy on member insert)
   const { error: ue } = await sb.from('trip_invites')
     .update({status:'accepted'})
     .eq('id', inviteId)
     .eq('invited_user', _sbUser.id);
-  if(ue){ console.error('Accept invite error:', ue); toast('❌ Could not accept invite'); return; }
-
-  // Step 2: Now insert self as member (RLS allows this because invite is now 'accepted')
-  const { error: me } = await sb.from('shared_trip_members').insert({
-    trip_id: tripId, user_id: _sbUser.id, role: 'editor'
-  });
-  if(me) console.error('Member insert error (non-fatal):', me);
-
-  // Step 3: Remove from local pending list and pull trip
+  if(ue){ toast('❌ Could not accept invite'); return; }
+  await sb.from('shared_trip_members').upsert(
+    { trip_id: tripId, user_id: _sbUser.id, role: 'editor' },
+    { onConflict: 'trip_id,user_id', ignoreDuplicates: true }
+  );
   _tripInvitesIn = _tripInvitesIn.filter(i=>i.id !== inviteId);
   await sbPullSharedTrips();
   renderTripsPage();
   toast('✅ Joined trip!');
 }
 
+// Decline a trip invite
 async function declineTripInvite(inviteId){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
   await sb.from('trip_invites').update({status:'declined'}).eq('id', inviteId);
   _tripInvitesIn = _tripInvitesIn.filter(i=>i.id !== inviteId);
   renderTripsPage();
-  toast('Trip invite declined');
+  toast('Invite declined');
 }
 
-// Pull all shared trips this user is a member of
+// Pull all shared trips this user is a member of (not owner)
 async function sbPullSharedTrips(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
-
-  // Step 1: get trip IDs where I'm an editor
   const { data: memberRows, error: me } = await sb
     .from('shared_trip_members')
     .select('trip_id')
     .eq('user_id', _sbUser.id)
     .neq('role', 'owner');
-
-  if(me || !memberRows){ console.error('sbPullSharedTrips member error:', me); return; }
-  if(!memberRows.length){ console.log('sbPullSharedTrips: no shared trips'); return; }
+  if(me){ console.error('sbPullSharedTrips error:', me); return; }
+  if(!memberRows?.length) return;
 
   const tripIds = memberRows.map(r=>r.trip_id);
-  console.log('sbPullSharedTrips: found member rows for trips:', tripIds);
-
-  // Step 2: fetch the actual trip data
   const { data: trips, error: te } = await sb
     .from('shared_trips')
     .select('id, owner_id, title, trip_data, updated_at')
     .in('id', tripIds);
+  if(te || !trips) return;
 
-  if(te || !trips){ console.error('sbPullSharedTrips trip fetch error:', te); return; }
-  console.log('sbPullSharedTrips: fetched', trips.length, 'trips');
-
-  let changed = false;
-  // Build set of trips the user has deleted/left — never re-add these
   const deletedIds = new Set(DELETED_TRIPS.map(t=>t.id));
-
+  let changed = false;
   for(const st of trips){
-    if(!st.trip_data) continue;
-    // Skip if user previously deleted/left this trip
-    if(deletedIds.has(st.id)) continue;
-
-    const remoteTripData = st.trip_data;
-    delete remoteTripData._confirmedMembers;
-
-    // Fetch owner profile to get their name/avatar
-    const { data: ownerProfile } = await sb.from('profiles')
+    if(!st.trip_data || deletedIds.has(st.id)) continue;
+    const d = {...st.trip_data, _shared:true, _ownerId:st.owner_id};
+    delete d._confirmedMembers;
+    const { data: op } = await sb.from('profiles')
       .select('gear_data').eq('id', st.owner_id).single();
-    if(ownerProfile?.gear_data?.profile){
-      remoteTripData._ownerProfile = ownerProfile.gear_data.profile;
-    }
-
-    const localIdx = TRIPS.findIndex(t=>t.id===st.id);
-    if(localIdx === -1){
-      TRIPS.push({...remoteTripData, _shared: true, _ownerId: st.owner_id});
+    if(op?.gear_data?.profile) d._ownerProfile = op.gear_data.profile;
+    const idx = TRIPS.findIndex(t=>t.id===st.id);
+    if(idx === -1){ TRIPS.push(d); changed = true; }
+    else if(new Date(st.updated_at).getTime() > (TRIPS[idx]._updatedAt||0)){
+      TRIPS[idx] = {...d, _updatedAt: new Date(st.updated_at).getTime()};
       changed = true;
-    } else {
-      const remoteTime = new Date(st.updated_at).getTime();
-      const localTime = TRIPS[localIdx]._updatedAt || 0;
-      if(remoteTime > localTime){
-        TRIPS[localIdx] = {...remoteTripData, _shared: true, _ownerId: st.owner_id, _updatedAt: remoteTime};
-        changed = true;
-      }
     }
   }
   if(changed){ renderTripsPage(); scheduleSave(); }
 }
 
-// Subscribe to real-time changes on shared trips
+// Real-time subscription — refresh a trip when any member pushes an update
 function sbSubscribeTrips(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
   if(_realtimeChannel) _realtimeChannel.unsubscribe();
-
   _realtimeChannel = sb.channel('shared_trips_changes')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'shared_trips'
-    }, async (payload)=>{
-      // A trip we're a member of changed — pull latest
-      const tripId = payload.new?.id || payload.old?.id;
-      if(!tripId) return;
-      // Check if we're a member
-      const isMember = await sb.from('shared_trip_members')
-        .select('role').eq('trip_id', tripId).eq('user_id', _sbUser.id).single();
-      if(!isMember.data) return;
-
-      const { data } = await sb.from('shared_trips')
-        .select('id, owner_id, title, trip_data, updated_at')
-        .eq('id', tripId).single();
-      if(!data) return;
-
-      const localIdx = TRIPS.findIndex(t=>t.id===tripId);
-      if(localIdx >= 0){
-        TRIPS[localIdx] = {...data.trip_data, _confirmedMembers: undefined, _shared:true, _ownerId:data.owner_id, _updatedAt: new Date(data.updated_at).getTime()};
-      } else {
-        TRIPS.push({...data.trip_data, _confirmedMembers: undefined, _shared:true, _ownerId:data.owner_id});
-      }
-      renderTripsPage();
-      toast('🔄 Trip updated by a crew member');
-    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'shared_trips' },
+      async (payload)=>{
+        const tripId = payload.new?.id || payload.old?.id;
+        if(!tripId) return;
+        const { data: membership } = await sb.from('shared_trip_members')
+          .select('role').eq('trip_id', tripId).eq('user_id', _sbUser.id).single();
+        if(!membership) return;
+        const { data } = await sb.from('shared_trips')
+          .select('id, owner_id, title, trip_data, updated_at').eq('id', tripId).single();
+        if(!data) return;
+        const d = {...data.trip_data, _shared:true, _ownerId:data.owner_id,
+          _updatedAt: new Date(data.updated_at).getTime()};
+        delete d._confirmedMembers;
+        const idx = TRIPS.findIndex(t=>t.id===tripId);
+        if(idx >= 0) TRIPS[idx] = d; else TRIPS.push(d);
+        await sbLoadTripMemberStatus();
+        renderTripsPage();
+        toast('🔄 Trip updated');
+      })
     .subscribe();
 }
-
-// When a friend is added/removed from a trip, push it to Supabase
-async function sbSyncTripMembers(trip){
-  if(!_sbUser) return;
-  const isOwner = !trip._shared;
-  if(!isOwner) return; // only owner can push
-  await sbPushSharedTrip(trip);
-}
-
-// Hook: after scheduleSave fires, also push any shared trips
-const _origScheduleSave2 = scheduleSave;
-// (already overridden once — patch the debounce instead)
-const _origSbCloudDebounce = ()=>{
-  if(_sbUser){
-    // Push all trips that have members
-    TRIPS.filter(t=>t.memberIds && t.memberIds.length && !t._shared)
-         .forEach(t=>sbPushSharedTrip(t));
-  }
-};
-
 
 // On sign-in, pull shared trips and subscribe to realtime
 
