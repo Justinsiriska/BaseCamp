@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.25 — Gear Organizer</title>
+<title>BaseCamp v3.26 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.25</div>
+      <div class="logo-sub">Gear Organizer · v3.26</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6785,7 +6785,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.25) ──
+// ── Persistence layer (rebuilt v3.26) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -11105,47 +11105,56 @@ async function sbPushData(){
   }
 }
 
-// Pull from Supabase — ONLY used when localStorage is empty (new device/browser).
-// Never overwrites existing local data to avoid race conditions.
+// Pull from Supabase — ONLY restores gear data when localStorage is empty (new device/browser).
+// BUT always fetches and applies the user's profile (name/photo/color) from cloud,
+// so the correct identity shows regardless of which browser/account is active.
 async function sbPullData(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
 
-  // If we already have local data, push it up and return — don't pull.
+  // Always fetch from cloud so we can apply profile data
+  const { data, error } = await sb.from('profiles')
+    .select('gear_data').eq('id', _sbUser.id).single();
+
   const hasLocal = !!localStorage.getItem(SAVE_KEY);
+
   if(hasLocal){
-    // Local exists — push to cloud so it's backed up, but don't overwrite local.
+    // Local gear data exists — push it up as backup
     await sbPushData();
+    // But still apply the cloud profile (name/photo/color) so identity is correct
+    if(data?.gear_data?.profile){
+      const p = data.gear_data.profile;
+      if(p.name) MY_PROFILE.name = p.name;
+      if(p.bio !== undefined) MY_PROFILE.bio = p.bio;
+      if(p.color) MY_PROFILE.color = p.color;
+      if(p.photo){
+        MY_PROFILE._userUploadedPhoto = p.photo;
+        MY_PROFILE.avatarDataUrl = '<img src="' + p.photo + '" style="width:100%;height:100%;object-fit:cover;">';
+        try{ localStorage.setItem('basecamp_profile_photo', p.photo); }catch(e){}
+      } else {
+        try{
+          const bp = localStorage.getItem('basecamp_profile_photo');
+          if(bp){ MY_PROFILE._userUploadedPhoto=bp; MY_PROFILE.avatarDataUrl='<img src="'+bp+'" style="width:100%;height:100%;object-fit:cover;">'; }
+        }catch(e){}
+      }
+      saveState();
+      renderCrewPage();
+    }
     return;
   }
 
-  // No local data — this is a new browser/device. Fetch from cloud.
-  const { data, error } = await sb.from('profiles')
-    .select('gear_data').eq('id', _sbUser.id).single();
+  // No local data — new browser/device. Restore everything from cloud.
   if(error || !data?.gear_data) return;
-
   const cloud = data.gear_data;
   const migrated = migratePayload({...cloud});
-
-  // Merge deletedTrips from cloud into the (empty) local state
-  // so permanently-deleted trips stay gone on new devices too.
-  const dismissedShared = (() => {
-    try { const d = localStorage.getItem('basecamp_dismissed_shared'); return d ? JSON.parse(d) : []; } catch(e){ return []; }
-  })();
-
-  // Write cloud data to localStorage and load it
   localStorage.setItem(SAVE_KEY, JSON.stringify(migrated));
   loadState();
   renderAll();
   renderTripsPage();
   toast('☁️ Data loaded from cloud');
-
-  // Restore photo backup
   if(migrated.profile?.photo){
     try{ localStorage.setItem('basecamp_profile_photo', migrated.profile.photo); }catch(e){}
   }
-
-  // If profile name still blank, seed from auth metadata
   if(!MY_PROFILE.name && _sbUser){
     const meta = _sbUser.user_metadata || {};
     const seedName = meta.full_name || _sbUser.email?.split('@')[0] || '';
