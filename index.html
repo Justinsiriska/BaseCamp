@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.6 — Gear Organizer</title>
+<title>BaseCamp v3.7 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1825,7 +1825,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.6</div>
+      <div class="logo-sub">Gear Organizer · v3.7</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9098,7 +9098,9 @@ function memberGearWeight(member, packId){
     const pid = packId || season;
     return CATS.filter(c=>catInPack(c)).reduce((s,c)=>s+c.items.filter(i=>i.s.includes(pid)).reduce((a,i)=>a+(i.w||0),0),0);
   }
-  return member.cats.reduce((s,c)=>s+c.items.reduce((a,i)=>a+(i.w||0),0),0);
+  // Filter items by packId so we only count gear the member assigned to this trip
+  const pid = packId || season;
+  return member.cats.reduce((s,c)=>s+c.items.filter(i=>i.s && i.s.includes(pid)).reduce((a,i)=>a+(i.w||0),0),0);
 }
 
 function memberFoodWeight(member){
@@ -9116,7 +9118,9 @@ function getMemberItems(member, packId){
     const pid = packId || season;
     return CATS.filter(c=>catInPack(c)).flatMap(c=>c.items.filter(i=>i.s.includes(pid)).map(i=>({...i,catColor:c.color,catName:c.name})));
   }
-  return member.cats.flatMap(c=>c.items.map(i=>({...i,catColor:c.color,catName:c.name})));
+  // Filter items by packId so we only show gear the member assigned to this trip
+  const pid = packId || season;
+  return member.cats.flatMap(c=>c.items.filter(i=>i.s && i.s.includes(pid)).map(i=>({...i,catColor:c.color,catName:c.name})));
 }
 
 // ── Trip creation with optional pack duplication ──
