@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v2.9 — Gear Organizer</title>
+<title>BaseCamp v3.0 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1824,7 +1824,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v2.9</div>
+      <div class="logo-sub">Gear Organizer · v3.0</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9013,14 +9013,15 @@ window._calDragEntry = null; // dragging an existing calendar entry
 
 // ── Helpers ──
 function getTripMembers(trip, confirmedIds){
+  const myName = MY_PROFILE.name || _sbUser?.user_metadata?.full_name || _sbUser?.email?.split('@')[0] || 'You';
   const me = {
     id: _sbUser?.id || 'me',
-    name: MY_PROFILE.name || 'You',
+    name: myName,
     avatar: MY_PROFILE.avatarDataUrl && MY_PROFILE.avatarDataUrl.startsWith('<img')
       ? MY_PROFILE.avatarDataUrl
       : MY_PROFILE._userUploadedPhoto
         ? `<img src="${MY_PROFILE._userUploadedPhoto}" style="width:100%;height:100%;object-fit:cover;">`
-        : `<span style="font-size:1rem;font-weight:800;color:white;">${(MY_PROFILE.name||'?')[0]}</span>`,
+        : `<span style="font-size:1rem;font-weight:800;color:white;">${myName[0].toUpperCase()}</span>`,
     color: MY_PROFILE.color,
     cats: CATS,
     food: FOOD_ITEMS,
@@ -11787,6 +11788,18 @@ async function sbPullData(){
   } else {
     // Local is newer — push up to sync cloud with latest deletedTrips
     setTimeout(()=>sbPushData(), 500);
+  }
+
+  // If profile name is still blank after loading, seed it from auth metadata
+  // This covers new accounts that signed up but never set a name in the UI
+  if(!MY_PROFILE.name && _sbUser){
+    const meta = _sbUser.user_metadata || {};
+    const seedName = meta.full_name || _sbUser.email?.split('@')[0] || '';
+    if(seedName){
+      MY_PROFILE.name = seedName;
+      saveProfile(); // persist to cloud so it's set for next login too
+      renderCrewPage();
+    }
   }
 }
 
