@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.14 — Gear Organizer</title>
+<title>BaseCamp v3.16 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1887,7 +1887,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.14</div>
+      <div class="logo-sub">Gear Organizer · v3.16</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9212,7 +9212,7 @@ function showConfirm(opts, onConfirm){
   overlay.classList.add('open');
 }
 
-function tripShowOptions(trip, anchorEl){
+function tripShowOptions(trip, anchorEl, preRect){
   // Remove any existing menu
   document.querySelectorAll('.trip-options-menu').forEach(m=>m.remove());
 
@@ -9260,9 +9260,11 @@ function tripShowOptions(trip, anchorEl){
 
   // Position near anchor
   document.body.appendChild(menu);
-  const rect = anchorEl.getBoundingClientRect();
-  menu.style.top = (rect.bottom+4)+'px';
-  menu.style.left = Math.min(rect.left, window.innerWidth-170)+'px';
+  const rect = preRect || anchorEl.getBoundingClientRect();
+  const top = rect.bottom > 10 ? rect.bottom + 4 : window.innerHeight / 2 - 100;
+  const left = rect.left > 10 ? Math.min(rect.left, window.innerWidth - 170) : window.innerWidth / 2 - 85;
+  menu.style.top = top + 'px';
+  menu.style.left = left + 'px';
 
   // Close on outside click
   setTimeout(()=>{
@@ -11028,8 +11030,9 @@ function renderTripsPage(){
     };
     item.querySelector('.trip-dd-options').onclick = e=>{
       e.stopPropagation();
+      const rect = e.target.getBoundingClientRect();
       _closeTripSwitcher();
-      tripShowOptions(t, e.target);
+      tripShowOptions(t, e.target, rect);
     };
     dd.appendChild(item);
   });
@@ -11061,14 +11064,17 @@ function renderTripsPage(){
   hdr.style.marginBottom='0.3rem';
   hdr.innerHTML=`<div class="trip-meta" style="margin-bottom:0.4rem;">${trip.date?trip.date+' · ':''}${trip.location?trip.location+' · ':''}${members.length} people · Group: ${dwTrip(totalGroupW)} · ${totalGroupKcal.toLocaleString()} kcal</div>`;
 
-  // Invite friends button
-  const inviteBtn=document.createElement('button');
-  inviteBtn.style.cssText='font-family:"Space Mono",monospace;font-size:0.48rem;border:1.5px solid rgba(74,143,168,0.5);background:rgba(74,143,168,0.08);color:#2a6a88;border-radius:20px;padding:0.22rem 0.7rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;';
-  inviteBtn.innerHTML='👥 Invite Friends';
-  inviteBtn.onmouseover=()=>inviteBtn.style.background='rgba(74,143,168,0.18)';
-  inviteBtn.onmouseout=()=>inviteBtn.style.background='rgba(74,143,168,0.08)';
-  inviteBtn.onclick=()=>openInviteModal(trip, members);
-  hdr.appendChild(inviteBtn);
+  // Invite friends button — leaders only
+  const isLeaderView = !trip._shared || trip.leaderId === (_sbUser?.id||'me');
+  if(isLeaderView){
+    const inviteBtn=document.createElement('button');
+    inviteBtn.style.cssText='font-family:"Space Mono",monospace;font-size:0.48rem;border:1.5px solid rgba(74,143,168,0.5);background:rgba(74,143,168,0.08);color:#2a6a88;border-radius:20px;padding:0.22rem 0.7rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;';
+    inviteBtn.innerHTML='👥 Invite Friends';
+    inviteBtn.onmouseover=()=>inviteBtn.style.background='rgba(74,143,168,0.18)';
+    inviteBtn.onmouseout=()=>inviteBtn.style.background='rgba(74,143,168,0.08)';
+    inviteBtn.onclick=()=>openInviteModal(trip, members);
+    hdr.appendChild(inviteBtn);
+  }
 
   content.appendChild(hdr);
 
