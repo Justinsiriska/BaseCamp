@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.23 — Gear Organizer</title>
+<title>BaseCamp v3.24 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.23</div>
+      <div class="logo-sub">Gear Organizer · v3.24</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6785,7 +6785,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.23) ──
+// ── Persistence layer (rebuilt v3.24) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -9912,6 +9912,99 @@ function detectFlags(trip, members){
 
 let crewSearchQuery = '';
 let crewViewFriend = null; // friend id being viewed
+
+
+function cropConfirm(){
+  const img = document.getElementById('crop-img');
+  if(!img || !img.src) return;
+  const vp = 240, out = 320;
+  const canvas = document.createElement('canvas');
+  canvas.width = out; canvas.height = out;
+  const ctx = canvas.getContext('2d');
+  const sx = -_cropState.x / _cropState.scale;
+  const sy = -_cropState.y / _cropState.scale;
+  const sw = vp / _cropState.scale;
+  ctx.drawImage(img, sx, sy, sw, sw, 0, 0, out, out);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+  MY_PROFILE._userUploadedPhoto = dataUrl;
+  MY_PROFILE.avatarDataUrl = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">';
+  saveProfile();
+  document.getElementById('profile-crop-modal').classList.remove('open');
+
+  // Directly update every avatar element in the DOM right now
+  const newImg = () => { const i=document.createElement('img'); i.src=dataUrl; i.style.cssText='width:100%;height:100%;object-fit:cover;display:block;'; return i; };
+  document.querySelectorAll('.trip-profile-avatar, .trip-col-avatar, .crew-friend-avatar').forEach(el=>{
+    if(el.dataset.isMe !== 'false'){
+      el.innerHTML=''; el.appendChild(newImg());
+      el.style.background='none';
+    }
+  });
+  // Also re-render both pages to catch any other avatar references
+  renderTripsPage();
+  renderCrewPage();
+  toast('✅ Profile photo updated');
+}
+
+function buildFlagsPanel(trip, members, flags){
+  const fp=document.createElement('div'); fp.className='trip-flags-panel';
+  const pillRow=document.createElement('div'); pillRow.className='trip-flag-pills';
+  const detailArea=document.createElement('div');
+  detailArea.style.cssText='max-width:480px;';
+  let activeFlagId=null;
+
+  flags.forEach(f=>{
+    const pill=document.createElement('button');
+    pill.className='trip-flag-pill'+(f.type==='suggestion'?' suggestion':'');
+    pill.title=f.text;
+    pill.textContent=f.icon;
+    pill.setAttribute('data-fid',f.id);
+    pill.onclick=(e)=>{
+      e.stopPropagation();
+      if(activeFlagId===f.id){
+        activeFlagId=null;
+        detailArea.innerHTML='';
+        pillRow.querySelectorAll('.trip-flag-pill').forEach(p=>p.classList.remove('active'));
+      } else {
+        activeFlagId=f.id;
+        pillRow.querySelectorAll('.trip-flag-pill').forEach(p=>p.classList.remove('active'));
+        pill.classList.add('active');
+        detailArea.innerHTML=`
+          <div class="trip-flag-detail${f.type==='suggestion'?' suggestion':''}">
+            <span style="font-size:0.9rem;flex-shrink:0;">${f.icon}</span>
+            <span class="trip-flag-detail-text">${escH(f.text)}</span>
+            <button class="trip-flag-dismiss" data-fid="${f.id}" data-tid="${trip.id}"
+              onclick="(function(btn){
+                if(btn.classList.contains('confirming')){
+                  dismissFlag(btn.dataset.tid, btn.dataset.fid);
+                  renderTripsPage();
+                } else {
+                  btn.classList.add('confirming');
+                  btn.textContent='Sure?';
+                  setTimeout(()=>{ if(btn.isConnected){ btn.classList.remove('confirming'); btn.textContent='✕ dismiss'; } },2500);
+                }
+              })(this)">✕ dismiss</button>
+          </div>`;
+      }
+    };
+    pillRow.appendChild(pill);
+  });
+
+  const closeFlagDetail=(e)=>{
+    if(!fp.contains(e.target)){
+      activeFlagId=null;
+      detailArea.innerHTML='';
+      pillRow.querySelectorAll('.trip-flag-pill').forEach(p=>p.classList.remove('active'));
+    }
+  };
+  document.addEventListener('click', closeFlagDetail, true);
+  const fpObserver=new MutationObserver(()=>{
+    if(!fp.isConnected){ document.removeEventListener('click', closeFlagDetail, true); fpObserver.disconnect(); }
+  });
+  fpObserver.observe(document.body, {childList:true, subtree:true});
+  fp.appendChild(pillRow);
+  fp.appendChild(detailArea);
+  return fp;
+}
 
 function _openTripSwitcher(){
   const dd=document.getElementById('trip-switcher-dd');
