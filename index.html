@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.84 — Gear Organizer</title>
+<title>BaseCamp v3.85 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1988,7 +1988,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.84</div>
+      <div class="logo-sub">Gear Organizer · v3.85</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11298,6 +11298,8 @@ function _renderWxBody(body, result, trip){
 }
 
 function renderTripsPage(){
+  const root = document.getElementById('trips-root');
+  if(!root) return;
   root.innerHTML='';
   root.style.position='';
 
