@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.77 — Gear Organizer</title>
+<title>BaseCamp v3.78 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.77</div>
+      <div class="logo-sub">Gear Organizer · v3.78</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11367,22 +11367,32 @@ function renderMemberFood(body, member, trip, members){
 
   // Effective kcal for owned items: full kcal (carrier always carries full item)
   // Tally scheduled qty per item from mealPlan
+  // scheduledQtyMap: qty this member has on calendar AND is personally eating
   const scheduledQtyMap = {};
+  // giveawayQtyMap: qty on calendar but member is NOT eating (given away entirely)
+  const giveawayQtyMap = {};
   mealPlan.filter(e=>{
     const cid = e.itemRef.memberId;
     return member.isMe ? isMeId(cid) : cid===memberId;
   }).forEach(e=>{
     const id = e.itemRef.itemId;
-    scheduledQtyMap[id] = (scheduledQtyMap[id]||0) + (e.qty||1);
+    const eaters = e.eatenBy||[];
+    const amEating = member.isMe ? eaters.some(id=>isMeId(id)) : eaters.includes(memberId);
+    if(amEating){
+      scheduledQtyMap[id] = (scheduledQtyMap[id]||0) + (e.qty||1);
+    } else {
+      giveawayQtyMap[id] = (giveawayQtyMap[id]||0) + (e.qty||1);
+    }
   });
 
-  // An item is "fully scheduled" if all its qty is on the calendar
-  // "partially scheduled" items appear in BOTH sections (planned portion + unplanned remainder)
+  // scheduled = items where member eats at least some
+  // unplanned = items with qty not yet personally eaten (not scheduled + not given away)
   const scheduled = allFood.filter(i=>scheduledQtyMap[i.id] > 0);
   const unplanned = allFood.filter(i=>{
     const totalQty = i.qty||1;
-    const sched = scheduledQtyMap[i.id]||0;
-    return sched < totalQty; // has at least 1 unscheduled unit
+    const schedQty = scheduledQtyMap[i.id]||0;
+    const givenQty = giveawayQtyMap[i.id]||0;
+    return (schedQty + givenQty) < totalQty; // has at least 1 unit not yet on calendar
   });
 
   // Compute how much of each owned item this member is sharing away via calendar splits
@@ -11422,7 +11432,8 @@ function renderMemberFood(body, member, trip, members){
     return allFood.reduce((s,i)=>{
       const totalQty   = i.qty||1;
       const schedQty   = scheduledQtyMap[i.id]||0;
-      const unplannedQty = Math.max(0, totalQty - schedQty);
+      const givenQty   = giveawayQtyMap[i.id]||0;
+      const unplannedQty = Math.max(0, totalQty - schedQty - givenQty);
       if(!unplannedQty) return s;
       const perUnit = (i[field]||0) / totalQty;
       return s + perUnit * unplannedQty;
@@ -11436,14 +11447,21 @@ function renderMemberFood(body, member, trip, members){
   // For section kcal headers — own planned = what I personally eat from my own entries
   const myId2 = member.isMe ? (_sbUser?.id||'me') : memberId;
   // Personal share from own calendar entries (kcal, protein, carbs, fat)
+  // Only counts if this member is actually in eatenBy (may give food away entirely)
   function myOwnEntryMacro(field){
     return mealPlan.filter(e=>{
       const cid = e.itemRef.memberId;
       return member.isMe ? isMeId(cid) : cid===memberId;
     }).reduce((s,e)=>{
       const it = itemForEntry(e, members); if(!it) return s;
+      // Check if this member is actually eating (not just carrying)
+      const eaters = e.eatenBy||[];
+      const amEating = member.isMe
+        ? eaters.some(id=>isMeId(id))
+        : eaters.includes(memberId);
+      if(!amEating) return s; // carrying for others — no personal macro gain
       const qf = Math.min(1,(e.qty||1)/(it.qty||1));
-      const numEaters = Math.max(1,(e.eatenBy||[]).length);
+      const numEaters = Math.max(1,eaters.length);
       return s + (it[field]||0) * qf / numEaters;
     }, 0);
   }
@@ -11543,7 +11561,8 @@ function renderMemberFood(body, member, trip, members){
 
     const itemTotalQty = item.qty||1;
     const itemSchedQty = scheduledQtyMap[item.id]||0;
-    const itemUnplannedQty = Math.max(0, itemTotalQty - itemSchedQty);
+    const itemGiveawayQty = giveawayQtyMap[item.id]||0;
+    const itemUnplannedQty = Math.max(0, itemTotalQty - itemSchedQty - itemGiveawayQty);
 
     // ── Qty chip — right after item name, always visible ──
     // Shows "×4" in amber when all planned, "×2 of 3" in amber when partial, "×3" in amber when none planned
