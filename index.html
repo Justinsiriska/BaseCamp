@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.59 — Gear Organizer</title>
+<title>BaseCamp v3.60 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.59</div>
+      <div class="logo-sub">Gear Organizer · v3.60</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7147,7 +7147,15 @@ function loadState(){
       });
     }
     if(d.activeTripId) activeTripId = d.activeTripId;
-    if(d.fridgeHistory && d.fridgeHistory.length){ FRIDGE_HISTORY.length=0; d.fridgeHistory.forEach(h=>FRIDGE_HISTORY.push(h)); }
+    if(d.fridgeHistory && d.fridgeHistory.length){
+      FRIDGE_HISTORY.length=0;
+      // Deduplicate by fridgeId — keep only most recent per food
+      const seen = new Set();
+      d.fridgeHistory.forEach(h=>{
+        const key = h.fridgeId || h.key;
+        if(!seen.has(key)){ seen.add(key); FRIDGE_HISTORY.push(h); }
+      });
+    }
     // TRAIL_LIBRARY is rebuilt from trip.trail assignments on init — not restored from save
 
     // Restore profile
@@ -8084,8 +8092,8 @@ function foodServingConfirm(){
   _foodServingPending = null;
 
   // Record in history
-  const hKey = f.fridgeId+'|'+unitW+'|g';
-  FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.key!==hKey);
+  const hKey = f.fridgeId;  // deduplicate by food, not by weight
+  FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.fridgeId!==f.fridgeId);
   FRIDGE_HISTORY.unshift({key:hKey, fridgeId:f.fridgeId, name:f.name,
     amount:unitW, unit:'g', kcal:unitKcal, cat:f.cat, ts:Date.now()});
   if(FRIDGE_HISTORY.length>40) FRIDGE_HISTORY.length=40;
@@ -8123,8 +8131,8 @@ function fridgeQuickAdd(fridgeId, amount, unit){
     catId, s:[foodSeason]
   });
   // Bump to top of history
-  const hKey = fridgeId+'|'+amount+'|'+unit;
-  FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.key!==hKey);
+  const hKey = fridgeId;  // deduplicate by food
+  FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.fridgeId!==fridgeId);
   FRIDGE_HISTORY.unshift({key:hKey, fridgeId, name:f.name, amount, unit,
     kcal:Math.round((f.kcal||0)*grams/100), cat:f.cat, ts:Date.now()});
   renderFoodPage();
@@ -8703,8 +8711,8 @@ function foodQuickAddSave(){
   document.getElementById('food-quick-add-modal').classList.remove('open');
 
   // Add to history so it shows in Previous tab
-  const hKey = fridgeId+'|100|g';
-  FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.key!==hKey);
+  const hKey = fridgeId;  // deduplicate by food
+  FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.fridgeId!==fridgeId);
   FRIDGE_HISTORY.unshift({key:hKey, fridgeId, name, amount:100, unit:'g',
     kcal:kcal100, cat:catId, ts:Date.now()});
   if(FRIDGE_HISTORY.length>40) FRIDGE_HISTORY.length=40;
