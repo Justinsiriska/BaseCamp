@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.89 — Gear Organizer</title>
+<title>BaseCamp v3.90 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1910,6 +1910,7 @@ html.dark .trailhead-info-row{border-bottom-color:rgba(60,95,45,0.3);}
 .wx-hist-banner{padding:0.4rem 0.8rem;background:rgba(250,220,130,0.2);border-bottom:1px solid rgba(200,170,80,0.3);display:flex;align-items:center;gap:0.4rem;}
 .wx-hist-banner-text{font-family:'Nunito',sans-serif;font-size:0.52rem;color:#7a5a1a;line-height:1.4;}
 .wx-loading{padding:1.2rem;text-align:center;font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);opacity:0.6;}
+.wx-unit-toggle{font-family:'Space Mono',monospace;font-size:0.42rem;font-weight:700;padding:2px 7px;border-radius:5px;border:1px solid rgba(184,201,163,0.6);background:rgba(184,201,163,0.15);color:var(--forest);cursor:pointer;margin-left:auto;margin-right:0.4rem;}
 html.dark .wx-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.5);}
 html.dark .wx-body{border-top-color:rgba(60,95,45,0.4);}
 html.dark .wx-day-col{border-right-color:rgba(60,95,45,0.3);}
@@ -1988,7 +1989,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.89</div>
+      <div class="logo-sub">Gear Organizer · v3.90</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11097,6 +11098,7 @@ function wmoLabel(c){ return WMO_LABELS[c]||''; }
 function wmoIcon(c){ return WMO_ICONS[c]||'🌡️'; }
 
 let _wxCollapsed = true;
+let _wxUnit = 'F'; // 'F' or 'C'
 let _wxCache = {}; // key: tripId → { data, ts, isHistorical }
 
 async function fetchWeatherForTrip(trip){
@@ -11196,7 +11198,17 @@ function renderWeatherPanel(trip){
   // Header
   const hd = document.createElement('div');
   hd.className = 'wx-header';
-  hd.innerHTML = `<span class="wx-title">Weather</span><span class="wx-chevron">${_wxCollapsed?'▶':'▼'}</span>`;
+  hd.innerHTML = `<span class="wx-title">Weather</span><button class="wx-unit-toggle">°${_wxUnit}</button><span class="wx-chevron">${_wxCollapsed?'▶':'▼'}</span>`;
+  const unitBtn = hd.querySelector('.wx-unit-toggle');
+  unitBtn.addEventListener('click', e=>{
+    e.stopPropagation();
+    _wxUnit = _wxUnit === 'F' ? 'C' : 'F';
+    unitBtn.textContent = '°'+_wxUnit;
+    if(body.style.display !== 'none'){
+      const cached = _wxCache[trip.id];
+      if(cached){ body.innerHTML=''; _renderWxBody(body, cached, trip); }
+    }
+  });
   hd.addEventListener('click', ()=>{
     _wxCollapsed = !_wxCollapsed;
     body.style.display = _wxCollapsed ? 'none' : 'block';
@@ -11275,13 +11287,15 @@ function _renderWxBody(body, result, trip){
     const label = wmoLabel(d.code);
     const rainPct = d.rain ?? 0;
     const rainClass = rainPct < 20 ? 'wx-rain dry' : 'wx-rain';
+    const cvtTemp = f => f != null ? (_wxUnit === 'C' ? Math.round((f-32)*5/9) : f) : null;
+    const hi = cvtTemp(d.hi), lo = cvtTemp(d.lo);
 
     col.innerHTML = `
       <div class="wx-day-label">${labelText}</div>
       <div class="wx-day-icon">${icon}</div>
       <div class="wx-temps">
-        <span class="wx-hi">${d.hi != null ? d.hi+'°' : '—'}</span>
-        <span class="wx-lo">${d.lo != null ? d.lo+'°' : '—'}</span>
+        <span class="wx-hi">${hi != null ? hi+'°' : '—'}</span>
+        <span class="wx-lo">${lo != null ? lo+'°' : '—'}</span>
       </div>
       <div class="${rainClass}">${rainPct}% rain</div>
       <div class="wx-day-desc">${label}</div>
@@ -11411,10 +11425,15 @@ function renderTripsPage(){
   // The stats card is position:relative inside the same fixed-height container.
   const MAP_H = 300; // single source of truth for height
 
+  // ── TITLE ROW (full width, blue box) ──
+  const titleRow = document.createElement('div');
+  titleRow.style.cssText = 'margin-bottom:0.6rem;';
+
+  // ── MIDDLE ROW: left=green, right=pink ──
   const topRow = document.createElement('div');
   topRow.style.cssText = 'display:flex;flex-direction:row;gap:1.2rem;align-items:flex-start;margin-bottom:0.75rem;justify-content:space-between;';
 
-  // LEFT: pills, title, flags, toggle
+  // LEFT column: days, flags, toggle, trailhead, weather
   const content = document.createElement('div');
   content.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;';
 
@@ -11482,7 +11501,7 @@ function renderTripsPage(){
 
   switcher.appendChild(switcherBtn);
   switcher.appendChild(dd);
-  content.appendChild(switcher);
+  titleRow.appendChild(switcher);
 
   // Meta line + invite button — sits below the switcher title
   const hdr=document.createElement('div'); hdr.className='trip-header';
@@ -11505,7 +11524,7 @@ function renderTripsPage(){
     hdr.appendChild(inviteBtn);
   }
 
-  content.appendChild(hdr);
+  titleRow.appendChild(hdr);
 
   // Days pill — stepper, no full re-render on change
   const daysPill=document.createElement('div');
@@ -11668,6 +11687,7 @@ function renderTripsPage(){
   }
 
   topRow.appendChild(rightPanel);
+  root.appendChild(titleRow);
   root.appendChild(topRow);
 
   // ── BOTTOM ROW: person columns — full width ──
