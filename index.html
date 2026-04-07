@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.82 — Gear Organizer</title>
+<title>BaseCamp v3.83 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1867,6 +1867,25 @@ html.dark .crew-pack-total{color:#a8d89a;}
 @media(max-width:900px){.trip-top-row{grid-template-columns:1fr;}}
 .trip-main{min-width:0;}
 .trip-sidebar{display:flex;flex-direction:column;gap:0.8rem;}
+.trailhead-panel{background:rgba(250,247,242,0.7);border:1.5px solid rgba(184,201,163,0.45);border-radius:14px;overflow:hidden;margin-bottom:0.8rem;}
+.trailhead-header{display:flex;align-items:center;gap:0.55rem;padding:0.55rem 0.8rem;cursor:pointer;user-select:none;}
+.trailhead-header:hover{background:rgba(184,201,163,0.1);}
+.trailhead-title{font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1px;color:var(--forest);font-weight:700;flex:1;}
+.trailhead-chevron{font-size:0.6rem;color:var(--stone);transition:transform 0.2s;}
+.trailhead-body{border-top:1px solid rgba(184,201,163,0.3);}
+.trailhead-info-row{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;border-bottom:1px solid rgba(184,201,163,0.2);}
+.trailhead-map-wrap{position:relative;overflow:hidden;height:160px;background:#dde8d5;}
+.trailhead-map-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.trailhead-map-pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-100%) translateY(4px);pointer-events:none;}
+.trailhead-dir-btn{background:var(--forest);color:white;border:none;border-radius:8px;padding:0.3rem 0.65rem;font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;white-space:nowrap;}
+.trailhead-dir-btn:hover{background:var(--moss);}
+.trailhead-name{font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:700;color:var(--bark);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.trailhead-sub{font-family:'Space Mono',monospace;font-size:0.36rem;color:var(--stone);opacity:0.7;margin-top:1px;}
+.trailhead-edit-btn{font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);background:none;border:1px solid rgba(184,201,163,0.5);border-radius:5px;padding:2px 7px;cursor:pointer;}
+.trailhead-edit-btn:hover{border-color:var(--water);color:var(--water);}
+html.dark .trailhead-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.5);}
+html.dark .trailhead-body{border-top-color:rgba(60,95,45,0.4);}
+html.dark .trailhead-info-row{border-bottom-color:rgba(60,95,45,0.3);}
 .trip-map-wrap{
   border-radius:14px;overflow:hidden;border:2px solid rgba(184,201,163,0.4);
   background:rgba(230,235,224,0.4);position:relative;
@@ -1937,7 +1956,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.82</div>
+      <div class="logo-sub">Gear Organizer · v3.83</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6876,7 +6895,7 @@ function getPayload(){
     fridgeCustom: FRIDGE_CUSTOM,
     fridgeHistory: FRIDGE_HISTORY,
     trailLibrary: TRAIL_LIBRARY,
-    trips: TRIPS.map(t=>({id:t.id,title:t.title,date:t.date||'',location:t.location||'',days:t.days||null,mealPlan:t.mealPlan||[],packId:t.packId,memberIds:t.memberIds,dismissedFlags:t.dismissedFlags||[],trail:t.trail||null})),
+    trips: TRIPS.map(t=>({id:t.id,title:t.title,date:t.date||'',location:t.location||'',days:t.days||null,mealPlan:t.mealPlan||[],packId:t.packId,memberIds:t.memberIds,dismissedFlags:t.dismissedFlags||[],trail:t.trail||null,trailhead:t.trailhead||null})),
     deletedTrips: DELETED_TRIPS,
     activeTripId,
     profile: {name:MY_PROFILE.name, bio:MY_PROFILE.bio||"", color:MY_PROFILE.color, photo:MY_PROFILE._userUploadedPhoto||null}
@@ -7144,7 +7163,7 @@ function loadState(){
       d.trips.forEach(t=>{
         // Ensure every mealPlan entry has an id (old saves may not have one)
         const mealPlan=(t.mealPlan||[]).map(e=>e.id?e:{...e,id:'mp_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)});
-        TRIPS.push({id:t.id,title:t.title,date:t.date||'',location:t.location||'',days:t.days||null,mealPlan,packId:t.packId,memberIds:t.memberIds||[],dismissedFlags:t.dismissedFlags||[],trail:t.trail||null});
+        TRIPS.push({id:t.id,title:t.title,date:t.date||'',location:t.location||'',days:t.days||null,mealPlan,packId:t.packId,memberIds:t.memberIds||[],dismissedFlags:t.dismissedFlags||[],trail:t.trail||null,trailhead:t.trailhead||null});
       });
     }
     if(d.activeTripId) activeTripId = d.activeTripId;
@@ -10775,6 +10794,243 @@ document.addEventListener('click', e=>{
   if(wrap && !wrap.contains(e.target)) _closeTripSwitcher();
 }, true);
 
+// ── Trailhead Panel ──
+let _trailheadCollapsed = false;
+
+function renderTrailheadPanel(trip){
+  // Auto-detect from GPX start if no trailhead set
+  if(!trip.trailhead && trip.trail?.coords?.length){
+    const [lat, lng] = trip.trail.coords[0];
+    trip.trailhead = { lat, lng, name: trip.trail.name||'Trailhead', address: '', fromGpx: true };
+  }
+
+  const panel = document.createElement('div');
+  panel.className = 'trailhead-panel';
+
+  // ── Header (always visible, toggles body) ──
+  const hd = document.createElement('div');
+  hd.className = 'trailhead-header';
+  const chevron = document.createElement('span');
+  chevron.className = 'trailhead-chevron';
+  chevron.textContent = _trailheadCollapsed ? '▶' : '▼';
+  hd.innerHTML = '<span style="font-size:0.9rem;">🗺️</span>';
+  const titleSpan = document.createElement('span');
+  titleSpan.className = 'trailhead-title';
+  titleSpan.textContent = 'Trailhead';
+  hd.appendChild(titleSpan);
+  hd.appendChild(chevron);
+
+  hd.addEventListener('click', ()=>{
+    _trailheadCollapsed = !_trailheadCollapsed;
+    body.style.display = _trailheadCollapsed ? 'none' : 'block';
+    chevron.textContent = _trailheadCollapsed ? '▶' : '▼';
+  });
+  panel.appendChild(hd);
+
+  // ── Body ──
+  const body = document.createElement('div');
+  body.className = 'trailhead-body';
+  body.style.display = _trailheadCollapsed ? 'none' : 'block';
+
+  if(trip.trailhead){
+    renderTrailheadContent(body, trip);
+  } else {
+    renderTrailheadSetup(body, trip);
+  }
+
+  panel.appendChild(body);
+  return panel;
+}
+
+function renderTrailheadContent(container, trip){
+  container.innerHTML = '';
+  const th = trip.trailhead;
+  const { lat, lng, name, address, fromGpx } = th;
+
+  // Info row
+  const infoRow = document.createElement('div');
+  infoRow.className = 'trailhead-info-row';
+
+  const pinIcon = document.createElement('div');
+  pinIcon.style.cssText = 'width:28px;height:28px;border-radius:7px;background:rgba(74,103,65,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;';
+  pinIcon.textContent = '📍';
+  infoRow.appendChild(pinIcon);
+
+  const nameWrap = document.createElement('div');
+  nameWrap.style.cssText = 'flex:1;min-width:0;';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'trailhead-name';
+  nameEl.title = name;
+  nameEl.textContent = name || (lat.toFixed(4)+', '+lng.toFixed(4));
+  nameWrap.appendChild(nameEl);
+  if(address || fromGpx){
+    const sub = document.createElement('div');
+    sub.className = 'trailhead-sub';
+    sub.textContent = fromGpx && !address ? 'From GPX · '+lat.toFixed(4)+'°, '+lng.toFixed(4)+'°' : address;
+    nameWrap.appendChild(sub);
+  }
+  infoRow.appendChild(nameWrap);
+
+  // Directions button
+  const dirBtn = document.createElement('button');
+  dirBtn.className = 'trailhead-dir-btn';
+  dirBtn.innerHTML = '→ Directions';
+  const gmUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  dirBtn.onclick = ()=> window.open(gmUrl, '_blank');
+  infoRow.appendChild(dirBtn);
+
+  // Edit button
+  const editBtn = document.createElement('button');
+  editBtn.className = 'trailhead-edit-btn';
+  editBtn.textContent = 'edit';
+  editBtn.onclick = ()=>{ delete trip.trailhead; scheduleSave(); sbPushTrip(trip); renderTripsPage(); };
+  infoRow.appendChild(editBtn);
+
+  container.appendChild(infoRow);
+
+  // Static OSM map tile
+  const mapWrap = document.createElement('div');
+  mapWrap.className = 'trailhead-map-wrap';
+
+  // OpenStreetMap static tile via tile.openstreetmap.org
+  // Zoom 14, tile calculation
+  const zoom = 14;
+  const tileX = Math.floor((lng + 180) / 360 * Math.pow(2, zoom));
+  const tileY = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+
+  // Render a 3x3 grid of tiles for coverage
+  const tileSize = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = 520; canvas.height = 160;
+  canvas.style.cssText = 'width:100%;height:100%;display:block;';
+  mapWrap.appendChild(canvas);
+
+  // Load tiles and draw on canvas
+  (async ()=>{
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#dde8d5';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const cols = 3, rows = 1;
+    const offX = Math.floor((lng - tileToLng(tileX, zoom)) / (tileToLng(tileX+1, zoom) - tileToLng(tileX, zoom)) * tileSize);
+    const offY = Math.floor((lat - tileToLat(tileY, zoom)) / (tileToLat(tileY+1, zoom) - tileToLat(tileY, zoom)) * tileSize);
+    const startX = Math.floor(canvas.width/2) - offX;
+    const startY = Math.floor(canvas.height/2) - offY;
+
+    const loadTile = (tx, ty) => new Promise(res=>{
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = ()=> res({img,tx,ty});
+      img.onerror = ()=> res(null);
+      const s = ['a','b','c'][Math.abs(tx+ty)%3];
+      img.src = `https://tile.openstreetmap.org/${zoom}/${tx}/${ty}.png`;
+    });
+
+    const promises = [];
+    for(let r=-1;r<=1;r++) for(let c=-1;c<=1;c++) promises.push(loadTile(tileX+c, tileY+r));
+    const results = await Promise.all(promises);
+    results.forEach(r=>{
+      if(!r) return;
+      const {img, tx, ty} = r;
+      const dx = startX + (tx - tileX) * tileSize;
+      const dy = startY + (ty - tileY) * tileSize;
+      ctx.drawImage(img, dx, dy, tileSize, tileSize);
+    });
+
+    // Draw pin
+    const px = canvas.width/2, py = canvas.height/2;
+    ctx.beginPath(); ctx.arc(px, py-16, 8, 0, Math.PI*2);
+    ctx.fillStyle = '#c85a2a'; ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, py-8); ctx.lineTo(px-5, py-16); ctx.lineTo(px+5, py-16);
+    ctx.fillStyle = '#c85a2a'; ctx.fill();
+    // Glow ring
+    ctx.beginPath(); ctx.arc(px, py-16, 13, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(200,90,42,0.3)'; ctx.lineWidth = 4; ctx.stroke();
+  })();
+
+  // Overlay "Open in Maps" on hover
+  const overlay = document.createElement('a');
+  overlay.href = `https://www.google.com/maps?q=${lat},${lng}`;
+  overlay.target = '_blank';
+  overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:6px;text-decoration:none;';
+  overlay.innerHTML = '<span style="background:rgba(255,255,255,0.9);border-radius:5px;padding:2px 7px;font-family:Space Mono,monospace;font-size:0.38rem;color:#185FA5;font-weight:700;">Open in Maps ↗</span>';
+  mapWrap.appendChild(overlay);
+
+  container.appendChild(mapWrap);
+}
+
+function tileToLng(x, z){ return x / Math.pow(2,z) * 360 - 180; }
+function tileToLat(y, z){
+  const n = Math.PI - 2*Math.PI*y/Math.pow(2,z);
+  return 180/Math.PI * Math.atan(0.5*(Math.exp(n)-Math.exp(-n)));
+}
+
+function renderTrailheadSetup(container, trip){
+  container.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:0.75rem 0.8rem;display:flex;flex-direction:column;gap:0.5rem;';
+
+  const statusEl = document.createElement('div');
+  statusEl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);min-height:0.9rem;";
+
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = 'Search address or paste lat, lng…';
+  inp.style.cssText = "width:100%;box-sizing:border-box;padding:0.3rem 0.5rem;font-size:0.7rem;border:1.5px solid rgba(184,201,163,0.5);border-radius:7px;background:var(--paper);color:var(--bark);font-family:'Nunito',sans-serif;";
+
+  let _searchTimer = null;
+  inp.addEventListener('input', ()=>{
+    clearTimeout(_searchTimer);
+    const val = inp.value.trim();
+    if(!val){ statusEl.textContent = ''; return; }
+    // Check if it looks like coordinates: "44.22, -71.41" or "44.22 -71.41"
+    const coordMatch = val.match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/);
+    if(coordMatch){
+      statusEl.style.color = 'var(--moss)';
+      statusEl.textContent = '✓ Coordinates detected — click Save to confirm';
+      return;
+    }
+    statusEl.style.color = 'var(--stone)'; statusEl.textContent = 'Searching…';
+    _searchTimer = setTimeout(async ()=>{
+      try{
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=3&addressdetails=1`, {headers:{'Accept-Language':'en'}});
+        const data = await res.json();
+        if(!data.length){ statusEl.style.color='var(--ember)'; statusEl.textContent = 'Not found — try coordinates: lat, lng'; return; }
+        const r = data[0];
+        const shortAddr = r.display_name.split(',').slice(0,3).join(',').trim();
+        inp._resolved = { lat: parseFloat(r.lat), lng: parseFloat(r.lon), name: val, address: shortAddr };
+        statusEl.style.color = 'var(--moss)';
+        statusEl.textContent = '✓ Found: '+shortAddr;
+      } catch(e){
+        statusEl.style.color = 'var(--stone)'; statusEl.textContent = 'Search failed — enter coordinates instead';
+      }
+    }, 600);
+  });
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'gw-confirm-btn';
+  saveBtn.style.cssText = 'font-size:0.62rem;padding:0.3rem 0.8rem;align-self:flex-start;';
+  saveBtn.textContent = '✓ Save trailhead';
+  saveBtn.onclick = ()=>{
+    const val = inp.value.trim();
+    const coordMatch = val.match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/);
+    if(coordMatch){
+      trip.trailhead = { lat: parseFloat(coordMatch[1]), lng: parseFloat(coordMatch[2]), name: 'Trailhead', address: val };
+      scheduleSave(); sbPushTrip(trip); renderTripsPage(); return;
+    }
+    if(inp._resolved){
+      trip.trailhead = inp._resolved;
+      scheduleSave(); sbPushTrip(trip); renderTripsPage(); return;
+    }
+    statusEl.style.color = 'var(--ember)'; statusEl.textContent = 'Wait for address to resolve, or enter coordinates';
+  };
+
+  wrap.appendChild(inp);
+  wrap.appendChild(statusEl);
+  wrap.appendChild(saveBtn);
+  container.appendChild(wrap);
+}
+
 function renderTripsPage(){
   const root = document.getElementById('trips-root');
   if(!root) return;
@@ -11129,6 +11385,10 @@ function renderTripsPage(){
 
   topRow.appendChild(rightPanel);
   root.appendChild(topRow);
+
+  // ── TRAILHEAD PANEL ──
+  const thPanel = renderTrailheadPanel(trip);
+  if(thPanel) root.appendChild(thPanel);
 
   // ── BOTTOM ROW: person columns — full width ──
   const cols=document.createElement('div'); cols.className='trip-columns'; cols.style.marginTop='0';
