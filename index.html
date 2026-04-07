@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.81 — Gear Organizer</title>
+<title>BaseCamp v3.82 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -977,7 +977,7 @@ html.dark .trip-profile-section{background:rgba(18,28,16,0.88);border-color:rgba
   transition:border-color 0.2s;flex-shrink:0;
 }
 .trip-profile-avatar:hover{border-color:var(--sage);}
-.trip-profile-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.trip-profile-avatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;}
 .trip-profile-avatar-edit{
   position:absolute;bottom:-2px;right:-2px;
   background:var(--forest);border:2px solid white;border-radius:50%;
@@ -1153,9 +1153,10 @@ html.dark .trip-col-name{color:#a8d89a;}
   width:90px;flex-shrink:0;align-self:stretch;height:110px;
   display:flex;align-items:center;justify-content:center;
   font-size:1.4rem;font-weight:800;color:white;overflow:hidden;
+  border-top-left-radius:14px;
 }
 .trip-col-stats{display:flex;gap:0.4rem;flex-wrap:wrap;}
-.trip-col-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.trip-col-avatar img{width:100%;height:100%;object-fit:cover;display:block;border-top-left-radius:14px;}
 .trip-col-stat{
   font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);
   background:rgba(184,201,163,0.18);border-radius:6px;padding:2px 7px;
@@ -1936,7 +1937,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.81</div>
+      <div class="logo-sub">Gear Organizer · v3.82</div>
     </div>
   </div>
   <div class="nav-tabs">
