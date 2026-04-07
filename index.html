@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.75 — Gear Organizer</title>
+<title>BaseCamp v3.76 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.75</div>
+      <div class="logo-sub">Gear Organizer · v3.76</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11435,20 +11435,27 @@ function renderMemberFood(body, member, trip, members){
 
   // For section kcal headers — own planned = what I personally eat from my own entries
   const myId2 = member.isMe ? (_sbUser?.id||'me') : memberId;
-  const scheduledKcal = mealPlan.filter(e=>{
-    const cid = e.itemRef.memberId;
-    return member.isMe ? isMeId(cid) : cid===memberId;
-  }).reduce((s,e)=>{
-    const it = itemForEntry(e, members); if(!it) return s;
-    const qf = Math.min(1,(e.qty||1)/(it.qty||1));
-    const numEaters = Math.max(1,(e.eatenBy||[]).length);
-    return s + (it.kcal_total||0) * qf / numEaters;
-  }, 0);
+  // Personal share from own calendar entries (kcal, protein, carbs, fat)
+  function myOwnEntryMacro(field){
+    return mealPlan.filter(e=>{
+      const cid = e.itemRef.memberId;
+      return member.isMe ? isMeId(cid) : cid===memberId;
+    }).reduce((s,e)=>{
+      const it = itemForEntry(e, members); if(!it) return s;
+      const qf = Math.min(1,(e.qty||1)/(it.qty||1));
+      const numEaters = Math.max(1,(e.eatenBy||[]).length);
+      return s + (it[field]||0) * qf / numEaters;
+    }, 0);
+  }
+  const scheduledKcal   = myOwnEntryMacro('kcal_total');
+  const scheduledProt   = myOwnEntryMacro('protein');
+  const scheduledCarbs  = myOwnEntryMacro('carbs');
+  const scheduledFat    = myOwnEntryMacro('fat');
   const unplannedKcal = unplannedKcalAmt;
   const totalKcal     = scheduledKcal + unplannedKcalAmt;
-  const totalProtein  = plannedProtFromDays + unplannedProt;
-  const totalCarbs    = plannedCarbsFromDays + unplannedCarbs;
-  const totalFat      = allFood.reduce((s,i)=>s+effectiveFat(i),0); // fat unchanged for now
+  const totalProtein  = scheduledProt  + unplannedProt;
+  const totalCarbs    = scheduledCarbs + unplannedCarbs;
+  const totalFat      = scheduledFat   + unplannedMacro('fat');
 
   if(!allFood.length && !receivedEntries.length){
     body.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:0.55rem;color:var(--stone);opacity:0.55;padding:1rem 0.5rem;text-align:center;">No food in this pack</div>';
