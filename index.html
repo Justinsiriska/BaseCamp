@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.60 — Gear Organizer</title>
+<title>BaseCamp v3.61 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.60</div>
+      <div class="logo-sub">Gear Organizer · v3.61</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8992,6 +8992,19 @@ function renderProfileSection(root){
 // My pack items NOT on calendar → spread evenly across all days (incl. half-days).
 // Returns planned-only macros per day for all members (for macro row in calendar).
 // Also returns per-member breakdown for the dropdown.
+// Returns true if a mealPlan memberId refers to the current user
+// Handles both legacy 'me' string and actual UUIDs
+function isMeId(mid){ return mid === 'me' || (!!_sbUser && mid === _sbUser.id); }
+// Returns the member object for a mealPlan memberId
+function memberForId(mid, members){ return isMeId(mid) ? members.find(m=>m.isMe) : members.find(m=>m.id===mid); }
+// Returns the food item for a mealPlan entry
+function itemForEntry(entry, members){
+  const m = memberForId(entry.itemRef.memberId, members);
+  if(!m) return null;
+  if(m.isMe) return FOOD_ITEMS.find(i=>i.id===entry.itemRef.itemId);
+  return (m.food||[]).find(i=>i.id===entry.itemRef.itemId);
+}
+
 function getMyDayMacros(trip, members){
   const days = trip.days||0;
   if(!days) return [];
@@ -9015,9 +9028,7 @@ function getMyDayMacros(trip, members){
 
   mealPlan.forEach(entry=>{
     const {memberId,itemId}=entry.itemRef;
-    let item;
-    if(memberId==='me') item=FOOD_ITEMS.find(i=>i.id===itemId);
-    else{ const c=members.find(m=>m.id===memberId); item=c&&(c.food||[]).find(i=>i.id===itemId); }
+    const item = itemForEntry(entry, members);
     if(!item||!byDay[entry.day]) return;
 
     const totalKcal = item.kcal_total||0;
@@ -9033,9 +9044,7 @@ function getMyDayMacros(trip, members){
       const carbs = totalCarbs * frac;
       dayKcal += kcal; dayProt += prot; dayCarbs += carbs;
 
-      const eaterMember = eaterId==='me'
-        ? members.find(m=>m.isMe)
-        : members.find(m=>m.id===eaterId);
+      const eaterMember = memberForId(eaterId, members);
       const mName = eaterMember?.name || eaterId;
       if(!byDay[entry.day].byMember[mName]) byDay[entry.day].byMember[mName]={kcal:0,prot:0};
       byDay[entry.day].byMember[mName].kcal += kcal;
@@ -9240,13 +9249,8 @@ function renderMealCalendar(container, trip, members){
 function buildCalEntry(entry, trip, members, refresh){
   const {memberId, itemId} = entry.itemRef;
   let item, carrier;
-  if(memberId==='me'){
-    item=FOOD_ITEMS.find(i=>i.id===itemId);
-    carrier=members.find(m=>m.isMe);
-  } else {
-    carrier=members.find(m=>m.id===memberId);
-    item=carrier&&(carrier.food||[]).find(i=>i.id===itemId);
-  }
+  carrier = memberForId(memberId, members);
+  item = itemForEntry(entry, members);
   const name=item?item.name:'Unknown item';
   const eaterNames=entry.eatenBy.map(id=>{const m=members.find(x=>x.id===id);return m?m.name:id;}).join(', ');
 
@@ -9623,12 +9627,9 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
 
   // Get per-unit kcal/weight for context
   let perUnitKcal=0, perUnitW=0;
-  if(dragData.memberId==='me'){
-    const it2=FOOD_ITEMS.find(i=>i.id===dragData.itemId);
-    if(it2){ perUnitKcal=Math.round((it2.kcal_total||0)/(it2.qty||1)); perUnitW=Math.round((it2.w_total||0)/(it2.qty||1)); }
-  } else {
-    const c2=members.find(m=>m.id===dragData.memberId);
-    const it2=c2&&(c2.food||[]).find(i=>i.id===dragData.itemId);
+  {
+    const carrier2 = memberForId(dragData.memberId, members);
+    const it2 = carrier2?.isMe ? FOOD_ITEMS.find(i=>i.id===dragData.itemId) : (carrier2?.food||[]).find(i=>i.id===dragData.itemId);
     if(it2){ perUnitKcal=Math.round((it2.kcal_total||0)/(it2.qty||1)); perUnitW=Math.round((it2.w_total||0)/(it2.qty||1)); }
   }
 
@@ -11222,11 +11223,11 @@ function renderTripsPage(){
                   const mId = m.isMe ? (_sbUser?.id||'me') : m.id;
                   const carrierKey = m.isMe ? 'me' : m.id;
                   const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
-                  const mPlan = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===carrierKey);
+                  const mPlan = (trip.mealPlan||[]).filter(e=> m.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===carrierKey);
                   const plannedIds = new Set(mPlan.map(e=>e.itemRef.itemId));
                   const consumedKcal = mFood.filter(i=>plannedIds.has(i.id)).reduce((s,i)=>s+(i.kcal_total||0),0);
                   // Subtract portions shared away via calendar splits
-                  const sharedAwayKcal = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===carrierKey).reduce((s,e)=>{
+                  const sharedAwayKcal = (trip.mealPlan||[]).filter(e=> m.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===carrierKey).reduce((s,e)=>{
                     if(!e.splits) return s;
                     const myFrac = e.splits[mId] ?? (1/Math.max(1,(e.eatenBy||[]).length));
                     const totalFrac = Object.values(e.splits).reduce((a,v)=>a+v,0);
@@ -11237,7 +11238,7 @@ function renderTripsPage(){
                   const receivedKcal2 = members.filter(d=>d.id!==m.id&&!(m.isMe&&d.isMe)).reduce((s,donor)=>{
                     const dk = donor.isMe ? 'me' : donor.id;
                     const df = donor.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (donor.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
-                    return s+(trip.mealPlan||[]).filter(e=>e.itemRef.memberId===dk).reduce((a,e)=>{
+                    return s+(trip.mealPlan||[]).filter(e=> donor.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===dk).reduce((a,e)=>{
                       const frac = e.splits ? (e.splits[mId]||0) : ((e.eatenBy||[]).includes(mId)?1/Math.max(1,(e.eatenBy||[]).length):0);
                       const it = df.find(i=>i.id===e.itemRef.itemId);
                       return a+(it?(it.kcal_total||0)*frac:0);
@@ -11395,15 +11396,15 @@ function renderMemberFood(body, member, trip, members){
   if(trip){
     mealPlan.forEach(entry=>{
       const eaters = entry.eatenBy||[];
-      if(!eaters.includes(memberId)) return;
+      // Handle both UUID and legacy 'me' string
+      const isEater = eaters.includes(memberId) || (member.isMe && eaters.some(id=>isMeId(id)));
+      if(!isEater) return;
       const {memberId:carrierId, itemId} = entry.itemRef;
       // Skip if this member is the carrier (shown in their own list)
-      if(carrierId === memberId || (member.isMe && carrierId==='me')) return;
-      const carrierMember = members.find(m=> carrierId==='me' ? m.isMe : m.id===carrierId);
+      if(member.isMe ? isMeId(carrierId) : carrierId===memberId) return;
+      const carrierMember = memberForId(carrierId, members);
       if(!carrierMember) return;
-      const item = carrierMember.isMe
-        ? FOOD_ITEMS.find(i=>i.id===itemId)
-        : (carrierMember.food||[]).find(i=>i.id===itemId);
+      const item = itemForEntry(entry, members);
       if(!item) return;
       const fractions = entry.splits && Object.keys(entry.splits).length
         ? entry.splits
@@ -11417,7 +11418,7 @@ function renderMemberFood(body, member, trip, members){
   const scheduledIds = new Set(
     mealPlan.filter(e=>{
       const cid = e.itemRef.memberId;
-      return (member.isMe && cid==='me') || (!member.isMe && cid===memberId);
+      return member.isMe ? isMeId(cid) : cid===memberId;
     }).map(e=>e.itemRef.itemId)
   );
 
@@ -11429,7 +11430,7 @@ function renderMemberFood(body, member, trip, members){
     // Sum fractions given to OTHER members in all entries where this member is the carrier
     return mealPlan.filter(e=>{
       const cid = e.itemRef.memberId;
-      return ((member.isMe && cid==='me')||(!member.isMe && cid===memberId)) && e.itemRef.itemId===itemId;
+      return (member.isMe ? isMeId(cid) : cid===memberId) && e.itemRef.itemId===itemId;
     }).reduce((s,e)=>{
       if(!e.splits) return s;
       const myFrac = e.splits[memberId] ?? (1/(e.eatenBy||[1]).length);
@@ -11484,7 +11485,7 @@ function renderMemberFood(body, member, trip, members){
       row.draggable = true;
       row.title = 'Drag to calendar to plan';
       row.addEventListener('dragstart', e=>{
-        window._calDrag = {memberId:'me', itemId:item.id};
+        window._calDrag = {memberId: _sbUser?.id || 'me', itemId:item.id};
         e.dataTransfer.effectAllowed = 'copy';
         try{ e.dataTransfer.setData('text/plain', JSON.stringify(window._calDrag)); }catch(_){}
         const ghost = document.createElement('div');
@@ -11535,7 +11536,7 @@ function renderMemberFood(body, member, trip, members){
     if(!isUnplanned){
       const entries = mealPlan.filter(e=>{
         const cid = e.itemRef.memberId;
-        return ((member.isMe && cid==='me')||(!member.isMe && cid===memberId)) && e.itemRef.itemId===item.id;
+        return (member.isMe ? isMeId(cid) : cid===memberId) && e.itemRef.itemId===item.id;
       });
       if(entries.length){
         const badge = document.createElement('span');
