@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.46 — Gear Organizer</title>
+<title>BaseCamp v3.47 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1930,7 +1930,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.46</div>
+      <div class="logo-sub">Gear Organizer · v3.47</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9447,10 +9447,24 @@ function memberFoodWeight(member, packId){
   return (member.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(pid)).reduce((s,i)=>s+(i.w_total||0),0);
 }
 
-function memberFoodKcal(member, packId){
+function memberFoodKcal(member, packId, trip){
   const pid = packId || foodSeason;
-  if(member.isMe) return FOOD_ITEMS.filter(i=>i.s.includes(pid)).reduce((s,i)=>s+(i.kcal_total||0),0);
-  return (member.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(pid)).reduce((s,i)=>s+(i.kcal_total||0),0);
+  const food = member.isMe
+    ? FOOD_ITEMS.filter(i=>i.s.includes(pid))
+    : (member.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(pid));
+  const base = food.reduce((s,i)=>s+(i.kcal_total||0),0);
+  if(!trip) return base;
+  // Subtract shared-away portions
+  const mId = member.isMe ? (_sbUser?.id||'me') : member.id;
+  const carrierKey = member.isMe ? 'me' : member.id;
+  const sharedAway = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===carrierKey).reduce((s,e)=>{
+    if(!e.splits) return s;
+    const myFrac = e.splits[mId] ?? (1/Math.max(1,(e.eatenBy||[]).length));
+    const totalFrac = Object.values(e.splits).reduce((a,v)=>a+v,0);
+    const it = food.find(i=>i.id===e.itemRef.itemId);
+    return s+(it?(it.kcal_total||0)*Math.max(0,totalFrac-myFrac):0);
+  },0);
+  return base - sharedAway;
 }
 
 function getMemberItems(member, packId){
@@ -10434,7 +10448,7 @@ function renderTripsPage(){
   }
   const maxW = Math.max(...members.map(m=>memberGearWeight(m,trip.packId)+memberFoodWeight(m,trip.packId)),1);
   const totalGroupW = members.reduce((s,m)=>s+memberGearWeight(m,trip.packId)+memberFoodWeight(m,trip.packId),0);
-  const totalGroupKcal = members.reduce((s,m)=>s+memberFoodKcal(m,trip.packId),0);
+  const totalGroupKcal = members.reduce((s,m)=>s+memberFoodKcal(m,trip.packId,trip),0);
 
   // ── TOP ROW: left=header/flags/toggle, right=map+stats ──
   // We use a simple flex row. The right panel has a fixed height of 260px.
@@ -10713,14 +10727,34 @@ function renderTripsPage(){
                  <span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`
               : (()=>{
                   const packId2 = trip.packId;
+                  const mId = m.isMe ? (_sbUser?.id||'me') : m.id;
+                  const carrierKey = m.isMe ? 'me' : m.id;
                   const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
-                  const mPlan = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===(m.isMe?'me':m.id));
+                  const mPlan = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===carrierKey);
                   const plannedIds = new Set(mPlan.map(e=>e.itemRef.itemId));
                   const consumedKcal = mFood.filter(i=>plannedIds.has(i.id)).reduce((s,i)=>s+(i.kcal_total||0),0);
-                  const totalKcal2 = mFood.reduce((s,i)=>s+(i.kcal_total||0),0);
+                  // Subtract portions shared away via calendar splits
+                  const sharedAwayKcal = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===carrierKey).reduce((s,e)=>{
+                    if(!e.splits) return s;
+                    const myFrac = e.splits[mId] ?? (1/Math.max(1,(e.eatenBy||[]).length));
+                    const totalFrac = Object.values(e.splits).reduce((a,v)=>a+v,0);
+                    const item2 = mFood.find(i=>i.id===e.itemRef.itemId);
+                    return s + (item2?(item2.kcal_total||0)*Math.max(0,totalFrac-myFrac):0);
+                  },0);
+                  // Add kcal received from others via splits
+                  const receivedKcal2 = members.filter(d=>d.id!==m.id&&!(m.isMe&&d.isMe)).reduce((s,donor)=>{
+                    const dk = donor.isMe ? 'me' : donor.id;
+                    const df = donor.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (donor.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
+                    return s+(trip.mealPlan||[]).filter(e=>e.itemRef.memberId===dk).reduce((a,e)=>{
+                      const frac = e.splits ? (e.splits[mId]||0) : ((e.eatenBy||[]).includes(mId)?1/Math.max(1,(e.eatenBy||[]).length):0);
+                      const it = df.find(i=>i.id===e.itemRef.itemId);
+                      return a+(it?(it.kcal_total||0)*frac:0);
+                    },0);
+                  },0);
+                  const totalKcal2 = Math.round(mFood.reduce((s,i)=>s+(i.kcal_total||0),0) - sharedAwayKcal + receivedKcal2);
                   return '<span class="trip-col-stat">🍽 <strong>'+dwTrip(foodW)+'</strong></span>'
                     +'<span class="trip-col-stat">⚡ <strong>'+totalKcal2.toLocaleString()+'kcal</strong></span>'
-                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+consumedKcal.toLocaleString()+'kcal planned</span>':'');
+                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+Math.round(consumedKcal).toLocaleString()+'kcal planned</span>':'');
                 })()
             }
           </div>
@@ -10899,13 +10933,32 @@ function renderMemberFood(body, member, trip, members){
   const scheduled = allFood.filter(i=>scheduledIds.has(i.id));
   const unplanned = allFood.filter(i=>!scheduledIds.has(i.id));
 
-  const totalKcal    = allFood.reduce((s,i)=>s+(i.kcal_total||0),0);
+  // Compute how much of each owned item this member is sharing away via calendar splits
+  function sharedAwayFrac(itemId){
+    // Sum fractions given to OTHER members in all entries where this member is the carrier
+    return mealPlan.filter(e=>{
+      const cid = e.itemRef.memberId;
+      return ((member.isMe && cid==='me')||(!member.isMe && cid===memberId)) && e.itemRef.itemId===itemId;
+    }).reduce((s,e)=>{
+      if(!e.splits) return s;
+      const myFrac = e.splits[memberId] ?? (1/(e.eatenBy||[1]).length);
+      const totalFrac = Object.values(e.splits).reduce((a,v)=>a+v,0);
+      return s + Math.max(0, totalFrac - myFrac);
+    }, 0);
+  }
+
+  function effectiveKcal(item){ return (item.kcal_total||0) * Math.max(0, 1 - sharedAwayFrac(item.id)); }
+  function effectiveProt(item){ return (item.protein||0) * Math.max(0, 1 - sharedAwayFrac(item.id)); }
+  function effectiveCarbs(item){ return (item.carbs||0) * Math.max(0, 1 - sharedAwayFrac(item.id)); }
+  function effectiveFat(item){  return (item.fat||0)   * Math.max(0, 1 - sharedAwayFrac(item.id)); }
+
+  const totalKcal    = allFood.reduce((s,i)=>s+effectiveKcal(i),0);
   const totalW       = allFood.reduce((s,i)=>s+(i.w_total||0),0);
-  const totalProtein = allFood.reduce((s,i)=>s+(i.protein||0),0);
-  const totalCarbs   = allFood.reduce((s,i)=>s+(i.carbs||0),0);
-  const totalFat     = allFood.reduce((s,i)=>s+(i.fat||0),0);
-  const scheduledKcal = scheduled.reduce((s,i)=>s+(i.kcal_total||0),0);
-  const unplannedKcal = unplanned.reduce((s,i)=>s+(i.kcal_total||0),0);
+  const totalProtein = allFood.reduce((s,i)=>s+effectiveProt(i),0);
+  const totalCarbs   = allFood.reduce((s,i)=>s+effectiveCarbs(i),0);
+  const totalFat     = allFood.reduce((s,i)=>s+effectiveFat(i),0);
+  const scheduledKcal = scheduled.reduce((s,i)=>s+effectiveKcal(i),0);
+  const unplannedKcal = unplanned.reduce((s,i)=>s+effectiveKcal(i),0);
   const receivedKcal  = receivedEntries.reduce((s,r)=>s+(r.item.kcal_total||0)*r.frac,0);
 
   if(!allFood.length && !receivedEntries.length){
@@ -11004,7 +11057,9 @@ function renderMemberFood(body, member, trip, members){
 
     const kcalEl = document.createElement('span');
     kcalEl.className = 'food-item-kcal';
-    kcalEl.textContent = (item.kcal_total||0).toLocaleString()+'kcal';
+    const dispKcal = Math.round(effectiveKcal(item));
+    kcalEl.textContent = dispKcal.toLocaleString()+'kcal';
+    if(dispKcal < (item.kcal_total||0)) kcalEl.title = 'Original: '+(item.kcal_total||0)+'kcal (sharing some away)';
     row.appendChild(kcalEl);
 
     const wEl = document.createElement('span');
