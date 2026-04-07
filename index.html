@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.61 — Gear Organizer</title>
+<title>BaseCamp v3.62 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.61</div>
+      <div class="logo-sub">Gear Organizer · v3.62</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8244,7 +8244,14 @@ function foodCatDelete(catId){
 }
 
 function foodRemoveItem(iid){
-  FOOD_ITEMS=FOOD_ITEMS.filter(i=>i.id!==iid);
+  FOOD_ITEMS = FOOD_ITEMS.filter(i=>i.id!==iid);
+  // Also remove any calendar entries referencing this item from all trips
+  TRIPS.forEach(t=>{
+    if(!t.mealPlan) return;
+    const before = t.mealPlan.length;
+    t.mealPlan = t.mealPlan.filter(e=>e.itemRef.itemId!==iid);
+    if(t.mealPlan.length !== before) sbPushTrip(t);
+  });
   renderFoodPage();
   scheduleSave();
 }
@@ -9076,9 +9083,20 @@ const MEAL_ROWS = [
 // ── Single shared drag state — one object, set on dragstart, cleared on drop/dragend ──
 let _draggedEntry = null; // {entry, trip} — the calendar entry being moved
 
+function cleanOrphanedMealPlan(trip, members){
+  if(!trip?.mealPlan?.length) return;
+  const before = trip.mealPlan.length;
+  trip.mealPlan = trip.mealPlan.filter(e => !!itemForEntry(e, members));
+  if(trip.mealPlan.length !== before){
+    markDirty();
+    sbPushTrip(trip);
+  }
+}
+
 function renderMealCalendar(container, trip, members){
   container.innerHTML='';
   const days = trip.days||0;
+  cleanOrphanedMealPlan(trip, members);
   if(!days){
     container.innerHTML='<div style="text-align:center;padding:1.2rem;font-family:\'Space Mono\',monospace;font-size:0.52rem;color:var(--stone);opacity:0.65;">Set trip duration above to plan meals 📅</div>';
     return;
@@ -9195,7 +9213,7 @@ function renderMealCalendar(container, trip, members){
         empty.textContent='drop food here';
         cell.appendChild(empty);
       } else {
-        entries.forEach(entry=> cell.appendChild(buildCalEntry(entry, trip, members, refresh)));
+        entries.forEach(entry=>{ const ce=buildCalEntry(entry,trip,members,refresh); if(ce) cell.appendChild(ce); });
       }
 
       // ── Drop handling ──
@@ -9251,7 +9269,8 @@ function buildCalEntry(entry, trip, members, refresh){
   let item, carrier;
   carrier = memberForId(memberId, members);
   item = itemForEntry(entry, members);
-  const name=item?item.name:'Unknown item';
+  if(!item) return null; // item was deleted — skip this entry
+  const name=item.name;
   const eaterNames=entry.eatenBy.map(id=>{const m=members.find(x=>x.id===id);return m?m.name:id;}).join(', ');
 
   const el=document.createElement('div');
