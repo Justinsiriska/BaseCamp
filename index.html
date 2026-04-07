@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.31 — Gear Organizer</title>
+<title>BaseCamp v3.32 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.31</div>
+      <div class="logo-sub">Gear Organizer · v3.32</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5185,9 +5185,11 @@ function upd(cid,iid,field,val){
   renderAll();
 }
 function addItem(cid){
-  // Gear Wall only — does NOT add to active pack (s:[])
+  // Gear Wall only — adds to currently active pack
   const cat=CATS.find(c=>c.id===cid);
-  const newItem={id:uid(),name:'',w:0,extra:'',link:'',s:[],_new:true};
+  const activePill = document.querySelector('.s-pill.active');
+  const activePack = activePill?.dataset?.s || season;
+  const newItem={id:uid(),name:'',w:0,extra:'',link:'',s:[activePack],_new:true};
   cat.items.push(newItem);
   gwCollapsed[cid]=false;
   renderAll();
@@ -5272,7 +5274,12 @@ function packInlineAddSave(cid, iid){
   const extra = (document.getElementById(`pia-extra-${iid}`)?.value||'').trim();
   // Use explicit targetPack if set (e.g. from trips page), otherwise fall back to active season
   const catCard2 = document.querySelector(`.cat-card[data-cid="${cid}"]`);
-  const targetPack = catCard2?.querySelector('.pack-inline-add')?.dataset?.targetPack || season;
+  const formTargetPack = catCard2?.querySelector('.pack-inline-add')?.dataset?.targetPack;
+  // Read the active pack pill from the UI as ground truth — more reliable than season variable
+  const activePill = document.querySelector('.s-pill.active');
+  const activePillPack = activePill?.dataset?.s;
+  const targetPack = formTargetPack || activePillPack || season;
+  console.log('[BaseCamp] packInlineAddSave: targetPack='+targetPack+', activePillPack='+activePillPack+', season='+season);
   const newItem = {id:uid(), name, w, extra, link:'', s:[targetPack]};
   // Also ensure the cat includes this pack
   const catObj = CATS.find(c=>c.id===cid);
@@ -6797,7 +6804,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.31) ──
+// ── Persistence layer (rebuilt v3.32) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
