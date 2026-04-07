@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.63 — Gear Organizer</title>
+<title>BaseCamp v3.64 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.63</div>
+      <div class="logo-sub">Gear Organizer · v3.64</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7573,6 +7573,7 @@ function renderFoodBag(){
         <div class="food-item-left">
           <span class="food-item-drag-handle">⠿</span>
           <span class="food-item-name food-item-name-editable" title="Tap to edit unit weight/kcal" onclick="event.stopPropagation();foodEditUnitOpen('${item.id}')">${escH(item.name)}</span>
+          ${qty>1?`<span style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:2px;flex-shrink:0;">×${qty}</span>`:''}
           <span style="font-family:'Space Mono',monospace;font-size:0.35rem;color:var(--stone);opacity:0.55;margin-left:3px;">${Math.round(totalKcal/qty)}kcal · ${dw(Math.round(totalW/qty))}/unit</span>
         </div>
         <div class="food-item-right">
@@ -9291,13 +9292,15 @@ function buildCalEntry(entry, trip, members, refresh){
   nameEl.textContent=name;
   el.appendChild(nameEl);
 
-  // Always show qty badge
+  // Qty chip — prominent, right after name
   {
     const qty = entry.qty||1;
-    const qtyBadge=document.createElement('span');
-    qtyBadge.style.cssText="font-family:'Space Mono',monospace;font-size:0.38rem;background:"+(qty>1?'rgba(232,168,53,0.18)':'rgba(74,103,65,0.12)')+";border-radius:4px;padding:1px 5px;color:"+(qty>1?'var(--sun)':'var(--stone)')+";font-weight:800;flex-shrink:0;";
-    qtyBadge.textContent='\xd7'+qty;
-    el.appendChild(qtyBadge);
+    if(qty > 1){
+      const qtyChip = document.createElement('span');
+      qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.7rem;font-weight:900;color:var(--sun);background:rgba(232,168,53,0.15);border-radius:5px;padding:1px 5px;flex-shrink:0;line-height:1.4;";
+      qtyChip.textContent = '×'+qty;
+      nameEl.insertAdjacentElement('afterend', qtyChip);
+    }
   }
 
   const eaterWrap=document.createElement('div');
@@ -11584,8 +11587,17 @@ function renderMemberFood(body, member, trip, members){
     const itemSchedQty = scheduledQtyMap[item.id]||0;
     const itemUnplannedQty = Math.max(0, itemTotalQty - itemSchedQty);
 
-    if(itemSchedQty > 0 && !isUnplanned){
-      // Planned badge — show scheduled qty + day/meal
+    // ── Qty chip — right after item name, always visible ──
+    // Shows "×4" in amber when all planned, "×2 of 3" in amber when partial, "×3" in amber when none planned
+    if(!isUnplanned){
+      // Planned section row
+      if(itemTotalQty > 1){
+        const qtyChip = document.createElement('span');
+        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:3px;flex-shrink:0;";
+        qtyChip.textContent = '×'+itemSchedQty;
+        name.after(qtyChip); // insert right after the name span
+      }
+      // Day/meal badge
       const entries = mealPlan.filter(e=>{
         const cid = e.itemRef.memberId;
         return (member.isMe ? isMeId(cid) : cid===memberId) && e.itemRef.itemId===item.id;
@@ -11593,29 +11605,24 @@ function renderMemberFood(body, member, trip, members){
       if(entries.length){
         const badge = document.createElement('span');
         badge.className = 'food-planned-badge';
-        const dayStr = entries.map(e=>'D'+e.day+' '+e.meal.charAt(0).toUpperCase()+e.meal.slice(1,3)).join(', ');
-        badge.textContent = (itemSchedQty > 1 ? '×'+itemSchedQty+' ' : '') + dayStr;
+        badge.textContent = entries.map(e=>'D'+e.day+' '+e.meal.charAt(0).toUpperCase()+e.meal.slice(1,3)).join(', ');
         row.appendChild(badge);
       }
-    }
-
-    // Qty badge — show total qty, or remaining if partially planned
-    if(isUnplanned && itemSchedQty > 0){
-      // Partially planned — show unplanned remainder
-      const qtyBadge = document.createElement('span');
-      qtyBadge.style.cssText = "font-family:'Space Mono',monospace;font-size:0.36rem;background:rgba(184,201,163,0.15);border-radius:4px;padding:1px 5px;color:var(--stone);font-weight:800;flex-shrink:0;";
-      qtyBadge.textContent = '×'+itemUnplannedQty+' unplanned';
-      row.appendChild(qtyBadge);
-    } else if(itemTotalQty > 1 && !isUnplanned){
-      const qtyBadge = document.createElement('span');
-      qtyBadge.style.cssText = "font-family:'Space Mono',monospace;font-size:0.36rem;background:rgba(232,168,53,0.15);border-radius:4px;padding:1px 5px;color:var(--sun);font-weight:800;flex-shrink:0;";
-      qtyBadge.textContent = '×'+itemTotalQty;
-      row.appendChild(qtyBadge);
-    } else if(itemTotalQty > 1 && isUnplanned && itemSchedQty === 0){
-      const qtyBadge = document.createElement('span');
-      qtyBadge.style.cssText = "font-family:'Space Mono',monospace;font-size:0.36rem;background:rgba(232,168,53,0.15);border-radius:4px;padding:1px 5px;color:var(--sun);font-weight:800;flex-shrink:0;";
-      qtyBadge.textContent = '×'+itemTotalQty;
-      row.appendChild(qtyBadge);
+    } else {
+      // Unplanned section row — show remaining qty
+      if(itemSchedQty > 0){
+        // Partially planned — show only the remainder
+        const qtyChip = document.createElement('span');
+        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--stone);margin-left:3px;flex-shrink:0;";
+        qtyChip.textContent = '×'+itemUnplannedQty;
+        name.after(qtyChip);
+      } else if(itemTotalQty > 1){
+        // Fully unplanned
+        const qtyChip = document.createElement('span');
+        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:3px;flex-shrink:0;";
+        qtyChip.textContent = '×'+itemTotalQty;
+        name.after(qtyChip);
+      }
     }
 
     const kcalEl = document.createElement('span');
