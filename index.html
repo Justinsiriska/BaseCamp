@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.95 — Gear Organizer</title>
+<title>BaseCamp v3.96 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1857,6 +1857,43 @@ html.dark .crew-pack-total{color:#a8d89a;}
 }
 .crew-empty-icon{font-size:2.5rem;margin-bottom:0.5rem;}
 
+/* ── Crew page two-column layout ── */
+.crew-layout{display:flex;gap:1.5rem;align-items:flex-start;}
+.crew-main{flex:1;min-width:0;}
+.crew-right{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:0.8rem;}
+@media(max-width:900px){.crew-layout{flex-direction:column;}.crew-right{width:100%;}}
+
+/* Public toggle in profile card */
+.crew-public-toggle{display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid rgba(184,201,163,0.25);}
+.crew-toggle-label{font-family:'Space Mono',monospace;font-size:0.45rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--stone);flex:1;}
+.crew-toggle-switch{position:relative;width:32px;height:18px;flex-shrink:0;}
+.crew-toggle-switch input{opacity:0;width:0;height:0;position:absolute;}
+.crew-toggle-slider{position:absolute;inset:0;background:rgba(184,201,163,0.4);border-radius:20px;cursor:pointer;transition:background 0.2s;}
+.crew-toggle-slider:before{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:white;border-radius:50%;transition:transform 0.2s;}
+.crew-toggle-switch input:checked + .crew-toggle-slider{background:var(--forest);}
+.crew-toggle-switch input:checked + .crew-toggle-slider:before{transform:translateX(14px);}
+
+/* Public users panel */
+.pub-panel{background:rgba(250,247,242,0.7);border:1.5px solid rgba(184,201,163,0.45);border-radius:14px;overflow:hidden;}
+html.dark .pub-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.5);}
+.pub-panel-hd{font-family:'Space Mono',monospace;font-size:0.45rem;text-transform:uppercase;letter-spacing:1px;color:var(--forest);font-weight:700;padding:0.7rem 0.8rem 0.4rem;}
+.pub-search{width:100%;box-sizing:border-box;font-family:'Nunito',sans-serif;font-size:0.62rem;color:var(--bark);background:rgba(184,201,163,0.15);border:1px solid rgba(184,201,163,0.4);border-radius:8px;padding:0.35rem 0.6rem;outline:none;margin:0 0.8rem 0.5rem;width:calc(100% - 1.6rem);}
+.pub-search:focus{border-color:var(--sage);}
+.pub-user-row{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.8rem;border-top:1px solid rgba(184,201,163,0.2);cursor:pointer;}
+.pub-user-row:hover{background:rgba(184,201,163,0.1);}
+.pub-user-name{font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--bark);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+html.dark .pub-user-name{color:#c0d8a8;}
+.pub-user-followers{font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);white-space:nowrap;}
+.pub-follow-btn{font-family:'Space Mono',monospace;font-size:0.42rem;font-weight:700;padding:3px 8px;border-radius:6px;border:1.5px solid var(--sage);background:transparent;color:var(--forest);cursor:pointer;white-space:nowrap;}
+.pub-follow-btn.following{background:var(--forest);color:white;border-color:var(--forest);}
+.pub-follow-btn:hover{background:var(--moss);color:white;border-color:var(--moss);}
+
+/* Followers panel */
+.followers-panel{background:rgba(250,247,242,0.7);border:1.5px solid rgba(184,201,163,0.45);border-radius:14px;overflow:hidden;}
+html.dark .followers-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.5);}
+.followers-row{display:flex;align-items:center;gap:0.55rem;padding:0.4rem 0.8rem;border-top:1px solid rgba(184,201,163,0.2);}
+.followers-name{font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:700;color:var(--bark);flex:1;}
+html.dark .followers-name{color:#c0d8a8;}
 
 /* ── Trail map widget ── */
 .trip-layout{display:block;}
@@ -1989,7 +2026,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.95</div>
+      <div class="logo-sub">Gear Organizer · v3.96</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4357,6 +4394,27 @@ function renderCrewPage(){
     colors.appendChild(dot);
   });
   infoCol.appendChild(colors);
+
+  // Public profile toggle
+  const pubToggleRow = document.createElement('div');
+  pubToggleRow.className = 'crew-public-toggle';
+  const pubLbl = document.createElement('span');
+  pubLbl.className = 'crew-toggle-label';
+  pubLbl.textContent = 'Public profile — let anyone discover & follow you';
+  const togSwitch = document.createElement('label');
+  togSwitch.className = 'crew-toggle-switch';
+  const togInp = document.createElement('input');
+  togInp.type = 'checkbox';
+  togInp.checked = !!MY_PROFILE.is_public;
+  togInp.onchange = ()=>{ MY_PROFILE.is_public = togInp.checked; saveProfile(); renderCrewPage(); };
+  const togSlider = document.createElement('span');
+  togSlider.className = 'crew-toggle-slider';
+  togSwitch.appendChild(togInp);
+  togSwitch.appendChild(togSlider);
+  pubToggleRow.appendChild(pubLbl);
+  pubToggleRow.appendChild(togSwitch);
+  infoCol.appendChild(pubToggleRow);
+
   cardRow.appendChild(infoCol);
 
   const metaLbl = document.createElement('div');
@@ -4392,12 +4450,20 @@ function renderCrewPage(){
   root.appendChild(searchWrap);
   if(crewSearchQuery) renderCrewSearchResults();
 
+  // ── TWO-COLUMN LAYOUT ──
+  const layout = document.createElement('div');
+  layout.className = 'crew-layout';
+  const crewMain = document.createElement('div');
+  crewMain.className = 'crew-main';
+  const crewRight = document.createElement('div');
+  crewRight.className = 'crew-right';
+
   // ── PENDING INCOMING REQUESTS ──
   if(_pendingIn.length){
     const pendingTitle = document.createElement('div');
     pendingTitle.className = 'crew-section-title';
     pendingTitle.textContent = '🔔 Friend Requests (' + _pendingIn.length + ')';
-    root.appendChild(pendingTitle);
+    crewMain.appendChild(pendingTitle);
     _pendingIn.forEach(req=>{
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.9rem;background:rgba(74,143,168,0.08);border:1.5px solid rgba(74,143,168,0.25);border-radius:12px;margin-bottom:0.5rem;';
@@ -4419,7 +4485,7 @@ function renderCrewPage(){
       declineBtn.textContent = '✕';
       declineBtn.onclick = ()=>sbRemoveFriend(req.id);
       row.appendChild(declineBtn);
-      root.appendChild(row);
+      crewMain.appendChild(row);
     });
   }
 
@@ -4427,7 +4493,7 @@ function renderCrewPage(){
   const secTitle = document.createElement('div');
   secTitle.className = 'crew-section-title';
   secTitle.textContent = 'My Crew';
-  root.appendChild(secTitle);
+  crewMain.appendChild(secTitle);
 
   const allFriends = _sbUser ? _friends : MOCK_FRIENDS;
 
@@ -4439,8 +4505,7 @@ function renderCrewPage(){
     } else {
       empty.innerHTML = '<div class="crew-empty-icon">👋</div>No crew yet — search for hikers above!';
     }
-    root.appendChild(empty);
-    return;
+    crewMain.appendChild(empty);
   }
 
   const grid = document.createElement('div');
@@ -4577,7 +4642,133 @@ function renderCrewPage(){
     grid.appendChild(fCard);
   });
 
-  root.appendChild(grid);
+  if(allFriends.length) crewMain.appendChild(grid);
+
+  // ── FOLLOWING LIST (people I follow) ──
+  if(_following.length){
+    const followTitle = document.createElement('div');
+    followTitle.className = 'crew-section-title';
+    followTitle.style.marginTop = '1.2rem';
+    followTitle.textContent = 'Following';
+    crewMain.appendChild(followTitle);
+    const followGrid = document.createElement('div');
+    followGrid.className = 'crew-friends-grid';
+    _following.forEach(f=>{
+      const pub = _publicUsers.find(u=>u.id===f.following_id);
+      if(!pub) return;
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:0.65rem;padding:0.55rem 0.8rem;background:rgba(250,247,242,0.7);border:1.5px solid rgba(184,201,163,0.4);border-radius:12px;margin-bottom:0.4rem;cursor:pointer;';
+      row.onclick = ()=>{ /* could expand pack view */ };
+      const av = _crewAvatar(pub.gear_data?.profile?.photo||null, pub.gear_data?.profile?.color||'#4a8fa8', pub.full_name, 36, true);
+      row.appendChild(av);
+      const nm = document.createElement('div');
+      nm.style.cssText = "flex:1;font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;color:var(--forest);";
+      nm.textContent = pub.full_name;
+      row.appendChild(nm);
+      const unfollowBtn = document.createElement('button');
+      unfollowBtn.className = 'pub-follow-btn following';
+      unfollowBtn.textContent = 'Following';
+      unfollowBtn.onclick = e=>{ e.stopPropagation(); sbUnfollow(pub.id); };
+      row.appendChild(unfollowBtn);
+      followGrid.appendChild(row);
+    });
+    crewMain.appendChild(followGrid);
+  }
+
+  // ── RIGHT COLUMN: followers panel + public users ──
+  crewRight.appendChild(_buildFollowersPanel());
+  crewRight.appendChild(_buildPublicUsersPanel());
+
+  layout.appendChild(crewMain);
+  layout.appendChild(crewRight);
+  root.appendChild(layout);
+}
+
+function _buildFollowersPanel(){
+  const panel = document.createElement('div');
+  panel.className = 'followers-panel';
+  const hd = document.createElement('div');
+  hd.className = 'pub-panel-hd';
+  hd.textContent = '👣 Followers (' + _followers.length + ')';
+  panel.appendChild(hd);
+  if(!_followers.length){
+    const empty = document.createElement('div');
+    empty.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.62rem;color:var(--stone);padding:0.6rem 0.8rem 0.8rem;opacity:0.6;";
+    empty.textContent = 'No followers yet — make your profile public!';
+    panel.appendChild(empty);
+    return panel;
+  }
+  _followers.forEach(f=>{
+    const prof = f.profile || f.profiles;
+    if(!prof) return;
+    const row = document.createElement('div');
+    row.className = 'followers-row';
+    const av = _crewAvatar(prof.gear_data?.profile?.photo||null, prof.gear_data?.profile?.color||'#4a8fa8', prof.full_name||'?', 28, true);
+    row.appendChild(av);
+    const nm = document.createElement('div');
+    nm.className = 'followers-name';
+    nm.textContent = prof.full_name || 'BaseCamp User';
+    row.appendChild(nm);
+    panel.appendChild(row);
+  });
+  return panel;
+}
+
+function _buildPublicUsersPanel(){
+  const panel = document.createElement('div');
+  panel.className = 'pub-panel';
+
+  const hd = document.createElement('div');
+  hd.className = 'pub-panel-hd';
+  hd.textContent = '🌐 Discover Hikers';
+  panel.appendChild(hd);
+
+  const searchInp = document.createElement('input');
+  searchInp.className = 'pub-search';
+  searchInp.placeholder = 'Search public users…';
+  searchInp.value = _pubSearchQuery;
+  searchInp.oninput = function(){ _pubSearchQuery = this.value; renderCrewPage(); };
+  panel.appendChild(searchInp);
+
+  const filtered = _publicUsers.filter(u=>{
+    if(!_pubSearchQuery) return true;
+    return (u.full_name||'').toLowerCase().includes(_pubSearchQuery.toLowerCase());
+  });
+
+  if(!filtered.length){
+    const empty = document.createElement('div');
+    empty.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.62rem;color:var(--stone);padding:0.6rem 0.8rem 0.8rem;opacity:0.6;";
+    empty.textContent = _pubSearchQuery ? 'No users found.' : 'No public users yet.';
+    panel.appendChild(empty);
+    return panel;
+  }
+
+  filtered.forEach(u=>{
+    const row = document.createElement('div');
+    row.className = 'pub-user-row';
+    const av = _crewAvatar(u.gear_data?.profile?.photo||null, u.gear_data?.profile?.color||'#4a8fa8', u.full_name, 32, true);
+    row.appendChild(av);
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0;';
+    const nm = document.createElement('div');
+    nm.className = 'pub-user-name';
+    nm.textContent = u.full_name;
+    info.appendChild(nm);
+    const followers = document.createElement('div');
+    followers.className = 'pub-user-followers';
+    followers.textContent = u.follower_count + (u.follower_count===1?' follower':' followers');
+    info.appendChild(followers);
+    row.appendChild(info);
+    const following = isFollowing(u.id);
+    const btn = document.createElement('button');
+    btn.className = 'pub-follow-btn' + (following?' following':'');
+    btn.textContent = following ? 'Following' : 'Follow';
+    btn.onclick = e=>{ e.stopPropagation(); following ? sbUnfollow(u.id) : sbFollow(u.id); };
+    row.appendChild(btn);
+    panel.appendChild(row);
+  });
+
+  return panel;
 }
 
 function profileStartBioEdit(){
@@ -6931,7 +7122,7 @@ function getPayload(){
     trips: TRIPS.map(t=>({id:t.id,title:t.title,date:t.date||'',location:t.location||'',days:t.days||null,mealPlan:t.mealPlan||[],packId:t.packId,memberIds:t.memberIds,dismissedFlags:t.dismissedFlags||[],trail:t.trail||null,trailhead:t.trailhead||null})),
     deletedTrips: DELETED_TRIPS,
     activeTripId,
-    profile: {name:MY_PROFILE.name, bio:MY_PROFILE.bio||"", color:MY_PROFILE.color, photo:MY_PROFILE._userUploadedPhoto||null}
+    profile: {name:MY_PROFILE.name, bio:MY_PROFILE.bio||"", color:MY_PROFILE.color, photo:MY_PROFILE._userUploadedPhoto||null, is_public:!!MY_PROFILE.is_public}
   };
 }
 
@@ -7216,6 +7407,7 @@ function loadState(){
       if(d.profile.name) MY_PROFILE.name = d.profile.name;
       if(d.profile.bio !== undefined) MY_PROFILE.bio = d.profile.bio;
       if(d.profile.color) MY_PROFILE.color = d.profile.color;
+      if(d.profile.is_public !== undefined) MY_PROFILE.is_public = d.profile.is_public;
       if(d.profile.photo){
         MY_PROFILE._userUploadedPhoto = d.profile.photo;
         MY_PROFILE.avatarDataUrl = '<img src="' + d.profile.photo + '" style="width:100%;height:100%;object-fit:cover;">';
@@ -12489,7 +12681,7 @@ async function sbInit(){
     // - If localStorage has data → push to cloud (backup), return
     // - If localStorage is empty → fetch from cloud and restore
     await sbPullData();
-    await Promise.all([sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
+    await Promise.all([sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites(), sbLoadFollows(), sbLoadPublicUsers()]);
     await sbLoadTripMemberStatus();
     sbSubscribeTrips();
   }
@@ -12500,7 +12692,7 @@ async function sbInit(){
       _sbUser = session.user;
       authUpdateUI(session.user);
       await sbPullData(); // push-or-restore
-      await Promise.all([sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites()]);
+      await Promise.all([sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites(), sbLoadFollows(), sbLoadPublicUsers()]);
       await sbLoadTripMemberStatus();
       sbSubscribeTrips();
       renderAll(); renderCrewPage(); renderTripsPage();
@@ -12816,6 +13008,63 @@ let _pendingOut = [];      // outgoing friend requests [{id, addressee_id}]
 let _tripInvitesIn = [];   // incoming trip invites [{id, trip_id, trip_title, inviter_name, invited_by}]
 let _crewSearchResults = [];
 let _crewSearchDebounce = null;
+
+// ── Follows system ──
+let _following = [];       // [{following_id, created_at}] — people I follow
+let _followers = [];       // [{follower_id, created_at, profiles:{full_name,gear_data}}] — people following me
+let _publicUsers = [];     // [{id, full_name, gear_data, follower_count}]
+let _pubSearchQuery = '';
+
+async function sbLoadFollows(){
+  const sb = sbClient();
+  if(!sb || !_sbUser) return;
+  const [fing, fwrs] = await Promise.all([
+    sb.from('follows').select('following_id').eq('follower_id', _sbUser.id),
+    sb.from('follows').select('follower_id, profiles!follows_follower_id_fkey(id,full_name,avatar_url,gear_data)').eq('following_id', _sbUser.id)
+  ]);
+  _following = fing.data || [];
+  _followers = (fwrs.data || []).map(r=>({...r, profile: r.profiles}));
+}
+
+async function sbLoadPublicUsers(){
+  const sb = sbClient();
+  if(!sb) return;
+  // Get all public profiles (is_public flag in gear_data.profile)
+  const { data } = await sb.from('profiles')
+    .select('id, full_name, avatar_url, gear_data')
+    .neq('id', _sbUser?.id || '');
+  // Filter to public only and compute follower counts
+  const pub = (data||[]).filter(u=>u.gear_data?.profile?.is_public);
+  // Get follow counts for each
+  if(pub.length){
+    const ids = pub.map(u=>u.id);
+    const { data: counts } = await sb.from('follows').select('following_id').in('following_id', ids);
+    const countMap = {};
+    (counts||[]).forEach(r=>{ countMap[r.following_id] = (countMap[r.following_id]||0)+1; });
+    _publicUsers = pub.map(u=>({...u, follower_count: countMap[u.id]||0}))
+      .sort((a,b)=>b.follower_count - a.follower_count);
+  } else {
+    _publicUsers = [];
+  }
+}
+
+async function sbFollow(userId){
+  const sb = sbClient();
+  if(!sb || !_sbUser){ toast('Sign in to follow users'); openAuthModal(); return; }
+  await sb.from('follows').insert({ follower_id: _sbUser.id, following_id: userId });
+  await Promise.all([sbLoadFollows(), sbLoadPublicUsers()]);
+  renderCrewPage();
+}
+
+async function sbUnfollow(userId){
+  const sb = sbClient();
+  if(!sb || !_sbUser) return;
+  await sb.from('follows').delete().eq('follower_id', _sbUser.id).eq('following_id', userId);
+  await Promise.all([sbLoadFollows(), sbLoadPublicUsers()]);
+  renderCrewPage();
+}
+
+function isFollowing(userId){ return _following.some(f=>f.following_id===userId); }
 
 // Load friends and pending requests from Supabase
 async function sbLoadFriends(){
