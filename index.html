@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.56 — Gear Organizer</title>
+<title>BaseCamp v3.58 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.56</div>
+      <div class="logo-sub">Gear Organizer · v3.58</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7354,7 +7354,7 @@ const FRIDGE_DB = [
 // User-added fridge items
 let FRIDGE_CUSTOM = [];
 let fridgeSortBy = 'default'; // default|kcal|protein|carbs|fat|weight
-let fridgeActivecat = 'all';  // all|breakfast|lunch|dinner|snacks|drinks
+let fridgeActivecat = 'previous';  // previous|all|fruit|meat|carbs|meals|snacks|drinks
 let fridgeExpandedItem = null; // id of expanded item
 let fridgeCollapsed = {}; // {catId: true} — collapsed section headers in "All" view
 let FRIDGE_HISTORY = [];
@@ -7614,6 +7614,12 @@ function renderFoodBag(){
 let _foodDragTargetCat = null;
 
 // ── Fridge render — flat list with search + drag ──
+function fridgeRemoveHistory(key){
+  FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.key!==key);
+  renderFridge();
+  scheduleSave();
+}
+
 function renderFridgeBars(){
   // Category filter bar
   const catBar = document.getElementById('fridge-cat-bar');
@@ -7684,6 +7690,7 @@ function renderFridge(){
         </div>
         <div class="fridge-item-right">
           <button class="fridge-add-btn" onclick="event.stopPropagation();foodOpenServingModal('${escH(h.fridgeId)}')">+ Add</button>
+          <button class="del-btn" title="Remove from history" onclick="event.stopPropagation();fridgeRemoveHistory('${escH(h.key)}')">✕</button>
         </div>`;
       row.addEventListener('dragstart', e=>{
         e.dataTransfer.setData('fridgeId', h.fridgeId);
@@ -8415,18 +8422,66 @@ function fqaResultsNav(dir){
   items[_fqaResultIdx]?.scrollIntoView({block:'nearest'});
 }
 
+// Claude AI fallback when USDA is rate-limited
+async function fqaAILookup(query){
+  const status = document.getElementById('fqa-status');
+  const spinner = document.getElementById('fqa-spinner');
+  if(spinner) spinner.style.display='block';
+  try{
+    // Use the existing Claude AI path (needs api key in session)
+    let apiKey = sessionStorage.getItem('tw_apikey');
+    if(!apiKey){
+      // No key — just show manual entry with a helpful note
+      if(status){ status.style.color='var(--stone)'; status.textContent='No results found — enter macros manually'; }
+      fqaShowManual(query);
+      return;
+    }
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001', max_tokens:300,
+        system:'You are a nutrition database. Return ONLY a JSON object, no markdown, no backticks, no explanation.',
+        messages:[{role:'user',content:`Nutritional values per 100g for "${query}". Return exactly: {"kcal":0,"protein":0,"carbs":0,"fat":0,"sodium":0}`}]
+      })
+    });
+    const data = await resp.json();
+    const n = JSON.parse(data.content?.[0]?.text.replace(/\`\`\`json?|\`\`\`/g,'').trim()||'{}');
+    if(n.kcal){
+      fqaSelectResult(query, Math.round(n.kcal), Math.round(n.protein*10)/10, Math.round(n.carbs*10)/10, Math.round(n.fat*10)/10, Math.round(n.sodium||0));
+      if(status){ status.style.color='var(--moss)'; status.textContent='✓ Macros filled via AI — adjust if needed'; }
+    } else {
+      if(status){ status.style.color='var(--stone)'; status.textContent='Could not find — enter macros manually'; }
+      fqaShowManual(query);
+    }
+  } catch(e){
+    if(status){ status.style.color='var(--stone)'; status.textContent='Could not find — enter macros manually'; }
+    fqaShowManual(query);
+  } finally {
+    if(spinner) spinner.style.display='none';
+  }
+}
+
 async function fqaSearch(query){
   const spinner = document.getElementById('fqa-spinner');
   const status = document.getElementById('fqa-status');
   try{
-    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=8&api_key=DEMO_KEY&dataType=Foundation,SR%20Legacy,Branded`;
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=8&api_key=cfngMG6UKqp49e0Y6D6UE8LdaAEKuI8Q9vBcpmsf&dataType=Foundation,SR%20Legacy,Branded`;
     const resp = await fetch(url);
+
+    // Rate limited or error — fall back to Claude AI
+    if(resp.status === 429 || resp.status >= 500){
+      if(status){ status.style.color='var(--stone)'; status.textContent='Looking up via AI…'; }
+      await fqaAILookup(query);
+      return;
+    }
+
     const data = await resp.json();
     const foods = (data.foods||[]).slice(0,8);
 
     if(!foods.length){
-      if(status){ status.style.color='var(--stone)'; status.textContent='No results — enter macros manually below'; }
-      fqaShowManual(query);
+      if(status){ status.style.color='var(--stone)'; status.textContent='No USDA results — trying AI…'; }
+      await fqaAILookup(query);
       return;
     }
 
@@ -8477,8 +8532,8 @@ async function fqaSearch(query){
     if(status) status.textContent = '';
 
   } catch(e){
-    if(status){ status.style.color='var(--stone)'; status.textContent='Search failed — enter macros manually'; }
-    fqaShowManual(query);
+    if(status){ status.style.color='var(--stone)'; status.textContent='Search failed — trying AI…'; }
+    await fqaAILookup(query);
   } finally {
     if(spinner) spinner.style.display='none';
   }
