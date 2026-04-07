@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.73 — Gear Organizer</title>
+<title>BaseCamp v3.74 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.73</div>
+      <div class="logo-sub">Gear Organizer · v3.74</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11432,8 +11432,17 @@ function renderMemberFood(body, member, trip, members){
   const unplannedFat   = unplannedMacro('fat');
   const unplannedKcalAmt = unplannedMacro('kcal_total');
 
-  // For section kcal headers
-  const scheduledKcal = plannedKcalFromDays;
+  // For section kcal headers — own planned = what I personally eat from my own entries
+  const myId2 = member.isMe ? (_sbUser?.id||'me') : memberId;
+  const scheduledKcal = mealPlan.filter(e=>{
+    const cid = e.itemRef.memberId;
+    return member.isMe ? isMeId(cid) : cid===memberId;
+  }).reduce((s,e)=>{
+    const it = itemForEntry(e, members); if(!it) return s;
+    const qf = Math.min(1,(e.qty||1)/(it.qty||1));
+    const numEaters = Math.max(1,(e.eatenBy||[]).length);
+    return s + (it.kcal_total||0) * qf / numEaters;
+  }, 0);
   const unplannedKcal = unplannedKcalAmt;
   const totalKcal     = scheduledKcal + unplannedKcalAmt;
   const totalProtein  = plannedProtFromDays + unplannedProt;
