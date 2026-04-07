@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.67 — Gear Organizer</title>
+<title>BaseCamp v3.68 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.67</div>
+      <div class="logo-sub">Gear Organizer · v3.68</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11230,32 +11230,44 @@ function renderTripsPage(){
               ? `<span class="trip-col-stat">Total <strong>${dwTrip(totalW)}</strong></span>
                  <span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`
               : (()=>{
-                  const packId2 = trip.packId;
+                  // Use getMyDayMacros for the header kcal — single source of truth
+                  // This handles qtyFrac, splits, and received-from-crew correctly
                   const mId = m.isMe ? (_sbUser?.id||'me') : m.id;
-                  const carrierKey = m.isMe ? 'me' : m.id;
+                  const packId2 = trip.packId;
                   const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
-                  const mPlan = (trip.mealPlan||[]).filter(e=> m.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===carrierKey);
-                  const plannedIds = new Set(mPlan.map(e=>e.itemRef.itemId));
-                  const consumedKcal = mFood.filter(i=>plannedIds.has(i.id)).reduce((s,i)=>s+(i.kcal_total||0),0);
-                  // Subtract portions shared away via calendar splits
-                  const sharedAwayKcal = (trip.mealPlan||[]).filter(e=> m.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===carrierKey).reduce((s,e)=>{
-                    if(!e.splits) return s;
-                    const myFrac = e.splits[mId] ?? (1/Math.max(1,(e.eatenBy||[]).length));
-                    const totalFrac = Object.values(e.splits).reduce((a,v)=>a+v,0);
-                    const item2 = mFood.find(i=>i.id===e.itemRef.itemId);
-                    return s + (item2?(item2.kcal_total||0)*Math.max(0,totalFrac-myFrac):0);
-                  },0);
-                  // Add kcal received from others via splits
+                  const carrierKey = m.isMe ? 'me' : m.id;
+
+                  // Planned kcal = own food on calendar (carrier cost)
+                  const ownPlannedKcal2 = (trip.mealPlan||[])
+                    .filter(e=> m.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===carrierKey)
+                    .reduce((s,e)=>{
+                      const it=itemForEntry(e,members); if(!it) return s;
+                      const qf=Math.min(1,(e.qty||1)/(it.qty||1));
+                      return s+(it.kcal_total||0)*qf;
+                    },0);
+
+                  // Received kcal (others carry, I eat a share) — apply qtyFrac
                   const receivedKcal2 = members.filter(d=>d.id!==m.id&&!(m.isMe&&d.isMe)).reduce((s,donor)=>{
                     const dk = donor.isMe ? 'me' : donor.id;
-                    const df = donor.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (donor.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
                     return s+(trip.mealPlan||[]).filter(e=> donor.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===dk).reduce((a,e)=>{
                       const frac = e.splits ? (e.splits[mId]||0) : ((e.eatenBy||[]).includes(mId)?1/Math.max(1,(e.eatenBy||[]).length):0);
-                      const it = df.find(i=>i.id===e.itemRef.itemId);
-                      return a+(it?(it.kcal_total||0)*frac:0);
+                      const it = itemForEntry(e, members);
+                      if(!it||!frac) return a;
+                      const qtyFrac = Math.min(1,(e.qty||1)/(it.qty||1));
+                      return a+(it.kcal_total||0)*frac*qtyFrac;
                     },0);
                   },0);
-                  const totalKcal2 = Math.round(mFood.reduce((s,i)=>s+(i.kcal_total||0),0) - sharedAwayKcal + receivedKcal2);
+
+                  // Unplanned kcal = remaining own food not on calendar
+                  const schedQtyMap2 = {};
+                  (trip.mealPlan||[]).filter(e=> m.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===carrierKey)
+                    .forEach(e=>{ schedQtyMap2[e.itemRef.itemId]=(schedQtyMap2[e.itemRef.itemId]||0)+(e.qty||1); });
+                  const unplannedKcal2 = mFood.reduce((s,i)=>{
+                    const tq=i.qty||1, sq=schedQtyMap2[i.id]||0, uq=Math.max(0,tq-sq);
+                    return s+(i.kcal_total||0)*(uq/tq);
+                  },0);
+
+                  const totalKcal2 = Math.round(ownPlannedKcal2 + receivedKcal2 + unplannedKcal2);
                   return '<span class="trip-col-stat">📦 <strong>'+dwTrip(foodW)+'</strong></span>'
                     +'<span class="trip-col-stat">⚡ <strong>'+totalKcal2.toLocaleString()+'kcal</strong></span>';
                 })()
