@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.64 — Gear Organizer</title>
+<title>BaseCamp v3.65 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.64</div>
+      <div class="logo-sub">Gear Organizer · v3.65</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11494,14 +11494,38 @@ function renderMemberFood(body, member, trip, members){
   function effectiveCarbs(item){ return (item.carbs||0) * Math.max(0, 1 - sharedAwayFrac(item)); }
   function effectiveFat(item){  return (item.fat||0)   * Math.max(0, 1 - sharedAwayFrac(item)); }
 
-  const totalKcal    = allFood.reduce((s,i)=>s+effectiveKcal(i),0);
   const totalW       = allFood.reduce((s,i)=>s+(i.w_total||0),0);
-  const totalProtein = allFood.reduce((s,i)=>s+effectiveProt(i),0);
-  const totalCarbs   = allFood.reduce((s,i)=>s+effectiveCarbs(i),0);
-  const totalFat     = allFood.reduce((s,i)=>s+effectiveFat(i),0);
-  const scheduledKcal = scheduled.reduce((s,i)=>s+effectiveKcal(i),0);
-  const unplannedKcal = unplanned.reduce((s,i)=>s+effectiveKcal(i),0);
-  const receivedKcal  = receivedEntries.reduce((s,r)=>s+(r.item.kcal_total||0)*r.frac,0);
+  const receivedKcal = receivedEntries.reduce((s,r)=>s+(r.item.kcal_total||0)*r.frac,0);
+
+  // Planned macros = sum of getMyDayMacros across all days (qty-aware, split-aware)
+  const dayMacrosArr = getMyDayMacros(trip, members);
+  const plannedKcalFromDays    = dayMacrosArr.reduce((s,d)=>s+(d.kcal||0),0);
+  const plannedProtFromDays    = dayMacrosArr.reduce((s,d)=>s+(d.protein||0),0);
+  const plannedCarbsFromDays   = dayMacrosArr.reduce((s,d)=>s+(d.carbs||0),0);
+
+  // Unplanned macros = pro-rated for unplanned units only
+  function unplannedMacro(field){
+    return allFood.reduce((s,i)=>{
+      const totalQty   = i.qty||1;
+      const schedQty   = scheduledQtyMap[i.id]||0;
+      const unplannedQty = Math.max(0, totalQty - schedQty);
+      if(!unplannedQty) return s;
+      const perUnit = (i[field]||0) / totalQty;
+      return s + perUnit * unplannedQty;
+    }, 0);
+  }
+  const unplannedProt  = unplannedMacro('protein');
+  const unplannedCarbs = unplannedMacro('carbs');
+  const unplannedFat   = unplannedMacro('fat');
+  const unplannedKcalAmt = unplannedMacro('kcal_total');
+
+  // For section kcal headers
+  const scheduledKcal = plannedKcalFromDays;
+  const unplannedKcal = unplannedKcalAmt;
+  const totalKcal     = scheduledKcal + unplannedKcalAmt;
+  const totalProtein  = plannedProtFromDays + unplannedProt;
+  const totalCarbs    = plannedCarbsFromDays + unplannedCarbs;
+  const totalFat      = allFood.reduce((s,i)=>s+effectiveFat(i),0); // fat unchanged for now
 
   if(!allFood.length && !receivedEntries.length){
     body.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:0.55rem;color:var(--stone);opacity:0.55;padding:1rem 0.5rem;text-align:center;">No food in this pack</div>';
@@ -11511,10 +11535,14 @@ function renderMemberFood(body, member, trip, members){
   // ── Macro summary pills ──
   const pillsRow = document.createElement('div');
   pillsRow.className = 'food-summary-pills';
-  const effKcal = Math.round(totalKcal + receivedKcal);
-  const effProt = Math.round(totalProtein + receivedEntries.reduce((s,r)=>s+(r.item.protein||0)*r.frac,0));
-  const effCarbs = Math.round(totalCarbs + receivedEntries.reduce((s,r)=>s+(r.item.carbs||0)*r.frac,0));
-  const effFat   = Math.round(totalFat   + receivedEntries.reduce((s,r)=>s+(r.item.fat||0)*r.frac,0));
+  // Pills = planned (day sums) + unplanned remainder + received from crew
+  const recvProt  = receivedEntries.reduce((s,r)=>s+(r.item.protein||0)*r.frac,0);
+  const recvCarbs = receivedEntries.reduce((s,r)=>s+(r.item.carbs||0)*r.frac,0);
+  const recvFat   = receivedEntries.reduce((s,r)=>s+(r.item.fat||0)*r.frac,0);
+  const effKcal  = Math.round(totalKcal + receivedKcal);
+  const effProt  = Math.round(totalProtein + recvProt);
+  const effCarbs = Math.round(totalCarbs + recvCarbs);
+  const effFat   = Math.round(totalFat + recvFat);
   // Planned kcal = items on calendar (carrier entries only, effective after splits)
   pillsRow.innerHTML =
     (effProt>0  ? '<span class="food-sum-pill wt">🥩 '+effProt+'g prot</span>' : '')+
@@ -11716,7 +11744,7 @@ function renderMemberFood(body, member, trip, members){
   // Unplanned section: own items not yet on calendar
   if(unplanned.length){
     body.appendChild(secHd(trip?.days ? 'Unplanned' : 'Food bag', unplannedKcal));
-    unplanned.forEach(item=> body.appendChild(buildItemRow(item, false)));
+    unplanned.forEach(item=> body.appendChild(buildItemRow(item, true)));
   }
 }
 
