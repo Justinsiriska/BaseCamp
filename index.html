@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.52 — Gear Organizer</title>
+<title>BaseCamp v3.53 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.52</div>
+      <div class="logo-sub">Gear Organizer · v3.53</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8433,18 +8433,20 @@ async function fqaSearch(query){
       const fat     = Math.round(getNut('total lipid')*10)/10;
       const sodium  = Math.round(getNut('sodium'));
 
+      // Title-case USDA all-caps names
+      const tcName = f.description.toLowerCase().replace(/\b\w/g, c=>c.toUpperCase());
       const row = document.createElement('div');
       row.className = 'fqa-result-item';
       row.style.cssText = 'padding:6px 10px;cursor:pointer;border-bottom:1px solid rgba(184,201,163,0.2);transition:background 0.1s;';
       row.innerHTML =
-        `<div style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.description}</div>`+
+        `<div style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tcName}</div>`+
         `<div style="font-family:'Space Mono',monospace;font-size:0.36rem;color:var(--stone);margin-top:1px;">`+
         `${kcal}kcal · ${protein}g prot · ${carbs}g carbs · ${fat}g fat <span style="opacity:0.55;">per 100g</span></div>`;
 
       row.addEventListener('mouseenter', ()=>{ row.style.background='rgba(184,201,163,0.15)'; });
       row.addEventListener('mouseleave', ()=>{ row.style.background=''; });
       row.addEventListener('click', ()=>{
-        fqaSelectResult(f.description, kcal, protein, carbs, fat, sodium);
+        fqaSelectResult(tcName, kcal, protein, carbs, fat, sodium);
       });
       res.appendChild(row);
     });
@@ -8478,7 +8480,9 @@ function fqaSelectResult(name, kcal, protein, carbs, fat, sodium){
   const sodEl = document.getElementById('fqa-sodium'); if(sodEl) sodEl.value = sodium;
 
   fqaResultsHide();
-  fqaShowManual(name); // show the fields for review
+  fqaShowManual(name);
+  // Scroll fields into view
+  setTimeout(()=>document.getElementById('fqa-fields')?.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
   const status = document.getElementById('fqa-status');
   if(status){ status.style.color='var(--moss)'; status.textContent='✓ Macros filled from USDA — adjust if needed'; }
 }
