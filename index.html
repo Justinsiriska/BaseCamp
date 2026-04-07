@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.87 — Gear Organizer</title>
+<title>BaseCamp v3.89 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1988,7 +1988,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.87</div>
+      <div class="logo-sub">Gear Organizer · v3.89</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10910,7 +10910,7 @@ document.addEventListener('click', e=>{
 }, true);
 
 // ── Trailhead Panel ──
-let _trailheadCollapsed = false;
+let _trailheadCollapsed = true;
 
 function renderTrailheadPanel(trip){
   // Auto-detect from GPX start if no trailhead set
@@ -11096,7 +11096,7 @@ const WMO_ICONS = {
 function wmoLabel(c){ return WMO_LABELS[c]||''; }
 function wmoIcon(c){ return WMO_ICONS[c]||'🌡️'; }
 
-let _wxCollapsed = false;
+let _wxCollapsed = true;
 let _wxCache = {}; // key: tripId → { data, ts, isHistorical }
 
 async function fetchWeatherForTrip(trip){
@@ -11490,7 +11490,7 @@ function renderTripsPage(){
   hdr.innerHTML=`<div class="trip-meta" style="margin-bottom:0.4rem;display:flex;align-items:center;flex-wrap:wrap;gap:0.3rem;">
     <span id="trip-date-display-${trip.id}" style="cursor:pointer;border-bottom:1px dashed rgba(74,103,65,0.35);padding-bottom:1px;" title="Click to set date" onclick="openTripDatePicker('${trip.id}',this)">${trip.date||'<span style=\"opacity:0.4\">+ date</span>'}</span>
     ${trip.location?`<span style="opacity:0.5">·</span> ${escH(trip.location)} `:''}
-    <span style="opacity:0.5">·</span> ${members.length} people · Group: ${dwTrip(totalGroupW)} · ${totalGroupKcal.toLocaleString()} kcal
+    <span style="opacity:0.5">·</span> ${members.length} people
   </div>`;
 
   // Invite friends button — leaders only
@@ -11569,6 +11569,13 @@ function renderTripsPage(){
     <button class="trip-mode-btn${tripMode==='gear'?' active':''}" onclick="tripMode='gear';renderTripsPage()">🎒 Gear</button>
     <button class="trip-mode-btn${tripMode==='food'?' active':''}" onclick="tripMode='food';renderTripsPage()">🍽️ Food</button>`;
   content.appendChild(toggle);
+
+  // Trailhead + weather live in the left column, below the toggle
+  const thPanel = renderTrailheadPanel(trip);
+  if(thPanel){ thPanel.style.marginTop='0.5rem'; content.appendChild(thPanel); }
+  const wxPanel = renderWeatherPanel(trip);
+  if(wxPanel){ wxPanel.style.marginTop='0'; content.appendChild(wxPanel); }
+
   topRow.appendChild(content);
 
   // RIGHT: fixed-height container holding map + stats side by side
@@ -11662,15 +11669,6 @@ function renderTripsPage(){
 
   topRow.appendChild(rightPanel);
   root.appendChild(topRow);
-
-  // ── TRAILHEAD + WEATHER PANELS (constrained width) ──
-  const panelWrap = document.createElement('div');
-  panelWrap.style.cssText = 'width:520px;max-width:100%;';
-  const thPanel = renderTrailheadPanel(trip);
-  if(thPanel) panelWrap.appendChild(thPanel);
-  const wxPanel = renderWeatherPanel(trip);
-  if(wxPanel) panelWrap.appendChild(wxPanel);
-  root.appendChild(panelWrap);
 
   // ── BOTTOM ROW: person columns — full width ──
   const cols=document.createElement('div'); cols.className='trip-columns'; cols.style.marginTop='0';
