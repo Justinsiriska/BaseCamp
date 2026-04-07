@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.96 — Gear Organizer</title>
+<title>BaseCamp v3.97 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2026,7 +2026,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.96</div>
+      <div class="logo-sub">Gear Organizer · v3.97</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4645,7 +4645,11 @@ function renderCrewPage(){
   if(allFriends.length) crewMain.appendChild(grid);
 
   // ── FOLLOWING LIST (people I follow) ──
-  if(_following.length){
+  // ── FOLLOWING LIST — only people NOT already in crew ──
+  const crewIds = new Set((_sbUser ? _friends : []).map(f=>f.id));
+  const followingNonCrew = _following.filter(f=>!crewIds.has(f.following_id));
+
+  if(followingNonCrew.length){
     const followTitle = document.createElement('div');
     followTitle.className = 'crew-section-title';
     followTitle.style.marginTop = '1.2rem';
@@ -4653,12 +4657,11 @@ function renderCrewPage(){
     crewMain.appendChild(followTitle);
     const followGrid = document.createElement('div');
     followGrid.className = 'crew-friends-grid';
-    _following.forEach(f=>{
+    followingNonCrew.forEach(f=>{
       const pub = _publicUsers.find(u=>u.id===f.following_id);
       if(!pub) return;
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:0.65rem;padding:0.55rem 0.8rem;background:rgba(250,247,242,0.7);border:1.5px solid rgba(184,201,163,0.4);border-radius:12px;margin-bottom:0.4rem;cursor:pointer;';
-      row.onclick = ()=>{ /* could expand pack view */ };
       const av = _crewAvatar(pub.gear_data?.profile?.photo||null, pub.gear_data?.profile?.color||'#4a8fa8', pub.full_name, 36, true);
       row.appendChild(av);
       const nm = document.createElement('div');
