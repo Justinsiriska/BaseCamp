@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.53 — Gear Organizer</title>
+<title>BaseCamp v3.55 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.53</div>
+      <div class="logo-sub">Gear Organizer · v3.55</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2204,7 +2204,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
             <div class="gw-title">🧊 Fridge</div>
             <div class="gw-subtitle">Everything you eat · drag or click + Add</div>
           </div>
-          <button class="gw-confirm-btn" style="font-size:0.65rem;padding:0.25rem 0.6rem;white-space:nowrap;" onclick="openAddToFridgeModal()">＋ New Item</button>
+          <button class="gw-confirm-btn" style="font-size:0.65rem;padding:0.25rem 0.6rem;white-space:nowrap;" onclick="foodQuickAddOpen(null, true)">＋ New Item</button>
         </div>
         <div style="padding:0.4rem 0.6rem 0.3rem;">
           <input id="fridge-search" class="gw-field-inp" type="text" placeholder="🔍 Search fridge…" oninput="renderFridge()" style="width:100%;box-sizing:border-box;font-size:0.72rem;padding:0.28rem 0.5rem;margin-bottom:0.3rem;">
@@ -7655,7 +7655,8 @@ function renderFridge(){
   const isMetric = U.v==='g';
   const perLabel = '/100kcal';
 
-  let allItems = [...FRIDGE_DB, ...FRIDGE_CUSTOM];
+  // Custom items float to top in default sort — they're user-specific
+  let allItems = [...FRIDGE_CUSTOM, ...FRIDGE_DB];
 
   // Filter by search
   if(q) allItems = allItems.filter(f=>f.name.toLowerCase().includes(q)||(f.note||'').toLowerCase().includes(q));
@@ -7894,7 +7895,7 @@ function addToFridgeSave(){
   }
   const kcal=parseFloat(document.getElementById('af-kcal')?.value)||0;
   if(!kcal){ toast('⚠️ Please enter calories'); return; }
-  FRIDGE_CUSTOM.push({
+  FRIDGE_CUSTOM.unshift({
     id:'cu'+Date.now(), name,
     kcal, protein:parseFloat(document.getElementById('af-protein')?.value)||0,
     carbs:parseFloat(document.getElementById('af-carbs')?.value)||0,
@@ -8338,8 +8339,10 @@ function foodAdjustCount(iid, delta){
 // ── Quick-add food item directly into a category + auto-save to Fridge ──
 let _fqaCatId = null;
 
-function foodQuickAddOpen(catId){
+let _fqaFridgeOnly = false;
+function foodQuickAddOpen(catId, fridgeOnly){
   _fqaCatId = catId;
+  _fqaFridgeOnly = !!fridgeOnly;
   // Reset
   ['fqa-name','fqa-kcal-total','fqa-protein-total','fqa-carbs-total','fqa-fat-total','fqa-sodium'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.value = '';
@@ -8364,6 +8367,12 @@ function foodQuickAddOpen(catId){
     const preferred = catId || FOOD_CATS[0]?.id;
     if(preferred) catSel.value = preferred;
   }
+
+  // Update modal title and save button based on mode
+  const titleEl = document.querySelector('#food-quick-add-modal .modal-title');
+  if(titleEl) titleEl.textContent = fridgeOnly ? '🧊 Add to Fridge' : '🍽️ Add to Food Bag';
+  const saveBtn = document.getElementById('fqa-save-btn');
+  if(saveBtn) saveBtn.textContent = fridgeOnly ? '✓ Save to Fridge' : '✓ Add to Bag & Fridge';
 
   document.getElementById('food-quick-add-modal').classList.add('open');
   setTimeout(()=>document.getElementById('fqa-name')?.focus(), 80);
@@ -8534,6 +8543,7 @@ function foodQuickAddSave(){
   });
 
   document.getElementById('food-quick-add-modal').classList.remove('open');
+
   // Add to history so it shows in Previous tab
   const hKey = fridgeId+'|100|g';
   FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.key!==hKey);
@@ -8541,9 +8551,26 @@ function foodQuickAddSave(){
     kcal:kcal100, cat:catId, ts:Date.now()});
   if(FRIDGE_HISTORY.length>40) FRIDGE_HISTORY.length=40;
 
+  // If opened from "Add item to this bag" — also add to the food bag immediately
+  if(!_fqaFridgeOnly){
+    FOOD_ITEMS.push({
+      id: uid(), fridgeId, name,
+      amount: 100, unit: 'g', qty: 1,
+      w_total: 100,
+      kcal_total: kcal100,
+      protein: protein100,
+      carbs: carbs100,
+      fat: fat100,
+      sodium: sodium100,
+      catId, s: [foodSeason]
+    });
+    toast(`✅ "${name}" added to bag & saved to Fridge`);
+  } else {
+    toast(`✅ "${name}" saved to Fridge`);
+  }
+
   renderFoodPage();
   scheduleSave();
-  toast(`✅ "${name}" saved to Fridge`);
 }
 
 function foodAddCatModal(){
@@ -12808,7 +12835,7 @@ function sbSubscribeTrips(){
         </div>
       </div>
       <div style="display:flex;gap:0.5rem;">
-        <button class="gw-confirm-btn" onclick="foodQuickAddSave()" style="flex:1;">✓ Save to Fridge</button>
+        <button class="gw-confirm-btn" id="fqa-save-btn" onclick="foodQuickAddSave()" style="flex:1;">✓ Save to Fridge</button>
         <button class="gw-cancel-btn" onclick="document.getElementById('food-quick-add-modal').classList.remove('open')">✕ Cancel</button>
       </div>
     </div>
