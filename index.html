@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.44 — Gear Organizer</title>
+<title>BaseCamp v3.45 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1124,7 +1124,7 @@ html.dark .trip-mini-bar-label{color:#a8d89a;}
 .trip-col{
   flex:1;min-width:240px;
   background:rgba(250,247,242,0.7);border:2px solid rgba(184,201,163,0.45);
-  border-radius:16px;overflow:hidden;
+  border-radius:16px;overflow:visible;
   backdrop-filter:blur(6px);display:flex;flex-direction:column;
 }
 html.dark .trip-col{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.5);}
@@ -1909,7 +1909,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.44</div>
+      <div class="logo-sub">Gear Organizer · v3.45</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6872,7 +6872,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.44) ──
+// ── Persistence layer (rebuilt v3.45) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -12084,18 +12084,30 @@ function sbSubscribeTrips(){
         renderTripsPage();
         toast('🏕️ New trip invite from ' + (p?.full_name || 'Someone') + '!');
       })
-    // Watch profiles — crew member gear/food changes update the owner's shared trip view
+    // Watch profiles — crew member gear/food changes update in real-time
     .on('postgres_changes', { event:'UPDATE', schema:'public', table:'profiles' },
       async (payload)=>{
         const changedUserId = payload.new?.id;
         if(!changedUserId || changedUserId === _sbUser.id) return;
-        // Only care if this person is in a trip we own or share
+        // Check if this person is connected to any of our trips
         const hasConnection = TRIPS.some(t=>
           (!t._shared && (t.memberIds||[]).includes(changedUserId)) ||
           (t._shared && t._ownerId === changedUserId)
         );
         if(!hasConnection) return;
-        await sbPullSharedTrips();
+        // Re-fetch this friend's latest gear_data directly
+        const sb2 = sbClient();
+        if(sb2){
+          const { data: profile } = await sb2.from('profiles')
+            .select('id, full_name, avatar_url, gear_data').eq('id', changedUserId).single();
+          if(profile){
+            const idx = _friends.findIndex(f=>f.id===changedUserId);
+            const photo = profile.gear_data?.profile?.photo || null;
+            const updated = { ...(_friends[idx]||{}), id:profile.id, full_name:profile.full_name,
+              avatar_url:profile.avatar_url, photo, gear_data:profile.gear_data };
+            if(idx>=0) _friends[idx] = updated; else _friends.push(updated);
+          }
+        }
         renderTripsPage();
       })
     .subscribe();
