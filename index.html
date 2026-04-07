@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.35 — Gear Organizer</title>
+<title>BaseCamp v3.36 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.35</div>
+      <div class="logo-sub">Gear Organizer · v3.36</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6807,7 +6807,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.35) ──
+// ── Persistence layer (rebuilt v3.36) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -11228,6 +11228,8 @@ async function sbPullData(){
   if(error || !data?.gear_data) return;
   const cloud = data.gear_data;
   const migrated = migratePayload({...cloud});
+  console.log('[BaseCamp] sbPullData RESTORE: cloud trips='+( migrated.trips||[]).length+', items='+(migrated.cats||[]).reduce((s,c)=>s+(c.items||[]).length,0));
+  console.trace('[BaseCamp] sbPullData called from:');
   localStorage.setItem(SAVE_KEY, JSON.stringify(migrated));
   loadState();
   renderAll();
