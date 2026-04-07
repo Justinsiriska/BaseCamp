@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.55 — Gear Organizer</title>
+<title>BaseCamp v3.56 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.55</div>
+      <div class="logo-sub">Gear Organizer · v3.56</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2204,7 +2204,10 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
             <div class="gw-title">🧊 Fridge</div>
             <div class="gw-subtitle">Everything you eat · drag or click + Add</div>
           </div>
-          <button class="gw-confirm-btn" style="font-size:0.65rem;padding:0.25rem 0.6rem;white-space:nowrap;" onclick="foodQuickAddOpen(null, true)">＋ New Item</button>
+          <div style="display:flex;gap:0.35rem;flex-shrink:0;">
+            <button class="gw-cancel-btn" style="font-size:0.58rem;padding:0.22rem 0.55rem;white-space:nowrap;" onclick="foodManualAddOpen()">✏️ Manual</button>
+            <button class="gw-confirm-btn" style="font-size:0.65rem;padding:0.25rem 0.6rem;white-space:nowrap;" onclick="foodQuickAddOpen(null, true)">＋ Search</button>
+          </div>
         </div>
         <div style="padding:0.4rem 0.6rem 0.3rem;">
           <input id="fridge-search" class="gw-field-inp" type="text" placeholder="🔍 Search fridge…" oninput="renderFridge()" style="width:100%;box-sizing:border-box;font-size:0.72rem;padding:0.28rem 0.5rem;margin-bottom:0.3rem;">
@@ -8447,8 +8450,12 @@ async function fqaSearch(query){
       const row = document.createElement('div');
       row.className = 'fqa-result-item';
       row.style.cssText = 'padding:6px 10px;cursor:pointer;border-bottom:1px solid rgba(184,201,163,0.2);transition:background 0.1s;';
+      const brandStr = (f.brandOwner || f.brandName || '');
       row.innerHTML =
-        `<div style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tcName}</div>`+
+        `<div style="display:flex;align-items:baseline;gap:6px;overflow:hidden;">` +
+        `<span style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tcName}</span>` +
+        (brandStr ? `<span style="font-family:'Space Mono',monospace;font-size:0.34rem;color:var(--water);white-space:nowrap;flex-shrink:0;">${escH(brandStr)}</span>` : '') +
+        `</div>` +
         `<div style="font-family:'Space Mono',monospace;font-size:0.36rem;color:var(--stone);margin-top:1px;">`+
         `${kcal}kcal · ${protein}g prot · ${carbs}g carbs · ${fat}g fat <span style="opacity:0.55;">per 100g</span></div>`;
 
@@ -8533,14 +8540,25 @@ function foodQuickAddSave(){
     return;
   }
 
-  // Save to Fridge with per-100g densities
-  const fridgeId = 'custom_cu'+Date.now();
-  FRIDGE_CUSTOM.push({
-    id: 'cu'+Date.now(), name,
-    kcal: kcal100, protein: protein100,
-    carbs: carbs100, fat: fat100,
-    sodium: sodium100, note: '', cat: catId,
-  });
+  // Save to Fridge — update existing entry if same name, otherwise add new
+  const existingIdx = FRIDGE_CUSTOM.findIndex(f => f.name.toLowerCase() === name.toLowerCase());
+  let fridgeId;
+  if(existingIdx >= 0){
+    const existing = FRIDGE_CUSTOM.splice(existingIdx, 1)[0];
+    existing.kcal = kcal100; existing.protein = protein100;
+    existing.carbs = carbs100; existing.fat = fat100;
+    existing.sodium = sodium100; existing.cat = catId;
+    FRIDGE_CUSTOM.unshift(existing);
+    fridgeId = 'custom_' + existing.id;
+  } else {
+    const newId = 'cu' + Date.now();
+    fridgeId = 'custom_' + newId;
+    FRIDGE_CUSTOM.unshift({ id: newId, name,
+      kcal: kcal100, protein: protein100,
+      carbs: carbs100, fat: fat100,
+      sodium: sodium100, note: '', cat: catId,
+    });
+  }
 
   document.getElementById('food-quick-add-modal').classList.remove('open');
 
@@ -8569,6 +8587,52 @@ function foodQuickAddSave(){
     toast(`✅ "${name}" saved to Fridge`);
   }
 
+  renderFoodPage();
+  scheduleSave();
+}
+
+function foodManualAddOpen(){
+  ['fma-name','fma-kcal','fma-protein','fma-carbs','fma-fat','fma-sodium'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const catSel=document.getElementById('fma-cat');
+  if(catSel){
+    catSel.innerHTML='';
+    FOOD_CATS.forEach(c=>{
+      const opt=document.createElement('option');
+      opt.value=c.id; opt.textContent=c.icon+' '+c.name;
+      catSel.appendChild(opt);
+    });
+  }
+  document.getElementById('food-manual-add-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('fma-name')?.focus(),80);
+}
+
+function foodManualAddSave(){
+  const name = (document.getElementById('fma-name')?.value||'').trim();
+  if(!name){ const el=document.getElementById('fma-name'); if(el){el.style.borderColor='var(--ember)';setTimeout(()=>el.style.borderColor='',1000);} return; }
+  const kcal100    = parseFloat(document.getElementById('fma-kcal')?.value)||0;
+  const protein100 = parseFloat(document.getElementById('fma-protein')?.value)||0;
+  const carbs100   = parseFloat(document.getElementById('fma-carbs')?.value)||0;
+  const fat100     = parseFloat(document.getElementById('fma-fat')?.value)||0;
+  const sodium100  = parseFloat(document.getElementById('fma-sodium')?.value)||0;
+  const catId      = document.getElementById('fma-cat')?.value || FOOD_CATS[0]?.id;
+
+  if(!kcal100){ const el=document.getElementById('fma-kcal'); if(el){el.style.borderColor='var(--ember)';setTimeout(()=>el.style.borderColor='',1000);} return; }
+
+  // Update existing or add new
+  const existingIdx = FRIDGE_CUSTOM.findIndex(f=>f.name.toLowerCase()===name.toLowerCase());
+  if(existingIdx>=0){
+    const ex=FRIDGE_CUSTOM.splice(existingIdx,1)[0];
+    ex.kcal=kcal100; ex.protein=protein100; ex.carbs=carbs100; ex.fat=fat100; ex.sodium=sodium100; ex.cat=catId;
+    FRIDGE_CUSTOM.unshift(ex);
+    toast(`✅ "${name}" updated in Fridge`);
+  } else {
+    FRIDGE_CUSTOM.unshift({id:'cu'+Date.now(), name, kcal:kcal100, protein:protein100, carbs:carbs100, fat:fat100, sodium:sodium100, note:'', cat:catId});
+    toast(`✅ "${name}" saved to Fridge`);
+  }
+
+  document.getElementById('food-manual-add-modal').classList.remove('open');
   renderFoodPage();
   scheduleSave();
 }
@@ -12843,6 +12907,49 @@ function sbSubscribeTrips(){
     <!-- Before selection: just cancel -->
     <div id="fqa-pre-select" style="margin-top:0.25rem;">
       <button class="gw-cancel-btn" onclick="document.getElementById('food-quick-add-modal').classList.remove('open')" style="width:100%;">Cancel</button>
+    </div>
+  </div>
+</div>
+<!-- MANUAL FRIDGE ADD MODAL -->
+<div class="modal-overlay" id="food-manual-add-modal">
+  <div class="modal" style="max-width:340px;">
+    <div class="modal-title">✏️ Add Custom Item</div>
+    <div class="modal-sub">Enter values per 100g · saved to your Fridge</div>
+    <div style="display:flex;flex-direction:column;gap:0.45rem;margin-bottom:0.85rem;">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);margin-bottom:2px;">Name</div>
+        <input class="gw-field-inp" id="fma-name" type="text" placeholder="e.g. My Protein Bar" style="width:100%;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('fma-kcal').focus()">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.35rem;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Calories</div>
+          <input class="gw-field-inp" id="fma-kcal" type="number" min="0" placeholder="kcal" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Protein (g)</div>
+          <input class="gw-field-inp" id="fma-protein" type="number" min="0" step="0.1" placeholder="g" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Carbs (g)</div>
+          <input class="gw-field-inp" id="fma-carbs" type="number" min="0" step="0.1" placeholder="g" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Fat (g)</div>
+          <input class="gw-field-inp" id="fma-fat" type="number" min="0" step="0.1" placeholder="g" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Sodium (mg)</div>
+          <input class="gw-field-inp" id="fma-sodium" type="number" min="0" placeholder="mg" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Category</div>
+          <select class="gw-field-inp" id="fma-cat" style="padding:3px 6px;width:100%;box-sizing:border-box;"></select>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+      <button class="gw-confirm-btn" onclick="foodManualAddSave()" style="flex:1;">✓ Save to Fridge</button>
+      <button class="gw-cancel-btn" onclick="document.getElementById('food-manual-add-modal').classList.remove('open')">✕ Cancel</button>
     </div>
   </div>
 </div>
