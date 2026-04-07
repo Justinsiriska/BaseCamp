@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.33 — Gear Organizer</title>
+<title>BaseCamp v3.34 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.33</div>
+      <div class="logo-sub">Gear Organizer · v3.34</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3392,6 +3392,7 @@ let DELETED_TRIPS = [];
 // ── Persistence globals (must be declared before any function that uses them) ──
 let _isDirty = false;
 let _lastSavedAt = 0;
+let _stateLoaded = false; // true after first loadState() completes
 let _lastCloudPushAt = 0;
 let _sbCloudDebounce = null;
 let _sbUser = null;  // forward-declare so markDirty can reference it safely
@@ -4745,7 +4746,9 @@ function renderAll(){
   renderTripsPage();
   renderCrewPage();
   document.getElementById('total-disp').textContent=dw(total());
-  // NOTE: renderAll does NOT save — call markDirty() explicitly after mutations
+  // Save on any renderAll that happens after state is loaded — catches drag/drop,
+  // toggles, and any other mutation that calls renderAll without explicit markDirty
+  if(_stateLoaded) markDirty();
 }
 
 // ============================================================
@@ -6804,7 +6807,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.33) ──
+// ── Persistence layer (rebuilt v3.34) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -7053,6 +7056,7 @@ function loadState(){
       }
     }
 
+    _stateLoaded = true;
     return true;
   } catch(e){ return false; }
 }
