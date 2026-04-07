@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.90 — Gear Organizer</title>
+<title>BaseCamp v3.92 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1989,7 +1989,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.90</div>
+      <div class="logo-sub">Gear Organizer · v3.92</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4710,7 +4710,7 @@ function renderTripMap(container, trip){
     if(!mapEl) return;
     const map = L.map(mapId, {zoomControl:true, attributionControl:false, scrollWheelZoom:true});
     _leafletMaps[trip.id] = map;
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,opacity:0.88}).addTo(map);
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,opacity:0.95}).addTo(map);
     if(trip.trail?.coords?.length){
       const coords = trip.trail.coords;
       const poly = L.polyline(coords, {color:'#c87941',weight:4,opacity:0.9}).addTo(map);
@@ -11512,16 +11512,16 @@ function renderTripsPage(){
     <span style="opacity:0.5">·</span> ${members.length} people
   </div>`;
 
-  // Invite friends button — leaders only
+  // Invite friends button — leaders only, placed next to days pill below
   const isLeaderView = !trip._shared || trip.leaderId === (_sbUser?.id||'me');
+  let inviteBtn = null;
   if(isLeaderView){
-    const inviteBtn=document.createElement('button');
+    inviteBtn=document.createElement('button');
     inviteBtn.style.cssText='font-family:"Space Mono",monospace;font-size:0.48rem;border:1.5px solid rgba(74,143,168,0.5);background:rgba(74,143,168,0.08);color:#2a6a88;border-radius:20px;padding:0.22rem 0.7rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;';
     inviteBtn.innerHTML='👥 Invite Friends';
     inviteBtn.onmouseover=()=>inviteBtn.style.background='rgba(74,143,168,0.18)';
     inviteBtn.onmouseout=()=>inviteBtn.style.background='rgba(74,143,168,0.08)';
     inviteBtn.onclick=()=>openInviteModal(trip, members);
-    hdr.appendChild(inviteBtn);
   }
 
   titleRow.appendChild(hdr);
@@ -11573,7 +11573,12 @@ function renderTripsPage(){
     updateDaysUI();
   };
 
-  content.appendChild(daysPill);
+  const daysRow = document.createElement('div');
+  daysRow.style.cssText = 'display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;';
+  daysPill.style.marginBottom = '0';
+  daysRow.appendChild(daysPill);
+  if(inviteBtn) daysRow.appendChild(inviteBtn);
+  content.appendChild(daysRow);
 
   // Flags — compact emoji pills, expand on click
   const flags=detectFlags(trip,members).filter(f=>f.tab===tripMode);
@@ -11838,7 +11843,7 @@ function renderTripsPage(){
     mapEl.style.height = leafletH+'px';
     const map=L.map(mapId,{zoomControl:true,attributionControl:false,scrollWheelZoom:false});
     _leafletMaps[trip.id]=map;
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,opacity:0.88}).addTo(map);
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,opacity:0.95}).addTo(map);
     if(trip.trail?.coords?.length){
       const coords=trip.trail.coords;
       const poly=L.polyline(coords,{color:'#c87941',weight:3.5,opacity:0.9}).addTo(map);
