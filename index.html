@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.65 — Gear Organizer</title>
+<title>BaseCamp v3.66 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.65</div>
+      <div class="logo-sub">Gear Organizer · v3.66</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9047,25 +9047,20 @@ function getMyDayMacros(trip, members){
     const totalProt = (item.protein||0) * qtyFrac;
     const totalCarbs = (item.carbs||0) * qtyFrac;
 
+    // Day totals = full entry cost (carrier carries the whole thing)
+    byDay[entry.day].kcal    += totalKcal;
+    byDay[entry.day].protein += totalProt;
+    byDay[entry.day].carbs   += totalCarbs;
+
+    // Per-member breakdown for the hover tooltip only
     const fractions = getEaterFractions(entry);
-    let dayKcal=0, dayProt=0, dayCarbs=0;
-
     Object.entries(fractions).forEach(([eaterId, frac])=>{
-      const kcal = totalKcal * frac;
-      const prot = totalProt * frac;
-      const carbs = totalCarbs * frac;
-      dayKcal += kcal; dayProt += prot; dayCarbs += carbs;
-
       const eaterMember = memberForId(eaterId, members);
       const mName = eaterMember?.name || eaterId;
       if(!byDay[entry.day].byMember[mName]) byDay[entry.day].byMember[mName]={kcal:0,prot:0};
-      byDay[entry.day].byMember[mName].kcal += kcal;
-      byDay[entry.day].byMember[mName].prot += prot;
+      byDay[entry.day].byMember[mName].kcal += totalKcal * frac;
+      byDay[entry.day].byMember[mName].prot += totalProt * frac;
     });
-
-    byDay[entry.day].kcal    += dayKcal;
-    byDay[entry.day].protein += dayProt;
-    byDay[entry.day].carbs   += dayCarbs;
   });
 
   return Object.values(byDay).map(d=>({
@@ -9168,25 +9163,7 @@ function renderMealCalendar(container, trip, members){
     }
     wrap.appendChild(cell);
 
-    // Hover dropdown — breakdown by member
-    if(dm.kcal > 0 && Object.keys(dm.byMember||{}).length){
-      const dd = document.createElement('div');
-      dd.className = 'cal-macro-dropdown';
-      Object.entries(dm.byMember).forEach(([name, vals])=>{
-        const r = document.createElement('div');
-        r.className = 'cal-macro-dd-row';
-        r.innerHTML = '<span class="cal-macro-dd-label">'+escH(name)+'</span>'+
-          '<span class="cal-macro-dd-val ember">'+Math.round(vals.kcal).toLocaleString()+' kcal</span>';
-        dd.appendChild(r);
-      });
-      const total = document.createElement('div');
-      total.className = 'cal-macro-dd-row';
-      total.style.cssText = 'border-top:1px solid rgba(184,201,163,0.3);margin-top:3px;padding-top:3px;';
-      total.innerHTML = '<span class="cal-macro-dd-label">Total</span>'+
-        '<span class="cal-macro-dd-val ember">'+dm.kcal.toLocaleString()+' kcal</span>';
-      dd.appendChild(total);
-      wrap.appendChild(dd);
-    }
+    // Breakdown tooltip removed — was confusing
 
     macroRow.appendChild(wrap);
   });
@@ -9578,10 +9555,15 @@ function openEaterPickerEdit(dragData, day, mealId, trip, members, existingEaten
     if(selected.size===0){ alert('Select at least one person.'); return; }
     const splits = getSplits();
     if(!trip.mealPlan) trip.mealPlan=[];
+    // qty = how many units being planned in this entry (default: all of item's qty)
+    const dragItem = dragData.memberId && (isMeId(dragData.memberId)
+      ? FOOD_ITEMS.find(i=>i.id===dragData.itemId)
+      : null);
+    const planQty = dragItem ? (dragItem.qty||1) : 1;
     trip.mealPlan.push({
       id:'mp_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
       itemRef:{memberId:dragData.memberId, itemId:dragData.itemId},
-      day, meal:mealId, eatenBy:[...selected], splits
+      day, meal:mealId, eatenBy:[...selected], splits, qty: planQty
     });
     scheduleSave(); sbPushTrip(trip); overlay.remove(); onDone();
   };
@@ -11334,7 +11316,7 @@ function renderTripsPage(){
       // Has duration — show hint + calendar
       const hintBar = document.createElement('div');
       hintBar.style.cssText = 'padding:0.35rem 0.9rem;font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);opacity:0.6;';
-      hintBar.textContent = 'Drag items from packs below onto the calendar · hover macro cells for breakdown';
+      hintBar.textContent = 'Drag items from packs below onto the calendar to plan meals';
       root.appendChild(hintBar);
 
       const calContainer = document.createElement('div');
@@ -11639,9 +11621,9 @@ function renderMemberFood(body, member, trip, members){
     } else {
       // Unplanned section row — show remaining qty
       if(itemSchedQty > 0){
-        // Partially planned — show only the remainder
+        // Partially planned — show only the remainder, same amber colour
         const qtyChip = document.createElement('span');
-        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--stone);margin-left:3px;flex-shrink:0;";
+        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:3px;flex-shrink:0;";
         qtyChip.textContent = '×'+itemUnplannedQty;
         name.after(qtyChip);
       } else if(itemTotalQty > 1){
