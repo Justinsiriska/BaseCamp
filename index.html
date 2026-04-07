@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.85 — Gear Organizer</title>
+<title>BaseCamp v3.86 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1988,7 +1988,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.85</div>
+      <div class="logo-sub">Gear Organizer · v3.86</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11188,7 +11188,7 @@ function buildDaysFromHistorical(allYears, numDays){
 }
 
 function renderWeatherPanel(trip){
-  if(!trip.trailhead || !trip.date) return null;
+  if(!trip.trailhead) return null;
 
   const panel = document.createElement('div');
   panel.className = 'wx-panel';
@@ -11207,6 +11207,13 @@ function renderWeatherPanel(trip){
   const body = document.createElement('div');
   body.className = 'wx-body';
   body.style.display = _wxCollapsed ? 'none' : 'block';
+
+  // No date set — show prompt
+  if(!trip.date){
+    body.innerHTML = `<div class="wx-loading" style="padding:0.9rem 0.8rem;">Set a trip date to see the forecast.</div>`;
+    panel.appendChild(body);
+    return panel;
+  }
 
   // Check cache first for instant render, then fetch
   const cached = _wxCache[trip.id];
@@ -11656,13 +11663,14 @@ function renderTripsPage(){
   topRow.appendChild(rightPanel);
   root.appendChild(topRow);
 
-  // ── TRAILHEAD PANEL ──
+  // ── TRAILHEAD + WEATHER PANELS (constrained width) ──
+  const panelWrap = document.createElement('div');
+  panelWrap.style.cssText = 'max-width:760px;';
   const thPanel = renderTrailheadPanel(trip);
-  if(thPanel) root.appendChild(thPanel);
-
-  // ── WEATHER PANEL ──
+  if(thPanel) panelWrap.appendChild(thPanel);
   const wxPanel = renderWeatherPanel(trip);
-  if(wxPanel) root.appendChild(wxPanel);
+  if(wxPanel) panelWrap.appendChild(wxPanel);
+  root.appendChild(panelWrap);
 
   // ── BOTTOM ROW: person columns — full width ──
   const cols=document.createElement('div'); cols.className='trip-columns'; cols.style.marginTop='0';
