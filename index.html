@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.29 — Gear Organizer</title>
+<title>BaseCamp v3.30 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1884,7 +1884,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.29</div>
+      <div class="logo-sub">Gear Organizer · v3.30</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6797,7 +6797,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.29) ──
+// ── Persistence layer (rebuilt v3.30) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -11132,10 +11132,20 @@ async function authSignOut(){
 async function sbPushData(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
-  // Always snapshot current state (don't use a cached payload)
-  saveState(); // ensure localStorage is current first
-  const payload = getPayload();
-  if(!payload.profile.photo && MY_PROFILE._userUploadedPhoto){
+  // Build payload from current in-memory state — but only if state has been loaded.
+  // Guard: if CATS is empty, something went wrong — read from localStorage instead.
+  let payload;
+  if(CATS.length > 0){
+    payload = getPayload();
+  } else {
+    // In-memory state not loaded yet — read directly from localStorage to avoid pushing blanks
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      payload = raw ? JSON.parse(raw) : getPayload();
+    } catch(e){ payload = getPayload(); }
+  }
+  if(!payload.profile?.photo && MY_PROFILE._userUploadedPhoto){
+    if(!payload.profile) payload.profile = {};
     payload.profile.photo = MY_PROFILE._userUploadedPhoto;
   }
   const { error } = await sb.from('profiles')
@@ -11143,7 +11153,7 @@ async function sbPushData(){
   if(error){
     console.error('[BaseCamp] Push error:', error);
   } else {
-    _lastCloudPushAt = payload.savedAt;
+    _lastCloudPushAt = payload.savedAt||Date.now();
     _isDirty = false;
     const el = document.getElementById('auth-sync-status');
     if(el) el.textContent = '✓ Synced ' + new Date().toLocaleTimeString();
@@ -11164,9 +11174,10 @@ async function sbPullData(){
   const hasLocal = !!localStorage.getItem(SAVE_KEY);
 
   if(hasLocal){
-    // Local gear data exists — push it up as backup
-    await sbPushData();
-    // But still apply the cloud profile (name/photo/color) so identity is correct
+    // Local gear data exists — only push to cloud if user made changes since last push
+    // Don't blindly push on every startup as it can overwrite cloud with stale in-memory state
+    if(_isDirty) await sbPushData();
+    // Apply the cloud profile (name/photo/color) so identity is always correct
     if(data?.gear_data?.profile){
       const p = data.gear_data.profile;
       if(p.name) MY_PROFILE.name = p.name;
@@ -11182,7 +11193,6 @@ async function sbPullData(){
           if(bp){ MY_PROFILE._userUploadedPhoto=bp; MY_PROFILE.avatarDataUrl='<img src="'+bp+'" style="width:100%;height:100%;object-fit:cover;">'; }
         }catch(e){}
       }
-      saveState();
       renderCrewPage();
     }
     return;
