@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.49 — Gear Organizer</title>
+<title>BaseCamp v3.51 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -868,6 +868,8 @@ html.dark .food-cat-card.food-drop-target{border-color:var(--water)!important;}
 .food-item-row:last-child{border-bottom:none;}
 .food-item-left{display:flex;align-items:center;gap:0.3rem;min-width:0;flex:1;}
 .food-item-name{font-family:'Nunito',sans-serif;font-size:0.78rem;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.food-item-name-editable{cursor:pointer;border-bottom:1px dashed rgba(139,115,85,0.3);transition:border-color 0.15s,color 0.15s;}
+.food-item-name-editable:hover{border-bottom-color:var(--water);color:var(--water);}
 .food-item-amount{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);flex-shrink:0;background:var(--cream);border-radius:4px;padding:1px 5px;}
 .food-qty-stepper{display:flex;align-items:center;gap:0;border:1.5px solid rgba(184,201,163,0.5);border-radius:7px;overflow:hidden;flex-shrink:0;}
 .food-qty-btn{background:transparent;border:none;cursor:pointer;font-size:0.72rem;font-weight:700;color:var(--forest);padding:0 5px;line-height:1.6;transition:background 0.12s;}
@@ -1930,7 +1932,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.49</div>
+      <div class="logo-sub">Gear Organizer · v3.51</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2983,36 +2985,65 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 
 <!-- FOOD SERVING MODAL -->
 <div class="modal-overlay" id="food-serving-modal">
-  <div class="modal" style="max-width:360px;">
+  <div class="modal" style="max-width:340px;">
     <div class="modal-title">🍽️ Add to Food Bag</div>
-    <div class="modal-sub" id="food-serving-item-name">Item name</div>
-    <!-- Mode A: qty stepper (custom items with known weight) -->
-    <div id="food-serving-qty-mode" style="display:none;margin-bottom:0.65rem;">
-      <div style="font-family:'Space Mono',monospace;font-size:0.46rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.4rem;">HOW MANY?</div>
-      <div style="display:flex;align-items:center;gap:0.75rem;">
-        <button onclick="foodServingQtyAdj(-1)" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--lichen);background:transparent;font-size:1.1rem;font-weight:700;cursor:pointer;color:var(--forest);">−</button>
-        <span id="food-serving-qty-val" style="font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:800;color:var(--forest);min-width:2rem;text-align:center;">1</span>
-        <button onclick="foodServingQtyAdj(1)" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--lichen);background:transparent;font-size:1.1rem;font-weight:700;cursor:pointer;color:var(--forest);">＋</button>
-        <span id="food-serving-qty-desc" style="font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);"></span>
+    <div id="food-serving-item-name" style="font-family:'Playfair Display',serif;font-size:0.88rem;font-weight:700;color:var(--forest);margin-bottom:0.75rem;"></div>
+
+    <!-- Per-unit values — all editable -->
+    <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.35rem;">Per unit</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.75rem;">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Weight</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input class="gw-field-inp" id="fsm-weight" type="number" min="0" step="1" style="width:70px;padding:3px 6px;" oninput="fsmScaleFromWeight()">
+          <span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);">g</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Calories</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input class="gw-field-inp" id="fsm-kcal" type="number" min="0" step="1" style="width:70px;padding:3px 6px;" oninput="fsmRecalcPreview()">
+          <span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);">kcal</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Protein</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input class="gw-field-inp" id="fsm-protein" type="number" min="0" step="0.1" style="width:70px;padding:3px 6px;">
+          <span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);">g</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Carbs</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input class="gw-field-inp" id="fsm-carbs" type="number" min="0" step="0.1" style="width:70px;padding:3px 6px;">
+          <span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);">g</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Fat</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input class="gw-field-inp" id="fsm-fat" type="number" min="0" step="0.1" style="width:70px;padding:3px 6px;">
+          <span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);">g</span>
+        </div>
       </div>
     </div>
-    <!-- Mode B: free gram input (standard fridge DB items) -->
-    <div id="food-serving-gram-mode" style="display:flex;gap:0.5rem;margin-bottom:0.65rem;align-items:center;">
-      <input class="gw-field-inp" id="food-serving-amount" type="number" min="0" step="0.1" placeholder="e.g. 100" style="flex:1;" onkeydown="if(event.key==='Enter')foodServingConfirm()">
-      <select class="gw-field-inp" id="food-serving-unit" style="flex:0.7;min-width:0;">
-        <option value="g">g</option>
-        <option value="oz">oz</option>
-        <option value="ml">ml</option>
-        <option value="cups">cups</option>
-        <option value="tbsp">tbsp</option>
-        <option value="servings">servings</option>
-        <option value="items">items</option>
-      </select>
+
+    <!-- Qty -->
+    <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.35rem;">How many?</div>
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+      <button onclick="fsmQtyAdj(-1)" style="width:30px;height:30px;border-radius:50%;border:1.5px solid var(--lichen);background:transparent;font-size:1rem;font-weight:700;cursor:pointer;color:var(--forest);">−</button>
+      <span id="fsm-qty-val" style="font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:800;color:var(--forest);min-width:2rem;text-align:center;">1</span>
+      <button onclick="fsmQtyAdj(1)" style="width:30px;height:30px;border-radius:50%;border:1.5px solid var(--lichen);background:transparent;font-size:1rem;font-weight:700;cursor:pointer;color:var(--forest);">＋</button>
+      <span id="fsm-qty-preview" style="font-family:'Space Mono',monospace;font-size:0.44rem;color:var(--ember);font-weight:700;"></span>
     </div>
+
+    <!-- Category -->
     <div style="margin-bottom:0.8rem;">
-      <div style="font-family:'Space Mono',monospace;font-size:0.46rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.3rem;">Category</div>
+      <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.3rem;">Category</div>
       <select class="gw-field-inp" id="food-serving-cat" style="width:100%;box-sizing:border-box;"></select>
     </div>
+
     <div class="gw-confirm-row">
       <button class="gw-confirm-btn" onclick="foodServingConfirm()">✓ Add to bag</button>
       <button class="gw-cancel-btn" onclick="foodServingCancel()">✕ Cancel</button>
@@ -7486,16 +7517,11 @@ function renderFoodBag(){
       <div class="food-item-row" draggable="true" data-food-iid="${item.id}" data-food-cat="${cat.id}">
         <div class="food-item-left">
           <span class="food-item-drag-handle">⠿</span>
-          <span class="food-item-name">${escH(item.name)}</span>
-          ${qty>1?`<span style="font-family:'Space Mono',monospace;font-size:0.36rem;color:var(--stone);opacity:0.6;margin-left:2px;">${Math.round(totalKcal/qty)}kcal · ${dw(Math.round(totalW/qty))} each</span>`:''}
+          <span class="food-item-name food-item-name-editable" title="Tap to edit unit weight/kcal" onclick="event.stopPropagation();foodEditUnitOpen('${item.id}')">${escH(item.name)}</span>
+          <span style="font-family:'Space Mono',monospace;font-size:0.35rem;color:var(--stone);opacity:0.55;margin-left:3px;">${Math.round(totalKcal/qty)}kcal · ${dw(Math.round(totalW/qty))}/unit</span>
         </div>
         <div class="food-item-right">
-          <div class="food-qty-stepper" title="Adjust serving size">
-            <button class="food-qty-btn" onclick="event.stopPropagation();foodAdjustQty('${item.id}',-1)">−</button>
-            <span class="food-item-amount">${item.amount}${item.unit}</span>
-            <button class="food-qty-btn" onclick="event.stopPropagation();foodAdjustQty('${item.id}',1)">＋</button>
-          </div>
-          <div class="food-count-stepper" title="Adjust quantity (×${qty})">
+          <div class="food-count-stepper" title="Quantity">
             <button class="food-count-btn" onclick="event.stopPropagation();foodAdjustCount('${item.id}',-1)">−</button>
             <span class="food-count-val" style="font-weight:800;color:${qty>1?'var(--sun)':'var(--stone)'}">×${qty}</span>
             <button class="food-count-btn" onclick="event.stopPropagation();foodAdjustCount('${item.id}',1)">＋</button>
@@ -7880,122 +7906,131 @@ function addToFridgeSave(){
 }
 
 // ── Serving modal ──
-function foodOpenServingModal(fridgeId){
-  const f=fridgeId.startsWith('custom_')
-    ?FRIDGE_CUSTOM.find(x=>x.id===fridgeId.replace('custom_',''))
-    :FRIDGE_DB.find(x=>x.id===fridgeId) || FRIDGE_CUSTOM.find(x=>x.id===fridgeId);
-  if(!f) return;
-  _foodServingPending={...f,fridgeId};
-  document.getElementById('food-serving-item-name').textContent=f.name;
-
-  // Custom items (added via quick-add) use qty stepper with fixed weight
-  // Standard DB items use free gram input
-  const isCustom = FRIDGE_CUSTOM.includes(f) || FRIDGE_CUSTOM.find(x=>x.id===fridgeId);
-  const qtyMode = document.getElementById('food-serving-qty-mode');
-  const gramMode = document.getElementById('food-serving-gram-mode');
-
-  if(isCustom && f._origAmount){
-    // Qty stepper mode — use original amount as the unit
-    qtyMode.style.display='block';
-    gramMode.style.display='none';
-    _foodServingQty = 1;
-    document.getElementById('food-serving-qty-val').textContent='1';
-    document.getElementById('food-serving-qty-desc').textContent=
-      `× ${f._origAmount}g = ${f._origAmount}g · ${Math.round(f.kcal*(f._origAmount/100))} kcal`;
-  } else {
-    // Gram input mode
-    qtyMode.style.display='none';
-    gramMode.style.display='flex';
-    document.getElementById('food-serving-amount').value='';
-    document.getElementById('food-serving-unit').value='g';
-  }
-
-  // Populate category dropdown
-  const catSel=document.getElementById('food-serving-cat');
-  catSel.innerHTML='';
-  FOOD_CATS.forEach(c=>{
-    const opt=document.createElement('option');
-    opt.value=c.id;
-    opt.textContent=c.icon+' '+c.name;
-    catSel.appendChild(opt);
-  });
-  // Pre-select: drag target > fridge item's own cat > first cat
-  const preferred = _foodDragTargetCat || FOOD_CATS.find(c=>c.id===f.cat)?.id || FOOD_CATS[0]?.id;
-  if(preferred) catSel.value=preferred;
-
-  document.getElementById('food-serving-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('food-serving-amount').focus(),80);
-}
-
+// ── Unified serving modal ──
+// Per-unit values from Fridge DB, all overridable. Single qty stepper.
 let _foodServingQty = 1;
 
-function foodServingQtyAdj(delta){
+function foodOpenServingModal(fridgeId){
+  const f = fridgeId.startsWith('custom_')
+    ? FRIDGE_CUSTOM.find(x=>x.id===fridgeId.replace('custom_',''))
+    : FRIDGE_DB.find(x=>x.id===fridgeId) || FRIDGE_CUSTOM.find(x=>x.id===fridgeId);
+  if(!f) return;
+  _foodServingPending = {...f, fridgeId};
+  _foodServingQty = 1;
+
+  document.getElementById('food-serving-item-name').textContent = f.name;
+
+  // Calculate per-unit values from Fridge DB
+  // DB stores kcal/protein/carbs/fat per 100g — derive per-item defaults
+  // Custom items with _origAmount use that as unit weight
+  const unitG = f._origAmount || 100;
+  const scale = unitG / 100;
+
+  document.getElementById('fsm-weight').value  = unitG;
+  document.getElementById('fsm-kcal').value    = Math.round((f.kcal||0) * scale);
+  document.getElementById('fsm-protein').value = Math.round((f.protein||0) * scale * 10) / 10;
+  document.getElementById('fsm-carbs').value   = Math.round((f.carbs||0) * scale * 10) / 10;
+  document.getElementById('fsm-fat').value     = Math.round((f.fat||0) * scale * 10) / 10;
+
+  document.getElementById('fsm-qty-val').textContent = '1';
+  fsmRecalcPreview();
+
+  // Category dropdown
+  const catSel = document.getElementById('food-serving-cat');
+  catSel.innerHTML = '';
+  FOOD_CATS.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.icon+' '+c.name;
+    catSel.appendChild(opt);
+  });
+  const preferred = _foodDragTargetCat || FOOD_CATS.find(c=>c.id===f.cat)?.id || FOOD_CATS[0]?.id;
+  if(preferred) catSel.value = preferred;
+
+  document.getElementById('food-serving-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('fsm-weight').focus(), 80);
+}
+
+function fsmScaleFromWeight(){
+  // When weight changes, scale kcal/protein/carbs/fat proportionally
   const f = _foodServingPending;
   if(!f) return;
-  _foodServingQty = Math.max(1, _foodServingQty + delta);
-  document.getElementById('food-serving-qty-val').textContent = _foodServingQty;
-  const origAmt = f._origAmount || 100;
-  const totalG = origAmt * _foodServingQty;
-  const scale = totalG / 100;
-  document.getElementById('food-serving-qty-desc').textContent =
-    `× ${origAmt}g = ${totalG}g · ${Math.round((f.kcal||0)*scale)} kcal`;
+  const newG = parseFloat(document.getElementById('fsm-weight').value) || 0;
+  if(!newG) return;
+  const scale = newG / 100;
+  document.getElementById('fsm-kcal').value    = Math.round((f.kcal||0) * scale);
+  document.getElementById('fsm-protein').value = Math.round((f.protein||0) * scale * 10) / 10;
+  document.getElementById('fsm-carbs').value   = Math.round((f.carbs||0) * scale * 10) / 10;
+  document.getElementById('fsm-fat').value     = Math.round((f.fat||0) * scale * 10) / 10;
+  fsmRecalcPreview();
 }
+
+function fsmRecalcPreview(){
+  const kcal = parseFloat(document.getElementById('fsm-kcal').value) || 0;
+  const qty  = _foodServingQty || 1;
+  const prev = document.getElementById('fsm-qty-preview');
+  if(prev) prev.textContent = qty > 1 ? '= '+(kcal*qty).toLocaleString()+' kcal total' : kcal ? kcal.toLocaleString()+' kcal' : '';
+}
+
+function fsmQtyAdj(delta){
+  _foodServingQty = Math.max(1, (_foodServingQty||1) + delta);
+  document.getElementById('fsm-qty-val').textContent = _foodServingQty;
+  fsmRecalcPreview();
+}
+
+// Legacy alias (called from qty adjust in old code paths)
+function foodServingQtyAdj(delta){ fsmQtyAdj(delta); }
 
 function foodServingConfirm(){
   if(!_foodServingPending) return;
-  const f=_foodServingPending;
-  const catId=document.getElementById('food-serving-cat')?.value || _foodDragTargetCat||FOOD_CATS.find(c=>c.id===f.cat)?.id||FOOD_CATS[0].id;
-  _foodDragTargetCat=null;
+  const f = _foodServingPending;
+  const catId = document.getElementById('food-serving-cat')?.value
+    || _foodDragTargetCat || FOOD_CATS.find(c=>c.id===f.cat)?.id || FOOD_CATS[0].id;
+  _foodDragTargetCat = null;
 
-  let amount, unit, grams;
-  const qtyMode = document.getElementById('food-serving-qty-mode');
-  if(qtyMode.style.display !== 'none' && f._origAmount){
-    // Qty stepper mode — use original amount × qty
-    amount = f._origAmount;
-    unit = 'g';
-    grams = f._origAmount * _foodServingQty;
-  } else {
-    // Gram input mode
-    amount=parseFloat(document.getElementById('food-serving-amount').value)||0;
-    unit=document.getElementById('food-serving-unit').value;
-    if(!amount){
-      const inp=document.getElementById('food-serving-amount');
-      inp.style.borderColor='var(--ember)';setTimeout(()=>inp.style.borderColor='',1000);
-      return;
-    }
-    const toG={g:1,oz:28.35,ml:1,cups:240,tbsp:15,servings:30,items:50};
-    grams=amount*(toG[unit]||1);
+  const unitW   = parseFloat(document.getElementById('fsm-weight').value)  || 0;
+  const unitKcal= parseFloat(document.getElementById('fsm-kcal').value)    || 0;
+  const unitProt= parseFloat(document.getElementById('fsm-protein').value) || 0;
+  const unitCarb= parseFloat(document.getElementById('fsm-carbs').value)   || 0;
+  const unitFat = parseFloat(document.getElementById('fsm-fat').value)     || 0;
+  const qty     = _foodServingQty || 1;
+
+  if(!unitW){
+    const el = document.getElementById('fsm-weight');
+    el.style.borderColor='var(--ember)'; setTimeout(()=>el.style.borderColor='',1000);
+    return;
   }
 
-  const scale=grams/100;
-  const qty = (qtyMode.style.display !== 'none' && f._origAmount) ? _foodServingQty : 1;
   FOOD_ITEMS.push({
-    id:uid(),fridgeId:f.fridgeId,name:f.name,amount,unit,qty,
-    w_total:Math.round(grams),
-    kcal_total:Math.round((f.kcal||0)*scale),
-    protein:Math.round((f.protein||0)*scale*10)/10,
-    carbs:Math.round((f.carbs||0)*scale*10)/10,
-    fat:Math.round((f.fat||0)*scale*10)/10,
-    sodium:Math.round((f.sodium||0)*scale),
-    catId,s:[foodSeason]
+    id: uid(), fridgeId: f.fridgeId, name: f.name,
+    amount: unitW, unit: 'g', qty,
+    w_total:    Math.round(unitW    * qty),
+    kcal_total: Math.round(unitKcal * qty),
+    protein:    Math.round(unitProt * qty * 10) / 10,
+    carbs:      Math.round(unitCarb * qty * 10) / 10,
+    fat:        Math.round(unitFat  * qty * 10) / 10,
+    sodium:     Math.round((f.sodium||0) * (unitW/100) * qty),
+    catId, s:[foodSeason]
   });
+
   document.getElementById('food-serving-modal').classList.remove('open');
-  _foodServingPending=null;
+  _foodServingPending = null;
+
   // Record in history
-  const hKey = f.fridgeId+'|'+amount+'|'+unit;
+  const hKey = f.fridgeId+'|'+unitW+'|g';
   FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.key!==hKey);
-  FRIDGE_HISTORY.unshift({key:hKey, fridgeId:f.fridgeId, name:f.name, amount, unit,
-    kcal:Math.round((f.kcal||0)*grams/100), cat:f.cat, ts:Date.now()});
+  FRIDGE_HISTORY.unshift({key:hKey, fridgeId:f.fridgeId, name:f.name,
+    amount:unitW, unit:'g', kcal:unitKcal, cat:f.cat, ts:Date.now()});
   if(FRIDGE_HISTORY.length>40) FRIDGE_HISTORY.length=40;
+
   renderFoodPage();
   scheduleSave();
-  toast(`✅ ${f.name} added`);
+  toast(`✅ ${f.name}${qty>1?' ×'+qty:''} added`);
 }
 
 function foodServingCancel(){
   document.getElementById('food-serving-modal').classList.remove('open');
-  _foodServingPending=null;
-  _foodDragTargetCat=null;
+  _foodServingPending = null;
+  _foodDragTargetCat  = null;
 }
 
 function fridgeQuickAdd(fridgeId, amount, unit){
@@ -8162,6 +8197,118 @@ function foodAdjustQty(iid, delta){
   item.sodium=Math.round(baseSodium*ratio*qty);
   renderFoodPage();
   scheduleSave();
+}
+
+// Inline per-unit edit — click item name to adjust weight/kcal for one unit
+function foodEditUnitOpen(iid){
+  const item = FOOD_ITEMS.find(i=>i.id===iid);
+  if(!item) return;
+  const qty = item.qty||1;
+  const unitW    = Math.round((item.w_total||0)/qty);
+  const unitKcal = Math.round((item.kcal_total||0)/qty);
+  const unitProt = Math.round((item.protein||0)/qty*10)/10;
+  const unitCarb = Math.round((item.carbs||0)/qty*10)/10;
+  const unitFat  = Math.round((item.fat||0)/qty*10)/10;
+
+  // Remove any existing popover
+  document.getElementById('food-unit-edit-pop')?.remove();
+
+  const pop = document.createElement('div');
+  pop.id = 'food-unit-edit-pop';
+  pop.style.cssText = 'position:fixed;z-index:3000;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:12px;padding:0.75rem 0.9rem;box-shadow:0 6px 24px rgba(0,0,0,0.15);min-width:220px;';
+
+  const title = document.createElement('div');
+  title.style.cssText = "font-family:'Playfair Display',serif;font-size:0.72rem;font-weight:700;color:var(--forest);margin-bottom:0.5rem;";
+  title.textContent = item.name + ' — per unit';
+  pop.appendChild(title);
+
+  const fields = [
+    {id:'peu-w',    label:'Weight (g)',  val:unitW,    step:1,   key:'w'},
+    {id:'peu-kcal', label:'Calories',    val:unitKcal, step:1,   key:'kcal'},
+    {id:'peu-prot', label:'Protein (g)', val:unitProt, step:0.1, key:'prot'},
+    {id:'peu-carb', label:'Carbs (g)',   val:unitCarb, step:0.1, key:'carb'},
+    {id:'peu-fat',  label:'Fat (g)',     val:unitFat,  step:0.1, key:'fat'},
+  ];
+
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:0.35rem 0.5rem;margin-bottom:0.6rem;';
+  fields.forEach(f=>{
+    const wrap = document.createElement('div');
+    const lbl = document.createElement('div');
+    lbl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.35rem;color:var(--stone);margin-bottom:2px;";
+    lbl.textContent = f.label;
+    const inp = document.createElement('input');
+    inp.className = 'gw-field-inp';
+    inp.id = f.id;
+    inp.type = 'number'; inp.min = '0'; inp.step = f.step;
+    inp.value = f.val;
+    inp.style.cssText = 'padding:3px 6px;font-size:0.55rem;';
+    // Weight change scales macros
+    if(f.id==='peu-w') inp.addEventListener('input', ()=>{
+      const baseItem = FRIDGE_DB.find(x=>x.id===item.fridgeId)||FRIDGE_CUSTOM.find(x=>x.id===item.fridgeId)||{};
+      const newG = parseFloat(inp.value)||0;
+      if(!newG || !baseItem.kcal) return;
+      const scale = newG/100;
+      document.getElementById('peu-kcal').value = Math.round((baseItem.kcal||0)*scale);
+      document.getElementById('peu-prot').value = Math.round((baseItem.protein||0)*scale*10)/10;
+      document.getElementById('peu-carb').value = Math.round((baseItem.carbs||0)*scale*10)/10;
+      document.getElementById('peu-fat').value  = Math.round((baseItem.fat||0)*scale*10)/10;
+    });
+    wrap.appendChild(lbl); wrap.appendChild(inp);
+    grid.appendChild(wrap);
+  });
+  pop.appendChild(grid);
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:0.4rem;';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'gw-confirm-btn';
+  saveBtn.style.flex = '1';
+  saveBtn.textContent = '✓ Save';
+  saveBtn.onclick = ()=>{
+    const newUnitW    = parseFloat(document.getElementById('peu-w').value)||0;
+    const newUnitKcal = parseFloat(document.getElementById('peu-kcal').value)||0;
+    const newUnitProt = parseFloat(document.getElementById('peu-prot').value)||0;
+    const newUnitCarb = parseFloat(document.getElementById('peu-carb').value)||0;
+    const newUnitFat  = parseFloat(document.getElementById('peu-fat').value)||0;
+    if(!newUnitW){ document.getElementById('peu-w').style.borderColor='var(--ember)'; return; }
+    item.amount    = newUnitW;
+    item.unit      = 'g';
+    item.w_total   = Math.round(newUnitW * qty);
+    item.kcal_total= Math.round(newUnitKcal * qty);
+    item.protein   = Math.round(newUnitProt * qty * 10)/10;
+    item.carbs     = Math.round(newUnitCarb * qty * 10)/10;
+    item.fat       = Math.round(newUnitFat  * qty * 10)/10;
+    pop.remove();
+    renderFoodPage(); scheduleSave();
+  };
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'gw-cancel-btn';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = ()=> pop.remove();
+
+  btnRow.appendChild(saveBtn); btnRow.appendChild(cancelBtn);
+  pop.appendChild(btnRow);
+  document.body.appendChild(pop);
+
+  // Position near the clicked element
+  const rows = document.querySelectorAll('[data-food-iid="'+iid+'"]');
+  if(rows.length){
+    const r = rows[0].getBoundingClientRect();
+    pop.style.top  = Math.min(r.bottom+4, window.innerHeight-300)+'px';
+    pop.style.left = Math.max(4, r.left)+'px';
+  } else {
+    pop.style.top='50%'; pop.style.left='50%'; pop.style.transform='translate(-50%,-50%)';
+  }
+
+  // Close on outside click
+  setTimeout(()=>{
+    document.addEventListener('click', function h(e){
+      if(!pop.contains(e.target)){ pop.remove(); document.removeEventListener('click',h); }
+    });
+  },0);
 }
 
 function foodAdjustCount(iid, delta){
@@ -10778,11 +10925,8 @@ function renderTripsPage(){
                     },0);
                   },0);
                   const totalKcal2 = Math.round(mFood.reduce((s,i)=>s+(i.kcal_total||0),0) - sharedAwayKcal + receivedKcal2);
-                  const unplannedKcal2 = Math.round(totalKcal2 - consumedKcal);
                   return '<span class="trip-col-stat">📦 <strong>'+dwTrip(foodW)+'</strong></span>'
-                    +'<span class="trip-col-stat">⚡ <strong>'+totalKcal2.toLocaleString()+'kcal</strong></span>'
-                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+Math.round(consumedKcal).toLocaleString()+'kcal planned</span>':'')
-                    +(unplannedKcal2>0?'<span class="trip-col-stat" style="color:var(--stone);opacity:0.65;">· '+unplannedKcal2.toLocaleString()+'kcal unplanned</span>':'');
+                    +'<span class="trip-col-stat">⚡ <strong>'+totalKcal2.toLocaleString()+'kcal</strong></span>';
                 })()
             }
           </div>
@@ -11002,19 +11146,7 @@ function renderMemberFood(body, member, trip, members){
   const effCarbs = Math.round(totalCarbs + receivedEntries.reduce((s,r)=>s+(r.item.carbs||0)*r.frac,0));
   const effFat   = Math.round(totalFat   + receivedEntries.reduce((s,r)=>s+(r.item.fat||0)*r.frac,0));
   // Planned kcal = items on calendar (carrier entries only, effective after splits)
-  const plannedKcalPills = mealPlan.filter(e=>{
-    const cid=e.itemRef.memberId;
-    return (member.isMe&&cid==='me')||(!member.isMe&&cid===memberId);
-  }).reduce((s,e)=>{
-    const it=allFood.find(i=>i.id===e.itemRef.itemId);
-    if(!it) return s;
-    const myFrac = e.splits ? (e.splits[memberId]??(1/Math.max(1,(e.eatenBy||[]).length))) : 1;
-    return s+(it.kcal_total||0)*myFrac*(e.qty||1);
-  },0) + receivedEntries.reduce((s,r)=>s+(r.item.kcal_total||0)*r.frac,0);
-  const unplannedKcalPills = Math.max(0, Math.round(effKcal - plannedKcalPills));
   pillsRow.innerHTML =
-    (Math.round(plannedKcalPills)>0 ? '<span class="food-sum-pill wt" style="color:var(--water);border-color:rgba(74,143,168,0.3);">✓ '+Math.round(plannedKcalPills).toLocaleString()+'kcal planned</span>' : '')+
-    (unplannedKcalPills>0 ? '<span class="food-sum-pill unplanned">· '+unplannedKcalPills.toLocaleString()+'kcal unplanned</span>' : '')+
     (effProt>0  ? '<span class="food-sum-pill wt">🥩 '+effProt+'g prot</span>' : '')+
     (effCarbs>0 ? '<span class="food-sum-pill wt">🌾 '+effCarbs+'g carbs</span>' : '')+
     (effFat>0   ? '<span class="food-sum-pill wt">🫙 '+effFat+'g fat</span>' : '');
@@ -11123,31 +11255,42 @@ function renderMemberFood(body, member, trip, members){
     return row;
   }
 
-  // ── Received row (food from another member's pack shared via calendar split) ──
+  // ── Received row — greyed out, not in your pack, carried by someone else ──
   function buildReceivedRow(r){
     const row = document.createElement('div');
     row.className = 'food-item-row food-received-row';
+    row.style.cssText = 'opacity:0.5;';
+    row.title = 'Carried by '+r.carrier.name+' — not in your pack';
+
     const dot = document.createElement('span');
     dot.className = 'food-item-dot';
     dot.style.background = catColor(r.item.catId);
     row.appendChild(dot);
+
     const name = document.createElement('span');
     name.className = 'food-item-name';
     name.textContent = r.item.name;
     row.appendChild(name);
+
+    // Carried-by badge
     const badge = document.createElement('span');
     badge.className = 'food-received-badge';
+    badge.style.cssText = "font-family:'Space Mono',monospace;font-size:0.32rem;background:rgba(139,115,85,0.1);color:var(--stone);border-radius:4px;padding:1px 5px;flex-shrink:0;";
     const dayStr = r.entry.day ? 'D'+r.entry.day+' '+r.entry.meal.charAt(0).toUpperCase()+r.entry.meal.slice(1,3) : '';
-    badge.textContent = 'from '+r.carrier.name+(r.frac<1?' '+Math.round(r.frac*100)+'%':'')+(dayStr?' · '+dayStr:'');
+    badge.textContent = r.carrier.name+(r.frac<1?' '+Math.round(r.frac*100)+'%':'')+(dayStr?' · '+dayStr:'');
     row.appendChild(badge);
+
     const kcalEl = document.createElement('span');
     kcalEl.className = 'food-item-kcal';
     kcalEl.textContent = Math.round((r.item.kcal_total||0)*r.frac).toLocaleString()+'kcal';
     row.appendChild(kcalEl);
+
     const wEl = document.createElement('span');
     wEl.className = 'food-item-w';
-    wEl.textContent = dwTrip(Math.round((r.item.w_total||0)*r.frac));
+    wEl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);font-style:italic;flex-shrink:0;";
+    wEl.textContent = '('+r.carrier.name+' carries)';
     row.appendChild(wEl);
+
     return row;
   }
 
@@ -11155,26 +11298,24 @@ function renderMemberFood(body, member, trip, members){
     const hd = document.createElement('div');
     hd.className = 'food-sec-hd';
     hd.innerHTML = escH(label)
-      + (kcal > 0 ? ' <span style="opacity:0.5;font-weight:400;">'+Math.round(kcal).toLocaleString()+' kcal</span>' : '');
+      + (kcal > 0 ? ' <span style="font-weight:800;color:var(--bark);opacity:0.85;margin-left:3px;">'+Math.round(kcal).toLocaleString()+'<span style="font-weight:400;font-size:0.85em;opacity:0.65;"> kcal</span></span>' : '');
     return hd;
   }
 
-  if(scheduled.length){
-    body.appendChild(secHd('Scheduled', scheduledKcal));
+  // Planned section: own scheduled items + received-from-crew (greyed, not in your pack)
+  const plannedKcal = scheduledKcal + receivedKcal;
+  if(scheduled.length || receivedEntries.length){
+    body.appendChild(secHd('Planned', plannedKcal));
+    // Own items on calendar — normal style
     scheduled.forEach(item=> body.appendChild(buildItemRow(item, false)));
+    // Received from crew — greyed out (they carry it, not you)
+    receivedEntries.forEach(r=> body.appendChild(buildReceivedRow(r)));
   }
+
+  // Unplanned section: own items not yet on calendar
   if(unplanned.length){
     body.appendChild(secHd(trip?.days ? 'Unplanned' : 'Food bag', unplannedKcal));
     unplanned.forEach(item=> body.appendChild(buildItemRow(item, false)));
-  }
-
-  // ── Received from crew (via calendar splits) ──
-  if(receivedEntries.length){
-    const recHd = document.createElement('div');
-    recHd.className = 'food-received-section-hd';
-    recHd.innerHTML = '🤝 Shared from crew <span style="opacity:0.55;font-weight:400;font-size:0.34rem;margin-left:4px;">'+Math.round(receivedKcal).toLocaleString()+' kcal</span>';
-    body.appendChild(recHd);
-    receivedEntries.forEach(r=> body.appendChild(buildReceivedRow(r)));
   }
 }
 
