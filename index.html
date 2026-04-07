@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.51 — Gear Organizer</title>
+<title>BaseCamp v3.52 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -869,6 +869,10 @@ html.dark .food-cat-card.food-drop-target{border-color:var(--water)!important;}
 .food-item-left{display:flex;align-items:center;gap:0.3rem;min-width:0;flex:1;}
 .food-item-name{font-family:'Nunito',sans-serif;font-size:0.78rem;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .food-item-name-editable{cursor:pointer;border-bottom:1px dashed rgba(139,115,85,0.3);transition:border-color 0.15s,color 0.15s;}
+.fqa-result-item:last-child{border-bottom:none;}
+.fqa-result-item.active{background:rgba(184,201,163,0.2)!important;}
+html.dark .fqa-result-item{color:#b8dea8;}
+html.dark #fqa-results{background:rgba(14,22,12,0.97);border-color:rgba(55,85,40,0.5);}
 .food-item-name-editable:hover{border-bottom-color:var(--water);color:var(--water);}
 .food-item-amount{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);flex-shrink:0;background:var(--cream);border-radius:4px;padding:1px 5px;}
 .food-qty-stepper{display:flex;align-items:center;gap:0;border:1.5px solid rgba(184,201,163,0.5);border-radius:7px;overflow:hidden;flex-shrink:0;}
@@ -1932,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.51</div>
+      <div class="logo-sub">Gear Organizer · v3.52</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8336,134 +8340,206 @@ let _fqaCatId = null;
 
 function foodQuickAddOpen(catId){
   _fqaCatId = catId;
-  ['fqa-name','fqa-amount','fqa-kcal-total','fqa-protein-total','fqa-carbs-total','fqa-fat-total'].forEach(id=>{
+  // Reset
+  ['fqa-name','fqa-kcal-total','fqa-protein-total','fqa-carbs-total','fqa-fat-total','fqa-sodium'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.value = '';
   });
   const st = document.getElementById('fqa-status'); if(st) st.textContent = '';
   const sp = document.getElementById('fqa-spinner'); if(sp) sp.style.display = 'none';
-  const pr = document.getElementById('fqa-preview'); if(pr) pr.style.display = 'none';
+  const res = document.getElementById('fqa-results'); if(res){ res.style.display='none'; res.innerHTML=''; }
+  const fields = document.getElementById('fqa-fields'); if(fields) fields.style.display='none';
+  const pre = document.getElementById('fqa-pre-select'); if(pre) pre.style.display='block';
   _fqaLastQuery = '';
+  _fqaResultIdx = -1;
+
+  // Populate category dropdown
+  const catSel = document.getElementById('fqa-cat');
+  if(catSel){
+    catSel.innerHTML = '';
+    FOOD_CATS.forEach(c=>{
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.icon+' '+c.name;
+      catSel.appendChild(opt);
+    });
+    const preferred = catId || FOOD_CATS[0]?.id;
+    if(preferred) catSel.value = preferred;
+  }
+
   document.getElementById('food-quick-add-modal').classList.add('open');
   setTimeout(()=>document.getElementById('fqa-name')?.focus(), 80);
 }
 
-function fqaUpdatePreview(){
-  const preview = document.getElementById('fqa-preview');
-  if(!preview) return;
-  const amount = parseFloat(document.getElementById('fqa-amount')?.value)||0;
-  const kcal = parseFloat(document.getElementById('fqa-kcal-total')?.value)||0;
-  const protein = parseFloat(document.getElementById('fqa-protein-total')?.value)||0;
-  const carbs = parseFloat(document.getElementById('fqa-carbs-total')?.value)||0;
-  const fat = parseFloat(document.getElementById('fqa-fat-total')?.value)||0;
-  if(!amount || (!kcal && !protein && !carbs && !fat)){ preview.style.display='none'; return; }
-  // Show density so user can verify
-  const scale = 100/amount;
-  preview.style.display = 'block';
-  preview.innerHTML = `<strong style="color:var(--forest)">Per 100g density (auto-calculated):</strong><br>`
-    + (kcal ? `${Math.round(kcal*scale)} kcal/100g · ` : '')
-    + (protein ? `${Math.round(protein*scale*10)/10}g protein · ` : '')
-    + (carbs ? `${Math.round(carbs*scale*10)/10}g carbs · ` : '')
-    + (fat ? `${Math.round(fat*scale*10)/10}g fat` : '')
-    + `<br><span style="opacity:0.7">Scaling will update correctly when you adjust amount</span>`;
-}
-
 let _fqaDebounce = null;
 let _fqaLastQuery = '';
+let _fqaResultIdx = -1;
 
 function fqaNameInput(val){
   const status = document.getElementById('fqa-status');
   const spinner = document.getElementById('fqa-spinner');
   clearTimeout(_fqaDebounce);
   const q = val.trim();
-  if(q.length < 2){ if(status) status.textContent = ''; return; }
-  if(status){ status.style.color='var(--stone)'; status.textContent='Looking up typical macros…'; }
+  if(q.length < 2){
+    if(status) status.textContent = '';
+    fqaResultsHide();
+    return;
+  }
+  if(status){ status.style.color='var(--stone)'; status.textContent='Searching USDA database…'; }
   if(spinner) spinner.style.display='block';
-  _fqaDebounce = setTimeout(()=>fqaLookup(q), 520);
+  _fqaDebounce = setTimeout(()=>fqaSearch(q), 420);
 }
 
-async function fqaLookup(foodName){
-  if(foodName === _fqaLastQuery) return;
-  _fqaLastQuery = foodName;
+function fqaResultsHide(){
+  const res = document.getElementById('fqa-results');
+  if(res){ res.style.display='none'; res.innerHTML=''; }
+}
+
+function fqaResultsNav(dir){
+  const res = document.getElementById('fqa-results');
+  if(!res || res.style.display==='none') return;
+  const items = res.querySelectorAll('.fqa-result-item');
+  if(!items.length) return;
+  _fqaResultIdx = Math.max(0, Math.min(items.length-1, _fqaResultIdx+dir));
+  items.forEach((el,i)=> el.classList.toggle('active', i===_fqaResultIdx));
+  items[_fqaResultIdx]?.scrollIntoView({block:'nearest'});
+}
+
+async function fqaSearch(query){
   const spinner = document.getElementById('fqa-spinner');
   const status = document.getElementById('fqa-status');
   try{
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:200,
-        system:'You are a nutrition database. Return ONLY a JSON object, no markdown, no backticks.',
-        messages:[{role:'user',content:'Give me standard nutritional values per 100g for: "'+foodName+'". Return exactly: {"kcal":0,"protein":0,"carbs":0,"fat":0}'}]
-      })
-    });
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=8&api_key=DEMO_KEY&dataType=Foundation,SR%20Legacy,Branded`;
+    const resp = await fetch(url);
     const data = await resp.json();
-    const n = JSON.parse(data.content?.[0]?.text.replace(/```json?|```/g,'').trim()||'{}');
-    // Fill totals based on current amount (default 100g if not set)
-    const amount = parseFloat(document.getElementById('fqa-amount')?.value)||100;
-    const scale = amount/100;
-    const set=(id,v)=>{ const el=document.getElementById(id); if(el&&v!=null&&!el.value) el.value=Math.round(v*scale*10)/10; };
-    set('fqa-kcal-total', n.kcal);
-    set('fqa-protein-total', n.protein);
-    set('fqa-carbs-total', n.carbs);
-    set('fqa-fat-total', n.fat);
-    if(status){ status.style.color='var(--moss)'; status.textContent='✓ Typical macros filled — adjust if needed'; }
-    fqaUpdatePreview();
+    const foods = (data.foods||[]).slice(0,8);
+
+    if(!foods.length){
+      if(status){ status.style.color='var(--stone)'; status.textContent='No results — enter macros manually below'; }
+      fqaShowManual(query);
+      return;
+    }
+
+    // Show results
+    const res = document.getElementById('fqa-results');
+    if(!res) return;
+    res.innerHTML = '';
+    res.style.display = 'block';
+    _fqaResultIdx = -1;
+
+    foods.forEach((f,i)=>{
+      const getNut = (name) => f.foodNutrients?.find(n=>n.nutrientName?.toLowerCase().includes(name))?.value || 0;
+      const kcal    = Math.round(getNut('energy') || getNut('calorie'));
+      const protein = Math.round(getNut('protein')*10)/10;
+      const carbs   = Math.round(getNut('carbohydrate')*10)/10;
+      const fat     = Math.round(getNut('total lipid')*10)/10;
+      const sodium  = Math.round(getNut('sodium'));
+
+      const row = document.createElement('div');
+      row.className = 'fqa-result-item';
+      row.style.cssText = 'padding:6px 10px;cursor:pointer;border-bottom:1px solid rgba(184,201,163,0.2);transition:background 0.1s;';
+      row.innerHTML =
+        `<div style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.description}</div>`+
+        `<div style="font-family:'Space Mono',monospace;font-size:0.36rem;color:var(--stone);margin-top:1px;">`+
+        `${kcal}kcal · ${protein}g prot · ${carbs}g carbs · ${fat}g fat <span style="opacity:0.55;">per 100g</span></div>`;
+
+      row.addEventListener('mouseenter', ()=>{ row.style.background='rgba(184,201,163,0.15)'; });
+      row.addEventListener('mouseleave', ()=>{ row.style.background=''; });
+      row.addEventListener('click', ()=>{
+        fqaSelectResult(f.description, kcal, protein, carbs, fat, sodium);
+      });
+      res.appendChild(row);
+    });
+
+    // Add "enter manually" option at bottom
+    const manual = document.createElement('div');
+    manual.style.cssText = "padding:5px 10px;cursor:pointer;font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);opacity:0.7;border-top:1px solid rgba(184,201,163,0.3);";
+    manual.textContent = '+ Enter macros manually instead';
+    manual.addEventListener('click', ()=> fqaShowManual(document.getElementById('fqa-name')?.value||''));
+    res.appendChild(manual);
+
+    if(status) status.textContent = '';
+
   } catch(e){
-    if(status){ status.style.color='var(--stone)'; status.textContent='Could not auto-fill — enter manually'; }
+    if(status){ status.style.color='var(--stone)'; status.textContent='Search failed — enter macros manually'; }
+    fqaShowManual(query);
   } finally {
     if(spinner) spinner.style.display='none';
   }
 }
 
+function fqaSelectResult(name, kcal, protein, carbs, fat, sodium){
+  // Fill in the name and macros
+  const nameEl = document.getElementById('fqa-name');
+  if(nameEl) nameEl.value = name;
+
+  document.getElementById('fqa-kcal-total').value     = kcal;
+  document.getElementById('fqa-protein-total').value  = protein;
+  document.getElementById('fqa-carbs-total').value    = carbs;
+  document.getElementById('fqa-fat-total').value      = fat;
+  const sodEl = document.getElementById('fqa-sodium'); if(sodEl) sodEl.value = sodium;
+
+  fqaResultsHide();
+  fqaShowManual(name); // show the fields for review
+  const status = document.getElementById('fqa-status');
+  if(status){ status.style.color='var(--moss)'; status.textContent='✓ Macros filled from USDA — adjust if needed'; }
+}
+
+function fqaShowManual(name){
+  // Show the macro fields and hide the pre-select cancel
+  const fields = document.getElementById('fqa-fields'); if(fields) fields.style.display='block';
+  const pre = document.getElementById('fqa-pre-select'); if(pre) pre.style.display='none';
+  fqaResultsHide();
+  // Pre-fill name if empty
+  const nameEl = document.getElementById('fqa-name');
+  if(nameEl && !nameEl.value && name) nameEl.value = name;
+}
+
+// Legacy alias
+function fqaLookup(){ }
+
+
+// fqaNameInput and fqaUpdatePreview defined above
+function fqaUpdatePreview(){} // no-op, preview removed
+
+
+
 function foodQuickAddSave(){
   const name = (document.getElementById('fqa-name')?.value||'').trim();
-  if(!name){ const inp=document.getElementById('fqa-name'); inp.style.borderColor='var(--ember)'; setTimeout(()=>inp.style.borderColor='',1000); return; }
-  const amount = parseFloat(document.getElementById('fqa-amount')?.value)||100;
-  const kcalTotal = parseFloat(document.getElementById('fqa-kcal-total')?.value)||0;
-  const proteinTotal = parseFloat(document.getElementById('fqa-protein-total')?.value)||0;
-  const carbsTotal = parseFloat(document.getElementById('fqa-carbs-total')?.value)||0;
-  const fatTotal = parseFloat(document.getElementById('fqa-fat-total')?.value)||0;
+  if(!name){ const inp=document.getElementById('fqa-name'); if(inp){ inp.style.borderColor='var(--ember)'; setTimeout(()=>inp.style.borderColor='',1000); } return; }
 
-  // Back-calculate per-100g densities for fridge storage
-  const scale = 100/amount;
-  const kcalPer100 = Math.round(kcalTotal*scale);
-  const proteinPer100 = Math.round(proteinTotal*scale*10)/10;
-  const carbsPer100 = Math.round(carbsTotal*scale*10)/10;
-  const fatPer100 = Math.round(fatTotal*scale*10)/10;
+  // Fields are now per-100g (from USDA or entered manually)
+  const kcal100    = parseFloat(document.getElementById('fqa-kcal-total')?.value)||0;
+  const protein100 = parseFloat(document.getElementById('fqa-protein-total')?.value)||0;
+  const carbs100   = parseFloat(document.getElementById('fqa-carbs-total')?.value)||0;
+  const fat100     = parseFloat(document.getElementById('fqa-fat-total')?.value)||0;
+  const sodium100  = parseFloat(document.getElementById('fqa-sodium')?.value)||0;
+  const catId      = document.getElementById('fqa-cat')?.value || _fqaCatId || FOOD_CATS[0]?.id;
 
-  // Save to Fridge permanently with densities
-  const fridgeId = 'cu'+Date.now();
+  if(!kcal100){
+    const inp=document.getElementById('fqa-kcal-total');
+    if(inp){ inp.style.borderColor='var(--ember)'; setTimeout(()=>inp.style.borderColor='',1000); }
+    return;
+  }
+
+  // Save to Fridge with per-100g densities
+  const fridgeId = 'custom_cu'+Date.now();
   FRIDGE_CUSTOM.push({
-    id: fridgeId, name,
-    kcal: kcalPer100, protein: proteinPer100,
-    carbs: carbsPer100, fat: fatPer100,
-    sodium: 0, note: '', cat: 'snacks',
-    _origAmount: amount  // remember original weight for qty-stepper mode
-  });
-
-  // Add to food bag with the exact totals the user entered
-  FOOD_ITEMS.push({
-    id: uid(), fridgeId, name,
-    amount, unit:'g', qty:1,
-    w_total: Math.round(amount),
-    kcal_total: Math.round(kcalTotal),
-    protein: Math.round(proteinTotal*10)/10,
-    carbs: Math.round(carbsTotal*10)/10,
-    fat: Math.round(fatTotal*10)/10,
-    sodium: 0,
-    catId: _fqaCatId, s:[foodSeason]
+    id: 'cu'+Date.now(), name,
+    kcal: kcal100, protein: protein100,
+    carbs: carbs100, fat: fat100,
+    sodium: sodium100, note: '', cat: catId,
   });
 
   document.getElementById('food-quick-add-modal').classList.remove('open');
-  // Add to fridge history so it shows under Previous
-  const hKey = fridgeId+'|'+amount+'|g';
+  // Add to history so it shows in Previous tab
+  const hKey = fridgeId+'|100|g';
   FRIDGE_HISTORY = FRIDGE_HISTORY.filter(h=>h.key!==hKey);
-  FRIDGE_HISTORY.unshift({key:hKey, fridgeId, name, amount, unit:'g',
-    kcal:Math.round(kcalTotal), cat:'snacks', ts:Date.now()});
+  FRIDGE_HISTORY.unshift({key:hKey, fridgeId, name, amount:100, unit:'g',
+    kcal:kcal100, cat:catId, ts:Date.now()});
   if(FRIDGE_HISTORY.length>40) FRIDGE_HISTORY.length=40;
+
   renderFoodPage();
   scheduleSave();
-  toast(`✅ "${name}" added to bag & saved to Fridge`);
+  toast(`✅ "${name}" saved to Fridge`);
 }
 
 function foodAddCatModal(){
@@ -12680,43 +12756,62 @@ function sbSubscribeTrips(){
 
 <!-- FOOD QUICK ADD MODAL -->
 <div class="modal-overlay" id="food-quick-add-modal">
-  <div class="modal" style="max-width:400px;">
-    <div class="modal-title">🍽️ Add Food Item</div>
-    <div class="modal-sub">Enter totals for the amount you're bringing · saved to Fridge permanently</div>
-    <div style="display:flex;flex-direction:column;gap:0.45rem;margin-bottom:0.85rem;">
-      <div style="position:relative;">
-        <input class="gw-field-inp" id="fqa-name" type="text" placeholder="e.g. Sandwich, Peanut Butter, Jerky…" oninput="fqaNameInput(this.value)" onkeydown="if(event.key==='Enter')document.getElementById('fqa-amount').focus()" style="padding-right:2rem;">
-        <div id="fqa-spinner" style="display:none;position:absolute;right:0.55rem;top:50%;transform:translateY(-50%);font-size:0.7rem;">⌛</div>
-      </div>
-      <div id="fqa-status" style="font-family:'Space Mono',monospace;font-size:0.44rem;min-height:0.85rem;padding-left:0.1rem;color:var(--moss);"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
-        <div style="grid-column:1/-1;">
-          <div style="font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--stone);margin-bottom:2px;">TOTAL WEIGHT (g)</div>
-          <input class="gw-field-inp" id="fqa-amount" type="number" min="0" placeholder="e.g. 300" oninput="fqaUpdatePreview()">
-        </div>
-        <div>
-          <div style="font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--stone);margin-bottom:2px;">TOTAL CALORIES (kcal)</div>
-          <input class="gw-field-inp" id="fqa-kcal-total" type="number" min="0" placeholder="e.g. 600" oninput="fqaUpdatePreview()">
-        </div>
-        <div>
-          <div style="font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--stone);margin-bottom:2px;">TOTAL PROTEIN (g)</div>
-          <input class="gw-field-inp" id="fqa-protein-total" type="number" min="0" placeholder="e.g. 30" oninput="fqaUpdatePreview()">
-        </div>
-        <div>
-          <div style="font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--stone);margin-bottom:2px;">TOTAL CARBS (g)</div>
-          <input class="gw-field-inp" id="fqa-carbs-total" type="number" min="0" placeholder="e.g. 60" oninput="fqaUpdatePreview()">
-        </div>
-        <div>
-          <div style="font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--stone);margin-bottom:2px;">TOTAL FAT (g)</div>
-          <input class="gw-field-inp" id="fqa-fat-total" type="number" min="0" placeholder="e.g. 25" oninput="fqaUpdatePreview()">
-        </div>
-      </div>
-      <!-- Live preview -->
-      <div id="fqa-preview" style="display:none;background:rgba(74,103,65,0.08);border:1px solid rgba(74,103,65,0.2);border-radius:8px;padding:0.4rem 0.6rem;font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);line-height:1.8;"></div>
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">🔍 Add to Fridge</div>
+    <div class="modal-sub">Search any food — macros fill in automatically from USDA database</div>
+
+    <!-- Search box -->
+    <div style="position:relative;margin-bottom:0.4rem;">
+      <input class="gw-field-inp" id="fqa-name" type="text" placeholder="e.g. Beef Jerky, Clif Bar, Peanut Butter…"
+        oninput="fqaNameInput(this.value)"
+        onkeydown="if(event.key==='ArrowDown'){event.preventDefault();fqaResultsNav(1);}else if(event.key==='ArrowUp'){event.preventDefault();fqaResultsNav(-1);}else if(event.key==='Escape'){fqaResultsHide();}"
+        style="padding-right:2rem;width:100%;box-sizing:border-box;">
+      <div id="fqa-spinner" style="display:none;position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);font-size:0.75rem;">⌛</div>
     </div>
-    <div style="display:flex;gap:0.5rem;">
-      <button class="gw-confirm-btn" onclick="foodQuickAddSave()">✓ Add to Bag</button>
-      <button class="gw-cancel-btn" onclick="document.getElementById('food-quick-add-modal').classList.remove('open')">✕ Cancel</button>
+
+    <!-- Search results dropdown -->
+    <div id="fqa-results" style="display:none;max-height:180px;overflow-y:auto;border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;margin-bottom:0.5rem;background:var(--paper);"></div>
+
+    <div id="fqa-status" style="font-family:'Space Mono',monospace;font-size:0.42rem;min-height:0.8rem;padding-left:0.1rem;color:var(--moss);margin-bottom:0.4rem;"></div>
+
+    <!-- Per-100g macro fields (filled from selected result, still editable) -->
+    <div id="fqa-fields" style="display:none;">
+      <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.35rem;">Per 100g — edit if needed</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.35rem;margin-bottom:0.6rem;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Calories</div>
+          <input class="gw-field-inp" id="fqa-kcal-total" type="number" min="0" placeholder="kcal" oninput="fqaUpdatePreview()" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Protein (g)</div>
+          <input class="gw-field-inp" id="fqa-protein-total" type="number" min="0" placeholder="g" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Carbs (g)</div>
+          <input class="gw-field-inp" id="fqa-carbs-total" type="number" min="0" placeholder="g" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Fat (g)</div>
+          <input class="gw-field-inp" id="fqa-fat-total" type="number" min="0" placeholder="g" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Sodium (mg)</div>
+          <input class="gw-field-inp" id="fqa-sodium" type="number" min="0" placeholder="mg" style="padding:3px 6px;">
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);margin-bottom:2px;">Category</div>
+          <select class="gw-field-inp" id="fqa-cat" style="padding:3px 6px;width:100%;box-sizing:border-box;"></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <button class="gw-confirm-btn" onclick="foodQuickAddSave()" style="flex:1;">✓ Save to Fridge</button>
+        <button class="gw-cancel-btn" onclick="document.getElementById('food-quick-add-modal').classList.remove('open')">✕ Cancel</button>
+      </div>
+    </div>
+
+    <!-- Before selection: just cancel -->
+    <div id="fqa-pre-select" style="margin-top:0.25rem;">
+      <button class="gw-cancel-btn" onclick="document.getElementById('food-quick-add-modal').classList.remove('open')" style="width:100%;">Cancel</button>
     </div>
   </div>
 </div>
