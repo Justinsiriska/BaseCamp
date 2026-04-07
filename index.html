@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.70 — Gear Organizer</title>
+<title>BaseCamp v3.72 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.70</div>
+      <div class="logo-sub">Gear Organizer · v3.72</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9053,7 +9053,10 @@ function getMyDayMacros(trip, members){
     byDay[entry.day].carbs   += totalCarbs;
 
     // Per-member breakdown for the hover tooltip only
-    const fractions = getEaterFractions(entry);
+    // Always equal split — 1 / number of eaters
+    const eaterIds = entry.eatenBy||[];
+    const equalFrac = eaterIds.length > 0 ? 1/eaterIds.length : 0;
+    const fractions = Object.fromEntries(eaterIds.map(id=>[id, equalFrac]));
     Object.entries(fractions).forEach(([eaterId, frac])=>{
       const eaterMember = memberForId(eaterId, members);
       const mName = eaterMember?.name || eaterId;
@@ -9402,102 +9405,20 @@ function buildCalEntry(entry, trip, members, refresh){
 
 
 
-// ── Shared helper: build the calorie-split UI section ──
-// Returns { el, getSplits } where getSplits() → { [memberId]: portion } summing to 1
+// ── Shared helper: always equal splits — no UI needed ──
+// Returns { el (empty div), getSplits } where getSplits() → equal { [memberId]: 1/n }
 function buildSplitSection(members, selectedSet, existingSplits){
-  const wrap = document.createElement('div');
-  wrap.className = 'split-section';
-
-  const hd = document.createElement('div');
-  hd.className = 'split-section-title';
-  hd.innerHTML = 'Calorie split <button class="split-equal-btn" id="split-equal-btn-inner">= Equal</button>';
-  wrap.appendChild(hd);
-
-  const inputs = {}; // memberId → <input>
-  const sumEl = document.createElement('div');
-  sumEl.className = 'split-sum-row';
-
+  const wrap = document.createElement('div'); // empty — no UI
   function getActiveMembers(){ return members.filter(m=>selectedSet.has(m.id)); }
-
-  function equalSplit(){
-    const active = getActiveMembers();
-    if(!active.length) return;
-    const each = Math.round(100/active.length);
-    let rem = 100;
-    active.forEach((m,i)=>{
-      const v = i===active.length-1 ? rem : each;
-      rem -= each;
-      if(inputs[m.id]) inputs[m.id].value = v;
-    });
-    updateSum();
-  }
-
-  function updateSum(){
-    const active = getActiveMembers();
-    const total = active.reduce((s,m)=>s+(parseInt(inputs[m.id]?.value||0)||0),0);
-    sumEl.textContent = 'Total: ' + total + '%';
-    sumEl.className = 'split-sum-row ' + (total===100 ? 'split-sum-ok' : 'split-sum-err');
-    active.forEach(m=>{
-      if(inputs[m.id]) inputs[m.id].classList.toggle('error', total!==100);
-    });
-  }
-
-  function rebuildRows(){
-    // Remove existing rows
-    wrap.querySelectorAll('.split-row').forEach(r=>r.remove());
-    const active = getActiveMembers();
-    active.forEach(m=>{
-      const row = document.createElement('div');
-      row.className = 'split-row';
-      const dot = document.createElement('div');
-      dot.className = 'split-row-dot';
-      dot.style.background = m.color||'var(--sage)';
-      const nm = document.createElement('span');
-      nm.className = 'split-row-name';
-      nm.textContent = m.name + (m.isMe?' (you)':'');
-      const inp = document.createElement('input');
-      inp.className = 'split-pct-inp';
-      inp.type = 'number';
-      inp.min = 0; inp.max = 100;
-      // Use existing split if available
-      const existPct = existingSplits && existingSplits[m.id] !== undefined
-        ? Math.round(existingSplits[m.id]*100) : null;
-      inp.value = existPct !== null ? existPct : Math.round(100/active.length);
-      inp.addEventListener('input', updateSum);
-      inputs[m.id] = inp;
-      const pct = document.createElement('span');
-      pct.style.cssText = "font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);";
-      pct.textContent = '%';
-      row.appendChild(dot); row.appendChild(nm); row.appendChild(inp); row.appendChild(pct);
-      wrap.appendChild(row);
-    });
-    wrap.appendChild(sumEl);
-    updateSum();
-  }
-
-  // Equal split button
-  wrap.querySelector('#split-equal-btn-inner')?.addEventListener('click', e=>{
-    e.preventDefault(); e.stopPropagation(); equalSplit();
-  });
-  // Delegated since button is inside innerHTML
-  wrap.addEventListener('click', e=>{
-    if(e.target.id==='split-equal-btn-inner'){ e.preventDefault(); e.stopPropagation(); equalSplit(); }
-  });
-
-  rebuildRows();
-
   function getSplits(){
     const active = getActiveMembers();
+    if(!active.length) return null;
+    const each = 1 / active.length;
     const splits = {};
-    const total = active.reduce((s,m)=>s+(parseInt(inputs[m.id]?.value||0)||0),0);
-    if(total===0) return null;
-    active.forEach(m=>{ splits[m.id] = (parseInt(inputs[m.id]?.value||0)||0)/total; });
+    active.forEach(m=>{ splits[m.id] = each; });
     return splits;
   }
-
-  // Expose rebuildRows so parent can call when selection changes
-  wrap._rebuildRows = rebuildRows;
-
+  wrap._rebuildRows = ()=>{}; // no-op
   return { el: wrap, getSplits };
 }
 
@@ -11250,9 +11171,13 @@ function renderTripsPage(){
                   const receivedKcal2 = members.filter(d=>d.id!==m.id&&!(m.isMe&&d.isMe)).reduce((s,donor)=>{
                     const dk = donor.isMe ? 'me' : donor.id;
                     return s+(trip.mealPlan||[]).filter(e=> donor.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===dk).reduce((a,e)=>{
-                      const frac = e.splits ? (e.splits[mId]||0) : ((e.eatenBy||[]).includes(mId)?1/Math.max(1,(e.eatenBy||[]).length):0);
+                      // Always equal split
+                      const eaters = e.eatenBy||[];
+                      const isEater = eaters.includes(mId) || (m.isMe && eaters.some(id=>isMeId(id)));
+                      if(!isEater) return a;
+                      const frac = 1/Math.max(1,eaters.length);
                       const it = itemForEntry(e, members);
-                      if(!it||!frac) return a;
+                      if(!it) return a;
                       const qtyFrac = Math.min(1,(e.qty||1)/(it.qty||1));
                       return a+(it.kcal_total||0)*frac*qtyFrac;
                     },0);
@@ -11432,7 +11357,8 @@ function renderMemberFood(body, member, trip, members){
       const fractions = entry.splits && Object.keys(entry.splits).length
         ? entry.splits
         : Object.fromEntries((entry.eatenBy||[]).map(id=>[id,1/(entry.eatenBy||[]).length]));
-      const rawFrac = fractions[memberId] || (member.isMe && Object.entries(fractions).find(([k])=>isMeId(k))?.[1]) || 0;
+      // Always equal split — 1 / number of eaters
+      const rawFrac = (e.eatenBy||[]).length > 0 ? 1/e.eatenBy.length : 0;
       // Scale by entry qty relative to item total qty
       const itemQtyR = item.qty||1;
       const entryQtyR = entry.qty||1;
@@ -11609,27 +11535,31 @@ function renderMemberFood(body, member, trip, members){
     // Shows "×4" in amber when all planned, "×2 of 3" in amber when partial, "×3" in amber when none planned
     if(!isUnplanned){
       // Day/meal badge first
-      const entries = mealPlan.filter(e=>{
+      const itemEntries = mealPlan.filter(e=>{
         const cid = e.itemRef.memberId;
         return (member.isMe ? isMeId(cid) : cid===memberId) && e.itemRef.itemId===item.id;
       });
-      if(entries.length){
+      if(itemEntries.length){
         const badge = document.createElement('span');
         badge.className = 'food-planned-badge';
-        badge.textContent = entries.map(e=>'D'+e.day+' '+e.meal.charAt(0).toUpperCase()+e.meal.slice(1,3)).join(', ');
+        badge.textContent = itemEntries.map(e=>'D'+e.day+' '+e.meal.charAt(0).toUpperCase()+e.meal.slice(1,3)).join(', ');
         row.appendChild(badge);
       }
-      // Qty chip after the badge
-      if(itemTotalQty > 1){
+      // Qty chip = personal share (entryQty / numEaters), only show if > 1
+      const personalQty = Math.round(itemEntries.reduce((s,e)=>{
+        const numEaters = Math.max(1,(e.eatenBy||[]).length);
+        return s + (e.qty||1)/numEaters;
+      }, 0));
+      if(personalQty > 1){
         const qtyChip = document.createElement('span');
         qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:2px;flex-shrink:0;";
-        qtyChip.textContent = '×'+itemSchedQty;
+        qtyChip.textContent = '×'+personalQty;
         row.appendChild(qtyChip);
       }
     } else {
-      // Unplanned section row — qty chip after name area, before kcal
+      // Unplanned section row — personal unplanned qty
       const displayQty = itemSchedQty > 0 ? itemUnplannedQty : itemTotalQty;
-      if(displayQty > 1 || itemSchedQty > 0){
+      if(displayQty > 1){
         const qtyChip = document.createElement('span');
         qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);flex-shrink:0;";
         qtyChip.textContent = '×'+displayQty;
@@ -11647,8 +11577,7 @@ function renderMemberFood(body, member, trip, members){
       const unplannedKcalAmt = Math.round(perUnitKcal * (itemSchedQty > 0 ? itemUnplannedQty : itemTotalQty));
       kcalEl.textContent = unplannedKcalAmt.toLocaleString()+'kcal';
     } else {
-      // Planned row — show what the carrier actually eats from scheduled entries
-      // = sum of (entryKcal * myFrac) across all entries for this item
+      // Planned row — what the carrier eats: entryKcal / number of eaters (always equal split)
       const myId = member.isMe ? (_sbUser?.id||'me') : memberId;
       const plannedEatKcal = mealPlan.filter(e=>{
         const cid = e.itemRef.memberId;
@@ -11656,10 +11585,8 @@ function renderMemberFood(body, member, trip, members){
       }).reduce((s,e)=>{
         const qf = Math.min(1,(e.qty||1)/(itemTotalQty||1));
         const entryKcal = totalRaw * qf;
-        const myFrac = e.splits
-          ? (e.splits[myId] ?? (member.isMe && Object.entries(e.splits).find(([k])=>isMeId(k))?.[1]) ?? 0)
-          : ((e.eatenBy||[]).includes(myId) ? 1/Math.max(1,(e.eatenBy||[]).length) : 0);
-        return s + entryKcal * myFrac;
+        const numEaters = Math.max(1,(e.eatenBy||[]).length);
+        return s + entryKcal / numEaters;
       }, 0);
       kcalEl.textContent = Math.round(plannedEatKcal).toLocaleString()+'kcal';
     }
