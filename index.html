@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.94 — Gear Organizer</title>
+<title>BaseCamp v3.95 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1989,7 +1989,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.94</div>
+      <div class="logo-sub">Gear Organizer · v3.95</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10338,48 +10338,26 @@ function ntAdjDays(delta){
 }
 
 function openTripDatePicker(tripId, anchorEl){
-  // Remove any existing picker
-  document.querySelectorAll('.trip-date-picker-pop').forEach(e=>e.remove());
-
+  if(anchorEl.querySelector('input')) return;
   const trip = TRIPS.find(t=>t.id===tripId);
   if(!trip) return;
 
-  const pop = document.createElement('div');
-  pop.className = 'trip-date-picker-pop';
-  pop.style.cssText = 'position:absolute;z-index:999;background:var(--parchment);border:1.5px solid rgba(184,201,163,0.6);border-radius:10px;padding:0.5rem 0.65rem;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;flex-direction:column;gap:0.4rem;';
-
-  const label = document.createElement('div');
-  label.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--stone);opacity:0.7;margin-bottom:0.15rem;";
-  label.textContent = 'Trip start date';
-  pop.appendChild(label);
-
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex;align-items:center;gap:0.4rem;';
-
   const inp = document.createElement('input');
   inp.type = 'date';
-  inp.className = 'gw-field-inp';
-  inp.style.cssText = 'font-size:0.62rem;padding:0.25rem 0.4rem;width:auto;';
   inp.value = trip.date || '';
+  inp.style.cssText = "font-family:'Space Mono',monospace;font-size:inherit;color:var(--bark);background:transparent;border:none;border-bottom:1.5px solid var(--meadow);outline:none;padding:0 2px;width:8rem;cursor:pointer;";
 
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'trailhead-dir-btn';
-  saveBtn.style.cssText = 'font-size:0.52rem;padding:0.25rem 0.55rem;';
-  saveBtn.textContent = '✓';
-
-  const clearBtn = document.createElement('button');
-  clearBtn.className = 'trailhead-edit-btn';
-  clearBtn.style.cssText = 'font-size:0.48rem;padding:0.2rem 0.45rem;';
-  clearBtn.textContent = 'clear';
+  const prev = anchorEl.innerHTML;
+  anchorEl.innerHTML = '';
+  anchorEl.appendChild(inp);
+  anchorEl.style.borderBottom = 'none';
+  inp.focus();
 
   function applyDate(val){
     trip.date = val || null;
     scheduleSave(); sbPushTrip(trip);
-    pop.remove();
-    // Update display in-place without full re-render
-    const disp = document.getElementById('trip-date-display-'+tripId);
-    if(disp) disp.innerHTML = val || '<span style="opacity:0.4">+ date</span>';
-    // Refresh weather panel if visible
+    anchorEl.style.borderBottom = '1px dashed rgba(74,103,65,0.35)';
+    anchorEl.innerHTML = val || '<span style="opacity:0.4">+ date</span>';
     if(val){ delete _wxCache[tripId]; }
     const wxBody = document.querySelector('.wx-body');
     if(wxBody && val){
@@ -10392,32 +10370,12 @@ function openTripDatePicker(tripId, anchorEl){
     }
   }
 
-  saveBtn.onclick = ()=> applyDate(inp.value);
-  clearBtn.onclick = ()=> applyDate('');
-  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') applyDate(inp.value); if(e.key==='Escape') pop.remove(); });
-
-  row.appendChild(inp);
-  row.appendChild(saveBtn);
-  row.appendChild(clearBtn);
-  pop.appendChild(row);
-
-  // Position near anchor
-  const rect = anchorEl.getBoundingClientRect();
-  pop.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-  pop.style.left = (rect.left + window.scrollX) + 'px';
-  document.body.appendChild(pop);
-
-  inp.focus();
-
-  // Close on outside click
-  setTimeout(()=>{
-    document.addEventListener('click', function handler(e){
-      if(!pop.contains(e.target) && e.target !== anchorEl){
-        pop.remove();
-        document.removeEventListener('click', handler);
-      }
-    });
-  }, 10);
+  inp.addEventListener('change', ()=> applyDate(inp.value));
+  inp.addEventListener('blur', ()=> applyDate(inp.value));
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ inp.blur(); }
+    if(e.key==='Escape'){ anchorEl.style.borderBottom='1px dashed rgba(74,103,65,0.35)'; anchorEl.innerHTML=prev; }
+  });
 }
 
 function createTrip(){
