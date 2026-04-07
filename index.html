@@ -1874,8 +1874,8 @@ html.dark .crew-pack-total{color:#a8d89a;}
 .trailhead-chevron{font-size:0.6rem;color:var(--stone);transition:transform 0.2s;}
 .trailhead-body{border-top:1px solid rgba(184,201,163,0.3);}
 .trailhead-info-row{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;border-bottom:1px solid rgba(184,201,163,0.2);}
-.trailhead-map-wrap{position:relative;overflow:hidden;background:#dde8d5;border-radius:0 0 12px 12px;}
-.trailhead-map-wrap img{width:100%;height:auto;display:block;}
+.trailhead-map-wrap{position:relative;overflow:hidden;height:160px;background:#dde8d5;}
+.trailhead-map-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
 .trailhead-map-pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-100%) translateY(4px);pointer-events:none;}
 .trailhead-dir-btn{background:var(--forest);color:white;border:none;border-radius:8px;padding:0.3rem 0.65rem;font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;flex-shrink:0;white-space:nowrap;}
 .trailhead-dir-btn:hover{background:var(--moss);}
@@ -1886,6 +1886,38 @@ html.dark .crew-pack-total{color:#a8d89a;}
 html.dark .trailhead-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.5);}
 html.dark .trailhead-body{border-top-color:rgba(60,95,45,0.4);}
 html.dark .trailhead-info-row{border-bottom-color:rgba(60,95,45,0.3);}
+.wx-panel{background:rgba(250,247,242,0.7);border:1.5px solid rgba(184,201,163,0.45);border-radius:14px;overflow:hidden;margin-bottom:0.8rem;}
+.wx-header{display:flex;align-items:center;gap:0.55rem;padding:0.55rem 0.8rem;cursor:pointer;user-select:none;}
+.wx-header:hover{background:rgba(184,201,163,0.1);}
+.wx-title{font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1px;color:var(--forest);font-weight:700;flex:1;}
+.wx-chevron{font-size:0.6rem;color:var(--stone);transition:transform 0.2s;}
+.wx-body{border-top:1px solid rgba(184,201,163,0.3);}
+.wx-days-row{display:grid;}
+.wx-day-col{padding:0.65rem 0.5rem 0.7rem;border-right:1px solid rgba(184,201,163,0.25);display:flex;flex-direction:column;align-items:center;gap:3px;}
+.wx-day-col:last-child{border-right:none;}
+.wx-day-label{font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--stone);text-align:center;}
+.wx-day-icon{font-size:1.1rem;line-height:1;margin:2px 0;}
+.wx-temps{display:flex;gap:4px;align-items:baseline;}
+.wx-hi{font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;color:var(--bark);}
+.wx-lo{font-family:'Nunito',sans-serif;font-size:0.58rem;color:var(--stone);}
+.wx-rain{font-family:'Space Mono',monospace;font-size:0.38rem;color:#5a8fc2;}
+.wx-rain.dry{color:var(--stone);opacity:0.5;}
+.wx-day-desc{font-family:'Nunito',sans-serif;font-size:0.48rem;color:var(--stone);text-align:center;line-height:1.3;margin-top:1px;}
+.wx-footer{padding:0.4rem 0.8rem;border-top:1px solid rgba(184,201,163,0.25);display:flex;align-items:center;gap:0.5rem;}
+.wx-footer-note{font-family:'Space Mono',monospace;font-size:0.35rem;color:var(--stone);opacity:0.6;flex:1;}
+.wx-badge-live{font-family:'Space Mono',monospace;font-size:0.35rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(60,140,60,0.15);color:#3a7a3a;letter-spacing:0.04em;}
+.wx-badge-hist{font-family:'Space Mono',monospace;font-size:0.35rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(184,140,60,0.15);color:#7a5a1a;letter-spacing:0.04em;}
+.wx-hist-banner{padding:0.4rem 0.8rem;background:rgba(250,220,130,0.2);border-bottom:1px solid rgba(200,170,80,0.3);display:flex;align-items:center;gap:0.4rem;}
+.wx-hist-banner-text{font-family:'Nunito',sans-serif;font-size:0.52rem;color:#7a5a1a;line-height:1.4;}
+.wx-loading{padding:1.2rem;text-align:center;font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);opacity:0.6;}
+html.dark .wx-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.5);}
+html.dark .wx-body{border-top-color:rgba(60,95,45,0.4);}
+html.dark .wx-day-col{border-right-color:rgba(60,95,45,0.3);}
+html.dark .wx-footer{border-top-color:rgba(60,95,45,0.3);}
+html.dark .wx-hist-banner{background:rgba(100,80,20,0.3);border-bottom-color:rgba(150,120,40,0.4);}
+html.dark .wx-hist-banner-text{color:#c8a850;}
+html.dark .wx-badge-live{background:rgba(40,120,40,0.25);color:#7dcf7d;}
+html.dark .wx-badge-hist{background:rgba(120,90,20,0.25);color:#c8a850;}
 .trip-map-wrap{
   border-radius:14px;overflow:hidden;border:2px solid rgba(184,201,163,0.4);
   background:rgba(230,235,224,0.4);position:relative;
@@ -10304,6 +10336,89 @@ function ntAdjDays(delta){
   document.getElementById('new-trip-days-val').textContent = label;
 }
 
+function openTripDatePicker(tripId, anchorEl){
+  // Remove any existing picker
+  document.querySelectorAll('.trip-date-picker-pop').forEach(e=>e.remove());
+
+  const trip = TRIPS.find(t=>t.id===tripId);
+  if(!trip) return;
+
+  const pop = document.createElement('div');
+  pop.className = 'trip-date-picker-pop';
+  pop.style.cssText = 'position:absolute;z-index:999;background:var(--parchment);border:1.5px solid rgba(184,201,163,0.6);border-radius:10px;padding:0.5rem 0.65rem;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;flex-direction:column;gap:0.4rem;';
+
+  const label = document.createElement('div');
+  label.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--stone);opacity:0.7;margin-bottom:0.15rem;";
+  label.textContent = 'Trip start date';
+  pop.appendChild(label);
+
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:0.4rem;';
+
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'gw-field-inp';
+  inp.style.cssText = 'font-size:0.62rem;padding:0.25rem 0.4rem;width:auto;';
+  inp.value = trip.date || '';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'trailhead-dir-btn';
+  saveBtn.style.cssText = 'font-size:0.52rem;padding:0.25rem 0.55rem;';
+  saveBtn.textContent = '✓';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'trailhead-edit-btn';
+  clearBtn.style.cssText = 'font-size:0.48rem;padding:0.2rem 0.45rem;';
+  clearBtn.textContent = 'clear';
+
+  function applyDate(val){
+    trip.date = val || null;
+    scheduleSave(); sbPushTrip(trip);
+    pop.remove();
+    // Update display in-place without full re-render
+    const disp = document.getElementById('trip-date-display-'+tripId);
+    if(disp) disp.innerHTML = val || '<span style="opacity:0.4">+ date</span>';
+    // Refresh weather panel if visible
+    if(val){ delete _wxCache[tripId]; }
+    const wxBody = document.querySelector('.wx-body');
+    if(wxBody && val){
+      wxBody.innerHTML = '<div class="wx-loading">Refreshing…</div>';
+      fetchWeatherForTrip(trip).then(result=>{
+        if(!result){ wxBody.innerHTML='<div class="wx-loading">Weather unavailable</div>'; return; }
+        wxBody.innerHTML='';
+        _renderWxBody(wxBody, result, trip);
+      });
+    }
+  }
+
+  saveBtn.onclick = ()=> applyDate(inp.value);
+  clearBtn.onclick = ()=> applyDate('');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') applyDate(inp.value); if(e.key==='Escape') pop.remove(); });
+
+  row.appendChild(inp);
+  row.appendChild(saveBtn);
+  row.appendChild(clearBtn);
+  pop.appendChild(row);
+
+  // Position near anchor
+  const rect = anchorEl.getBoundingClientRect();
+  pop.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  pop.style.left = (rect.left + window.scrollX) + 'px';
+  document.body.appendChild(pop);
+
+  inp.focus();
+
+  // Close on outside click
+  setTimeout(()=>{
+    document.addEventListener('click', function handler(e){
+      if(!pop.contains(e.target) && e.target !== anchorEl){
+        pop.remove();
+        document.removeEventListener('click', handler);
+      }
+    });
+  }, 10);
+}
+
 function createTrip(){
   _ntDays = null;
 
@@ -10813,7 +10928,7 @@ function renderTrailheadPanel(trip){
   const chevron = document.createElement('span');
   chevron.className = 'trailhead-chevron';
   chevron.textContent = _trailheadCollapsed ? '▶' : '▼';
-  hd.innerHTML = '<span style="font-size:0.9rem;">🗺️</span>';
+  hd.innerHTML = '';
   const titleSpan = document.createElement('span');
   titleSpan.className = 'trailhead-title';
   titleSpan.textContent = 'Trailhead';
@@ -10887,78 +11002,6 @@ function renderTrailheadContent(container, trip){
   infoRow.appendChild(editBtn);
 
   container.appendChild(infoRow);
-
-  // Static OSM map tile
-  const mapWrap = document.createElement('div');
-  mapWrap.className = 'trailhead-map-wrap';
-
-  // OpenStreetMap static tile via tile.openstreetmap.org
-  // Zoom 14, tile calculation
-  const zoom = 14;
-  const tileX = Math.floor((lng + 180) / 360 * Math.pow(2, zoom));
-  const tileY = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
-
-  // Render a 3x3 grid of tiles for coverage
-  const tileSize = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = 800; canvas.height = 220;
-  canvas.style.cssText = 'width:100%;height:auto;display:block;';
-  mapWrap.appendChild(canvas);
-
-  // Load tiles and draw on canvas
-  (async ()=>{
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#dde8d5';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const offX = Math.floor((lng - tileToLng(tileX, zoom)) / (tileToLng(tileX+1, zoom) - tileToLng(tileX, zoom)) * tileSize);
-    const offY = Math.floor((lat - tileToLat(tileY, zoom)) / (tileToLat(tileY+1, zoom) - tileToLat(tileY, zoom)) * tileSize);
-    const startX = Math.floor(canvas.width/2) - offX;
-    const startY = Math.floor(canvas.height/2) - offY;
-
-    const loadTile = (tx, ty) => new Promise(res=>{
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = ()=> res({img,tx,ty});
-      img.onerror = ()=> res(null);
-      img.src = `https://tile.openstreetmap.org/${zoom}/${tx}/${ty}.png`;
-    });
-
-    // Load enough tiles to fill canvas (3 cols x 2 rows at zoom 14)
-    const promises = [];
-    for(let r=-1;r<=2;r++) for(let c=-2;c<=2;c++) promises.push(loadTile(tileX+c, tileY+r));
-    const results = await Promise.all(promises);
-    results.forEach(r=>{
-      if(!r) return;
-      const {img, tx, ty} = r;
-      const dx = startX + (tx - tileX) * tileSize;
-      const dy = startY + (ty - tileY) * tileSize;
-      ctx.drawImage(img, dx, dy, tileSize, tileSize);
-    });
-
-    // Draw pin — circle with shadow ring + tail
-    const px = canvas.width/2, py = canvas.height/2;
-    // Shadow ring
-    ctx.beginPath(); ctx.arc(px, py-18, 15, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(200,90,42,0.18)'; ctx.fill();
-    // Pin tail
-    ctx.beginPath(); ctx.moveTo(px, py-4); ctx.lineTo(px-7, py-18); ctx.lineTo(px+7, py-18);
-    ctx.fillStyle = '#c85a2a'; ctx.fill();
-    // Pin circle
-    ctx.beginPath(); ctx.arc(px, py-18, 9, 0, Math.PI*2);
-    ctx.fillStyle = '#c85a2a'; ctx.fill();
-    ctx.strokeStyle = 'white'; ctx.lineWidth = 2.5; ctx.stroke();
-  })();
-
-  // Overlay "Open in Maps" on hover
-  const overlay = document.createElement('a');
-  overlay.href = `https://www.google.com/maps?q=${lat},${lng}`;
-  overlay.target = '_blank';
-  overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:6px;text-decoration:none;';
-  overlay.innerHTML = '<span style="background:rgba(255,255,255,0.9);border-radius:5px;padding:2px 7px;font-family:Space Mono,monospace;font-size:0.38rem;color:#185FA5;font-weight:700;">Open in Maps ↗</span>';
-  mapWrap.appendChild(overlay);
-
-  container.appendChild(mapWrap);
 }
 
 function tileToLng(x, z){ return x / Math.pow(2,z) * 360 - 180; }
@@ -11033,9 +11076,228 @@ function renderTrailheadSetup(container, trip){
   container.appendChild(wrap);
 }
 
+// ── Weather Panel ──────────────────────────────────────────────────────────
+const WMO_LABELS = {
+  0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+  45:'Fog',48:'Icy fog',
+  51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
+  61:'Light rain',63:'Rain',65:'Heavy rain',
+  71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Showers',82:'Heavy showers',
+  95:'Thunderstorm',96:'T-storm/hail',99:'T-storm/hail'
+};
+const WMO_ICONS = {
+  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',
+  45:'🌫️',48:'🌫️',
+  51:'🌦️',53:'🌧️',55:'🌧️',
+  61:'🌦️',63:'🌧️',65:'🌧️',
+  71:'🌨️',73:'❄️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',
+  95:'⛈️',96:'⛈️',99:'⛈️'
+};
+function wmoLabel(c){ return WMO_LABELS[c]||''; }
+function wmoIcon(c){ return WMO_ICONS[c]||'🌡️'; }
+
+let _wxCollapsed = false;
+let _wxCache = {}; // key: tripId → { data, ts, isHistorical }
+
+async function fetchWeatherForTrip(trip){
+  if(!trip.trailhead) return null;
+  const { lat, lng } = trip.trailhead;
+  const cached = _wxCache[trip.id];
+  if(cached && (Date.now() - cached.ts) < 10*60*1000) return cached;
+
+  const tripStart = trip.date ? new Date(trip.date) : null;
+  if(!tripStart || isNaN(tripStart)) return null;
+
+  const days = Math.max(1, trip.days||1);
+  const tripEnd = new Date(tripStart);
+  tripEnd.setDate(tripEnd.getDate() + days - 1);
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const daysUntilTrip = Math.round((tripStart - today) / 86400000);
+  const isHistorical = daysUntilTrip > 16;
+
+  const fmt = d => d.toISOString().slice(0,10);
+
+  let result;
+  if(!isHistorical){
+    // Live forecast
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&temperature_unit=fahrenheit&timezone=auto&start_date=${fmt(tripStart)}&end_date=${fmt(tripEnd)}`;
+    const r = await fetch(url);
+    const j = await r.json();
+    result = { isHistorical: false, days: buildDaysFromForecast(j, tripStart, days) };
+  } else {
+    // Historical: average same calendar dates over past 5 years
+    const allYears = [];
+    for(let y = 1; y <= 5; y++){
+      const s = new Date(tripStart); s.setFullYear(s.getFullYear() - y);
+      const e = new Date(tripEnd);   e.setFullYear(e.getFullYear() - y);
+      const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&temperature_unit=fahrenheit&timezone=auto&start_date=${fmt(s)}&end_date=${fmt(e)}`;
+      try{
+        const r = await fetch(url);
+        const j = await r.json();
+        if(j.daily) allYears.push(j.daily);
+      } catch(err){ /* skip year */ }
+    }
+    result = { isHistorical: true, days: buildDaysFromHistorical(allYears, days) };
+  }
+
+  _wxCache[trip.id] = { ...result, ts: Date.now() };
+  return _wxCache[trip.id];
+}
+
+function buildDaysFromForecast(j, tripStart, numDays){
+  const out = [];
+  for(let i=0;i<numDays;i++){
+    const d = new Date(tripStart); d.setDate(d.getDate()+i);
+    out.push({
+      date: d,
+      hi: Math.round(j.daily?.temperature_2m_max?.[i] ?? 0),
+      lo: Math.round(j.daily?.temperature_2m_min?.[i] ?? 0),
+      rain: j.daily?.precipitation_probability_max?.[i] ?? 0,
+      code: j.daily?.weathercode?.[i] ?? 0
+    });
+  }
+  return out;
+}
+
+function buildDaysFromHistorical(allYears, numDays){
+  const out = [];
+  for(let i=0;i<numDays;i++){
+    const his = [], los = [], rains = [], codes = [];
+    allYears.forEach(yr=>{
+      if(yr.temperature_2m_max?.[i] != null) his.push(yr.temperature_2m_max[i]);
+      if(yr.temperature_2m_min?.[i] != null) los.push(yr.temperature_2m_min[i]);
+      // archive uses precipitation_sum (mm); map >0.5mm day to ~40% chance as rough proxy
+      if(yr.precipitation_sum?.[i] != null) rains.push(yr.precipitation_sum[i] > 0.5 ? 1 : 0);
+      if(yr.weathercode?.[i] != null) codes.push(yr.weathercode[i]);
+    });
+    const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+    // most common code
+    const modeCode = codes.length ? codes.sort((a,b)=>
+      codes.filter(v=>v===b).length - codes.filter(v=>v===a).length)[0] : 0;
+    out.push({
+      date: null, dayIndex: i,
+      hi: his.length ? Math.round(avg(his)) : null,
+      lo: los.length ? Math.round(avg(los)) : null,
+      rain: rains.length ? Math.round(avg(rains)*100) : null,
+      code: modeCode
+    });
+  }
+  return out;
+}
+
+function renderWeatherPanel(trip){
+  if(!trip.trailhead || !trip.date) return null;
+
+  const panel = document.createElement('div');
+  panel.className = 'wx-panel';
+
+  // Header
+  const hd = document.createElement('div');
+  hd.className = 'wx-header';
+  hd.innerHTML = `<span class="wx-title">Weather</span><span class="wx-chevron">${_wxCollapsed?'▶':'▼'}</span>`;
+  hd.addEventListener('click', ()=>{
+    _wxCollapsed = !_wxCollapsed;
+    body.style.display = _wxCollapsed ? 'none' : 'block';
+    hd.querySelector('.wx-chevron').textContent = _wxCollapsed ? '▶' : '▼';
+  });
+  panel.appendChild(hd);
+
+  const body = document.createElement('div');
+  body.className = 'wx-body';
+  body.style.display = _wxCollapsed ? 'none' : 'block';
+
+  // Check cache first for instant render, then fetch
+  const cached = _wxCache[trip.id];
+  if(cached){
+    _renderWxBody(body, cached, trip);
+  } else {
+    body.innerHTML = '<div class="wx-loading">Loading forecast…</div>';
+    fetchWeatherForTrip(trip).then(result=>{
+      if(!result){ body.innerHTML = '<div class="wx-loading">Weather unavailable</div>'; return; }
+      body.innerHTML = '';
+      _renderWxBody(body, result, trip);
+    }).catch(()=>{ body.innerHTML = '<div class="wx-loading">Could not load weather</div>'; });
+  }
+
+  panel.appendChild(body);
+  return panel;
+}
+
+function _renderWxBody(body, result, trip){
+  const { isHistorical, days } = result;
+  const numDays = days.length;
+
+  // Historical banner
+  if(isHistorical){
+    const banner = document.createElement('div');
+    banner.className = 'wx-hist-banner';
+    banner.innerHTML = `<span style="font-size:0.85rem;">📅</span><span class="wx-hist-banner-text">Historical averages — forecast not yet available for this trip. Showing typical conditions based on the past 5 years for these dates.</span>`;
+    body.appendChild(banner);
+  }
+
+  // Days row
+  const row = document.createElement('div');
+  row.className = 'wx-days-row';
+  row.style.gridTemplateColumns = `repeat(${numDays}, minmax(0,1fr))`;
+
+  const tripStart = trip.date ? new Date(trip.date) : null;
+  const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  days.forEach((d, i)=>{
+    const col = document.createElement('div');
+    col.className = 'wx-day-col';
+
+    let labelText;
+    if(d.date){
+      const today = new Date(); today.setHours(0,0,0,0);
+      const isToday = d.date.toDateString() === today.toDateString();
+      const isTomorrow = (d.date - today) === 86400000;
+      if(isToday) labelText = 'Today';
+      else if(isTomorrow) labelText = 'Tomorrow';
+      else labelText = DAY_NAMES[d.date.getDay()] + ' ' + MONTH_NAMES[d.date.getMonth()] + ' ' + d.date.getDate();
+    } else {
+      // historical — show calendar date from trip start
+      const ref = new Date(tripStart); ref.setDate(ref.getDate()+i);
+      labelText = DAY_NAMES[ref.getDay()] + ' ' + MONTH_NAMES[ref.getMonth()] + ' ' + ref.getDate();
+    }
+
+    const icon = wmoIcon(d.code);
+    const label = wmoLabel(d.code);
+    const rainPct = d.rain ?? 0;
+    const rainClass = rainPct < 20 ? 'wx-rain dry' : 'wx-rain';
+
+    col.innerHTML = `
+      <div class="wx-day-label">${labelText}</div>
+      <div class="wx-day-icon">${icon}</div>
+      <div class="wx-temps">
+        <span class="wx-hi">${d.hi != null ? d.hi+'°' : '—'}</span>
+        <span class="wx-lo">${d.lo != null ? d.lo+'°' : '—'}</span>
+      </div>
+      <div class="${rainClass}">${rainPct}% rain</div>
+      <div class="wx-day-desc">${label}</div>
+    `;
+    row.appendChild(col);
+  });
+  body.appendChild(row);
+
+  // Footer
+  const footer = document.createElement('div');
+  footer.className = 'wx-footer';
+  const coordStr = `${trip.trailhead.lat.toFixed(2)}°, ${trip.trailhead.lng.toFixed(2)}°`;
+  const updatedStr = 'updated just now';
+  const badgeClass = isHistorical ? 'wx-badge-hist' : 'wx-badge-live';
+  const badgeText = isHistorical ? 'Historical' : 'Forecast';
+  footer.innerHTML = `
+    <span class="wx-footer-note">Open-Meteo · ${updatedStr} · ${coordStr}</span>
+    <span class="${badgeClass}">${badgeText}</span>
+  `;
+  body.appendChild(footer);
+}
+
 function renderTripsPage(){
-  const root = document.getElementById('trips-root');
-  if(!root) return;
   root.innerHTML='';
   root.style.position='';
 
@@ -11216,7 +11478,11 @@ function renderTripsPage(){
   // Meta line + invite button — sits below the switcher title
   const hdr=document.createElement('div'); hdr.className='trip-header';
   hdr.style.marginBottom='0.3rem';
-  hdr.innerHTML=`<div class="trip-meta" style="margin-bottom:0.4rem;">${trip.date?trip.date+' · ':''}${trip.location?trip.location+' · ':''}${members.length} people · Group: ${dwTrip(totalGroupW)} · ${totalGroupKcal.toLocaleString()} kcal</div>`;
+  hdr.innerHTML=`<div class="trip-meta" style="margin-bottom:0.4rem;display:flex;align-items:center;flex-wrap:wrap;gap:0.3rem;">
+    <span id="trip-date-display-${trip.id}" style="cursor:pointer;border-bottom:1px dashed rgba(74,103,65,0.35);padding-bottom:1px;" title="Click to set date" onclick="openTripDatePicker('${trip.id}',this)">${trip.date||'<span style=\"opacity:0.4\">+ date</span>'}</span>
+    ${trip.location?`<span style="opacity:0.5">·</span> ${escH(trip.location)} `:''}
+    <span style="opacity:0.5">·</span> ${members.length} people · Group: ${dwTrip(totalGroupW)} · ${totalGroupKcal.toLocaleString()} kcal
+  </div>`;
 
   // Invite friends button — leaders only
   const isLeaderView = !trip._shared || trip.leaderId === (_sbUser?.id||'me');
@@ -11388,13 +11654,13 @@ function renderTripsPage(){
   topRow.appendChild(rightPanel);
   root.appendChild(topRow);
 
-  // ── TRAILHEAD PANEL — constrained to left-column width ──
+  // ── TRAILHEAD PANEL ──
   const thPanel = renderTrailheadPanel(trip);
-  if(thPanel){
-    // Match the left column width (same as trip-info content area, not full page)
-    thPanel.style.cssText += 'max-width:720px;';
-    root.appendChild(thPanel);
-  }
+  if(thPanel) root.appendChild(thPanel);
+
+  // ── WEATHER PANEL ──
+  const wxPanel = renderWeatherPanel(trip);
+  if(wxPanel) root.appendChild(wxPanel);
 
   // ── BOTTOM ROW: person columns — full width ──
   const cols=document.createElement('div'); cols.className='trip-columns'; cols.style.marginTop='0';
