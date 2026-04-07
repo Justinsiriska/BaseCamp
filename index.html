@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.78 — Gear Organizer</title>
+<title>BaseCamp v3.79 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.78</div>
+      <div class="logo-sub">Gear Organizer · v3.79</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9362,7 +9362,7 @@ function buildCalEntry(entry, trip, members, refresh){
 
     const removeItem=document.createElement('div');
     removeItem.className='meal-entry-popover-item danger';
-    removeItem.innerHTML='✕ &nbsp;Remove from slot';
+    removeItem.innerHTML='↩ &nbsp;Return to pack';
     removeItem.addEventListener('mousedown',ev2=>{
       ev2.preventDefault(); ev2.stopPropagation();
       pop.remove(); el.classList.remove('active');
@@ -11684,9 +11684,7 @@ function renderMemberFood(body, member, trip, members){
   const plannedKcal = scheduledKcal + receivedKcal;
   if(scheduled.length || receivedEntries.length){
     body.appendChild(secHd('Planned', plannedKcal));
-    // Own items on calendar — normal style
     scheduled.forEach(item=> body.appendChild(buildItemRow(item, false)));
-    // Received from crew — greyed out (they carry it, not you)
     receivedEntries.forEach(r=> body.appendChild(buildReceivedRow(r)));
   }
 
@@ -11694,6 +11692,22 @@ function renderMemberFood(body, member, trip, members){
   if(unplanned.length){
     body.appendChild(secHd(trip?.days ? 'Unplanned' : 'Food bag', unplannedKcal));
     unplanned.forEach(item=> body.appendChild(buildItemRow(item, true)));
+  }
+
+  // Given away: items on calendar but carrier is NOT eating — still draggable to reassign
+  const givenAway = allFood.filter(i=>(giveawayQtyMap[i.id]||0) > 0 && !(scheduledQtyMap[i.id]||0));
+  if(givenAway.length){
+    const hd = document.createElement('div');
+    hd.className = 'food-sec-hd';
+    hd.style.cssText = 'color:var(--stone);opacity:0.65;';
+    hd.textContent = 'Given away';
+    body.appendChild(hd);
+    givenAway.forEach(item=>{
+      const row = buildItemRow(item, true); // draggable, just no kcal for carrier
+      row.style.opacity = '0.55';
+      row.title = 'Drag to calendar to reassign, or click ✕ on calendar entry to reclaim';
+      body.appendChild(row);
+    });
   }
 }
 
