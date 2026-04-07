@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.58 — Gear Organizer</title>
+<title>BaseCamp v3.59 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.58</div>
+      <div class="logo-sub">Gear Organizer · v3.59</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7250,6 +7250,46 @@ const FOOD_CATS = [
 // this into fridge-db.js and import it.
 // ================================================================
 // Each food item: {id, name, kcal_per_100g, protein, carbs, fat, sodium, note}
+// Natural serving units for raw whole foods (weight in grams per typical unit)
+const NATURAL_UNITS = {
+  'banana':    { label: '1 medium banana',  weight: 118 },
+  'apple':     { label: '1 medium apple',   weight: 182 },
+  'orange':    { label: '1 medium orange',  weight: 131 },
+  'egg':       { label: '1 large egg',      weight: 50  },
+  'pear':      { label: '1 medium pear',    weight: 178 },
+  'mango':     { label: '1 medium mango',   weight: 200 },
+  'avocado':   { label: '1 medium avocado', weight: 150 },
+  'potato':    { label: '1 medium potato',  weight: 150 },
+  'carrot':    { label: '1 medium carrot',  weight: 61  },
+  'kiwi':      { label: '1 kiwi',           weight: 76  },
+  'peach':     { label: '1 medium peach',   weight: 150 },
+  'plum':      { label: '1 plum',           weight: 66  },
+  'date':      { label: '1 medjool date',   weight: 24  },
+  'fig':       { label: '1 medium fig',     weight: 50  },
+};
+
+// Returns serving info for a food: { label, weight } or null for bulk/per-100g foods
+function getFoodServing(f){
+  // Branded/packaged — use USDA household serving + servingSize
+  if(f.servingSize && f.householdServing){
+    const hs = (f.householdServing||'').toLowerCase();
+    // Only use if it's a whole unit (not "1 serving", "1 cup" etc.)
+    const isWholeUnit = /\b(package|box|bar|can|pouch|bottle|bag|piece|stick|packet|sachet|container)\b/.test(hs);
+    if(isWholeUnit){
+      const label = f.householdServing.charAt(0).toUpperCase()+f.householdServing.slice(1).toLowerCase();
+      return { label, weight: Math.round(f.servingSize) };
+    }
+  }
+  // Stored serving on custom fridge item
+  if(f.serving) return f.serving;
+  // Natural unit lookup for raw whole foods
+  const nameLower = (f.name||'').toLowerCase();
+  for(const [key, val] of Object.entries(NATURAL_UNITS)){
+    if(nameLower.includes(key)) return val;
+  }
+  return null;
+}
+
 const FRIDGE_DB = [
 
   // ── FRESH FRUIT (great day 1) ─────────────────────────────
@@ -7747,7 +7787,11 @@ function renderFridge(){
       <div class="fridge-item-left">
         <span class="fridge-drag-handle">⠿</span>
         <span class="fridge-item-name">${escH(f.name)}${isCustom?' <span style="font-size:0.5rem;color:var(--water);vertical-align:middle;">★</span>':''}</span>
-        <span class="fridge-item-tag">${f.kcal}kcal/100g</span>
+${(()=>{
+          const sv = getFoodServing(f);
+          if(sv) return `<span class="fridge-item-tag" style="color:var(--moss);">${sv.label} · ${Math.round(f.kcal*sv.weight/100)}kcal · ${sv.weight}g</span>`;
+          return `<span class="fridge-item-tag">${f.kcal}kcal/100g</span>`;
+        })()}
       </div>
       <div class="fridge-item-right">
         <button class="fridge-add-btn" onclick="event.stopPropagation();foodOpenServingModal('${fid}')">+ Add</button>
@@ -7941,11 +7985,20 @@ function foodOpenServingModal(fridgeId){
   const unitG = f._origAmount || 100;
   const scale = unitG / 100;
 
-  document.getElementById('fsm-weight').value  = unitG;
-  document.getElementById('fsm-kcal').value    = Math.round((f.kcal||0) * scale);
-  document.getElementById('fsm-protein').value = Math.round((f.protein||0) * scale * 10) / 10;
-  document.getElementById('fsm-carbs').value   = Math.round((f.carbs||0) * scale * 10) / 10;
-  document.getElementById('fsm-fat').value     = Math.round((f.fat||0) * scale * 10) / 10;
+  // Use natural serving weight if available, else default unit
+  const sv = getFoodServing(f);
+  const defaultG = sv ? sv.weight : unitG;
+  const defaultScale = defaultG / 100;
+
+  document.getElementById('fsm-weight').value  = defaultG;
+  document.getElementById('fsm-kcal').value    = Math.round((f.kcal||0) * defaultScale);
+  document.getElementById('fsm-protein').value = Math.round((f.protein||0) * defaultScale * 10) / 10;
+  document.getElementById('fsm-carbs').value   = Math.round((f.carbs||0) * defaultScale * 10) / 10;
+  document.getElementById('fsm-fat').value     = Math.round((f.fat||0) * defaultScale * 10) / 10;
+
+  // Show serving hint if applicable
+  const servHint = document.getElementById('food-serving-item-name');
+  if(servHint && sv) servHint.textContent = f.name + ` · default: ${sv.label} (${sv.weight}g)`;
 
   document.getElementById('fsm-qty-val').textContent = '1';
   fsmRecalcPreview();
@@ -8516,8 +8569,32 @@ async function fqaSearch(query){
 
       row.addEventListener('mouseenter', ()=>{ row.style.background='rgba(184,201,163,0.15)'; });
       row.addEventListener('mouseleave', ()=>{ row.style.background=''; });
+      // Derive serving info from USDA data
+      let serving = null;
+      if(f.servingSize && f.householdServingFullText){
+        const hs = (f.householdServingFullText||'').toLowerCase();
+        const isWholeUnit = /\b(package|box|bar|can|pouch|bottle|bag|piece|stick|packet|sachet|container)\b/.test(hs);
+        if(isWholeUnit){
+          const label = f.householdServingFullText.charAt(0).toUpperCase()+f.householdServingFullText.slice(1).toLowerCase();
+          serving = { label, weight: Math.round(f.servingSize) };
+        }
+      }
+      // Natural unit fallback for raw foods
+      if(!serving){
+        const nameLower = tcName.toLowerCase();
+        for(const [key, val] of Object.entries(NATURAL_UNITS)){
+          if(nameLower.includes(key)){ serving = val; break; }
+        }
+      }
+
+      // Update result row subtitle to show serving if available
+      if(serving){
+        const sub = row.querySelector('div:last-child');
+        if(sub) sub.innerHTML = `${serving.label} · ${serving.weight}g · <strong>${Math.round(kcal*serving.weight/100)}kcal</strong> <span style="opacity:0.45;">· per 100g: ${kcal}kcal</span>`;
+      }
+
       row.addEventListener('click', ()=>{
-        fqaSelectResult(tcName, kcal, protein, carbs, fat, sodium);
+        fqaSelectResult(tcName, kcal, protein, carbs, fat, sodium, serving);
       });
       res.appendChild(row);
     });
@@ -8539,8 +8616,10 @@ async function fqaSearch(query){
   }
 }
 
-function fqaSelectResult(name, kcal, protein, carbs, fat, sodium){
-  // Fill in the name and macros
+// Stores serving for the item being added
+let _fqaPendingServing = null;
+
+function fqaSelectResult(name, kcal, protein, carbs, fat, sodium, serving){
   const nameEl = document.getElementById('fqa-name');
   if(nameEl) nameEl.value = name;
 
@@ -8550,12 +8629,17 @@ function fqaSelectResult(name, kcal, protein, carbs, fat, sodium){
   document.getElementById('fqa-fat-total').value      = fat;
   const sodEl = document.getElementById('fqa-sodium'); if(sodEl) sodEl.value = sodium;
 
+  _fqaPendingServing = serving || null;
+
   fqaResultsHide();
   fqaShowManual(name);
-  // Scroll fields into view
   setTimeout(()=>document.getElementById('fqa-fields')?.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
   const status = document.getElementById('fqa-status');
-  if(status){ status.style.color='var(--moss)'; status.textContent='✓ Macros filled from USDA — adjust if needed'; }
+  if(status){
+    status.style.color='var(--moss)';
+    if(serving) status.textContent = `✓ Macros per 100g · default unit: ${serving.label} (${serving.weight}g)`;
+    else status.textContent = '✓ Macros filled from USDA — adjust if needed';
+  }
 }
 
 function fqaShowManual(name){
@@ -8612,6 +8696,7 @@ function foodQuickAddSave(){
       kcal: kcal100, protein: protein100,
       carbs: carbs100, fat: fat100,
       sodium: sodium100, note: '', cat: catId,
+      serving: _fqaPendingServing || null,
     });
   }
 
