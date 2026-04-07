@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.79 — Gear Organizer</title>
+<title>BaseCamp v3.81 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.79</div>
+      <div class="logo-sub">Gear Organizer · v3.81</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11587,7 +11587,7 @@ function renderMemberFood(body, member, trip, members){
         const qtyChip = document.createElement('span');
         qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:2px;flex-shrink:0;";
         qtyChip.textContent = '×'+personalQty;
-        row.appendChild(qtyChip);
+        name.insertAdjacentElement('afterend', qtyChip);
       }
     } else {
       // Unplanned section row — personal unplanned qty
@@ -11596,7 +11596,7 @@ function renderMemberFood(body, member, trip, members){
         const qtyChip = document.createElement('span');
         qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);flex-shrink:0;";
         qtyChip.textContent = '×'+displayQty;
-        row.appendChild(qtyChip);
+        name.insertAdjacentElement('afterend', qtyChip);
       }
     }
 
@@ -11650,24 +11650,18 @@ function renderMemberFood(body, member, trip, members){
     name.textContent = r.item.name;
     row.appendChild(name);
 
-    // Carried-by badge
-    const badge = document.createElement('span');
-    badge.className = 'food-received-badge';
-    badge.style.cssText = "font-family:'Space Mono',monospace;font-size:0.32rem;background:rgba(139,115,85,0.1);color:var(--stone);border-radius:4px;padding:1px 5px;flex-shrink:0;";
+    // Option C: single badge "FirstName · D2 Bre" + kcal only
+    const firstName = (r.carrier.name||'').split(' ')[0];
     const dayStr = r.entry.day ? 'D'+r.entry.day+' '+r.entry.meal.charAt(0).toUpperCase()+r.entry.meal.slice(1,3) : '';
-    badge.textContent = r.carrier.name+(r.frac<1?' '+Math.round(r.frac*100)+'%':'')+(dayStr?' · '+dayStr:'');
+    const badge = document.createElement('span');
+    badge.style.cssText = "font-family:'Space Mono',monospace;font-size:0.35rem;background:rgba(139,115,85,0.1);color:var(--stone);border-radius:4px;padding:2px 6px;flex-shrink:0;white-space:nowrap;";
+    badge.textContent = firstName + (dayStr ? ' · '+dayStr : '');
     row.appendChild(badge);
 
     const kcalEl = document.createElement('span');
     kcalEl.className = 'food-item-kcal';
     kcalEl.textContent = Math.round((r.item.kcal_total||0)*r.frac).toLocaleString()+'kcal';
     row.appendChild(kcalEl);
-
-    const wEl = document.createElement('span');
-    wEl.className = 'food-item-w';
-    wEl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);font-style:italic;flex-shrink:0;";
-    wEl.textContent = '('+r.carrier.name+' carries)';
-    row.appendChild(wEl);
 
     return row;
   }
