@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.72 — Gear Organizer</title>
+<title>BaseCamp v3.73 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.72</div>
+      <div class="logo-sub">Gear Organizer · v3.73</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11354,11 +11354,8 @@ function renderMemberFood(body, member, trip, members){
       if(!carrierMember) return;
       const item = itemForEntry(entry, members);
       if(!item) return;
-      const fractions = entry.splits && Object.keys(entry.splits).length
-        ? entry.splits
-        : Object.fromEntries((entry.eatenBy||[]).map(id=>[id,1/(entry.eatenBy||[]).length]));
       // Always equal split — 1 / number of eaters
-      const rawFrac = (e.eatenBy||[]).length > 0 ? 1/e.eatenBy.length : 0;
+      const rawFrac = (entry.eatenBy||[]).length > 0 ? 1/(entry.eatenBy||[]).length : 0;
       // Scale by entry qty relative to item total qty
       const itemQtyR = item.qty||1;
       const entryQtyR = entry.qty||1;
