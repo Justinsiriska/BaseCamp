@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.37 — Gear Organizer</title>
+<title>BaseCamp v3.38 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1260,6 +1260,31 @@ html.dark .meal-calendar{background:rgba(14,22,12,0.85);border-color:rgba(60,95,
   background:rgba(74,103,65,0.08);
   border-color:var(--forest);
 }
+/* ── Food mode redesign ── */
+.food-summary-pills{display:flex;gap:5px;flex-wrap:wrap;padding:7px 10px 6px;}
+.food-sum-pill{font-family:'Space Mono',monospace;font-size:0.42rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;letter-spacing:0.3px;}
+.food-sum-pill.kcal{background:rgba(200,90,42,0.1);color:var(--ember);border:1px solid rgba(200,90,42,0.2);}
+.food-sum-pill.wt{background:rgba(45,74,45,0.07);color:var(--forest);border:1px solid rgba(184,201,163,0.4);}
+.food-sum-pill.unplanned{background:rgba(139,115,85,0.09);color:var(--stone);border:1px solid rgba(139,115,85,0.2);}
+.food-sec-hd{font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--stone);padding:5px 10px 2px;display:flex;align-items:center;gap:6px;opacity:0.65;}
+.food-sec-hd::after{content:'';flex:1;height:1px;background:rgba(184,201,163,0.28);}
+.food-item-row{display:flex;align-items:center;gap:5px;padding:2px 10px;min-height:20px;}
+.food-item-row.unplanned{opacity:0.45;}
+.food-item-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.food-item-name{flex:1;color:var(--bark);font-family:'Nunito',sans-serif;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.food-item-kcal{font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--ember);flex-shrink:0;}
+.food-item-w{font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);flex-shrink:0;margin-left:3px;}
+.food-planned-badge{font-family:'Space Mono',monospace;font-size:0.36rem;background:rgba(74,143,168,0.12);color:var(--water);border-radius:4px;padding:1px 5px;flex-shrink:0;}
+/* macro row dropdown */
+.cal-macro-cell-wrap{position:relative;cursor:default;}
+.cal-macro-cell-wrap:hover .cal-macro-dropdown{display:block;}
+.cal-macro-dropdown{display:none;position:absolute;top:calc(100% + 2px);left:0;min-width:150px;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;box-shadow:0 4px 16px rgba(45,74,45,0.15);z-index:200;padding:5px 8px;}
+.cal-macro-dd-row{display:flex;justify-content:space-between;gap:10px;padding:2px 0;font-family:'Space Mono',monospace;font-size:0.4rem;}
+.cal-macro-dd-label{color:var(--stone);opacity:0.7;}
+.cal-macro-dd-val{font-weight:700;color:var(--bark);}
+.cal-macro-dd-val.ember{color:var(--ember);}
+html.dark .cal-macro-dropdown{background:rgba(10,18,8,0.97);border-color:rgba(55,85,40,0.45);}
+html.dark .cal-macro-dd-val{color:#b8dea8;}
 .meal-cal-entry-carrier{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 1.5px rgba(255,255,255,0.6);}
 .meal-cal-entry-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .meal-cal-entry-eaters{
@@ -1884,7 +1909,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.37</div>
+      <div class="logo-sub">Gear Organizer · v3.38</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6807,7 +6832,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.37) ──
+// ── Persistence layer (rebuilt v3.38) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -8432,51 +8457,49 @@ function renderProfileSection(root){
 // Returns [{day:1, protein, carbs, kcal}, ...] for numDays days.
 // Calendar items where eatenBy includes 'me' → attributed to that day.
 // My pack items NOT on calendar → spread evenly across all days (incl. half-days).
+// Returns planned-only macros per day for all members (for macro row in calendar).
+// Also returns per-member breakdown for the dropdown.
 function getMyDayMacros(trip, members){
   const days = trip.days||0;
   if(!days) return [];
   const numDays = Math.ceil(days);
   const mealPlan = trip.mealPlan||[];
 
-  // Build per-day totals from calendar
+  // Build per-day planned totals across ALL members
   const byDay = {};
-  for(let d=1;d<=numDays;d++) byDay[d]={day:d,protein:0,carbs:0,kcal:0};
+  for(let d=1;d<=numDays;d++) byDay[d]={day:d,protein:0,carbs:0,kcal:0,byMember:{}};
 
   mealPlan.forEach(entry=>{
-    if(!entry.eatenBy.includes('me')) return;
     const {memberId,itemId}=entry.itemRef;
     let item;
     if(memberId==='me') item=FOOD_ITEMS.find(i=>i.id===itemId);
     else{ const c=members.find(m=>m.id===memberId); item=c&&(c.food||[]).find(i=>i.id===itemId); }
     if(!item||!byDay[entry.day]) return;
-    byDay[entry.day].protein += item.protein||0;
-    byDay[entry.day].carbs   += item.carbs||0;
-    byDay[entry.day].kcal    += item.kcal_total||0;
-  });
 
-  // Unplanned items I carry → divide evenly across actual days (not numDays, use trip.days)
-  const onCal = new Set(mealPlan.map(e=>e.itemRef.memberId+'|'+e.itemRef.itemId));
-  const unplanned = FOOD_ITEMS.filter(i=>!onCal.has('me|'+i.id));
-  if(unplanned.length && days>0){
-    const perDay = {
-      protein: unplanned.reduce((s,i)=>s+(i.protein||0),0)/days,
-      carbs:   unplanned.reduce((s,i)=>s+(i.carbs||0),0)/days,
-      kcal:    unplanned.reduce((s,i)=>s+(i.kcal_total||0),0)/days,
-    };
-    for(let d=1;d<=numDays;d++){
-      // Last column gets fractional day weighting for half-days
-      const weight = (days%1!==0 && d===numDays) ? days%1 : 1;
-      byDay[d].protein += perDay.protein*weight;
-      byDay[d].carbs   += perDay.carbs*weight;
-      byDay[d].kcal    += perDay.kcal*weight;
-    }
-  }
+    const kcal = item.kcal_total||0;
+    const prot = item.protein||0;
+    const carbs = item.carbs||0;
+
+    // Total day column
+    byDay[entry.day].protein += prot;
+    byDay[entry.day].carbs   += carbs;
+    byDay[entry.day].kcal    += kcal;
+
+    // Per-member breakdown for dropdown
+    const mName = memberId==='me'
+      ? (members.find(m=>m.isMe)?.name||'You')
+      : (members.find(m=>m.id===memberId)?.name||'Member');
+    if(!byDay[entry.day].byMember[mName]) byDay[entry.day].byMember[mName]={kcal:0,prot:0};
+    byDay[entry.day].byMember[mName].kcal += kcal;
+    byDay[entry.day].byMember[mName].prot += prot;
+  });
 
   return Object.values(byDay).map(d=>({
     day:d.day,
     protein:Math.round(d.protein),
     carbs:Math.round(d.carbs),
     kcal:Math.round(d.kcal),
+    byMember:d.byMember,
   }));
 }
 
@@ -8535,21 +8558,52 @@ function renderMealCalendar(container, trip, members){
   }
   cal.appendChild(hdrRow);
 
-  // My macros row
+  // Planned macros row (planned only — no unplanned distribution)
   const macroRow = document.createElement('div');
   macroRow.className='meal-cal-macro-row';
   const macroLbl = document.createElement('div');
   macroLbl.className='meal-cal-macro-label';
-  macroLbl.innerHTML='<span>My<br>Macros</span>';
+  macroLbl.innerHTML='<span style="font-size:0.36rem;opacity:0.7;">Planned<br>Macros</span>';
   macroRow.appendChild(macroLbl);
   dayMacros.forEach(dm=>{
-    const cell=document.createElement('div');
-    cell.className='meal-cal-macro-cell';
-    const sep='<span style="opacity:0.25;font-size:0.4rem;color:var(--stone);">·</span>';
-    cell.innerHTML='<div class="meal-cal-macro-pill">🥩 <strong>'+dm.protein+'g</strong> prot</div>'
-      +sep+'<div class="meal-cal-macro-pill">🌾 <strong>'+dm.carbs+'g</strong> carbs</div>'
-      +sep+'<div class="meal-cal-macro-pill">⚡ <strong>'+dm.kcal.toLocaleString()+'</strong> kcal</div>';
-    macroRow.appendChild(cell);
+    const wrap = document.createElement('div');
+    wrap.className = 'meal-cal-macro-cell cal-macro-cell-wrap';
+
+    const cell = document.createElement('div');
+    cell.className = 'meal-cal-macro-cell';
+    cell.style.cssText = 'cursor:default;';
+    if(dm.kcal > 0){
+      const sep='<span style="opacity:0.22;font-size:0.38rem;color:var(--stone);">·</span>';
+      cell.innerHTML =
+        '<div class="meal-cal-macro-pill">🥩 <strong>'+dm.protein+'g</strong></div>'+sep+
+        '<div class="meal-cal-macro-pill">🌾 <strong>'+dm.carbs+'g</strong></div>'+sep+
+        '<div class="meal-cal-macro-pill">⚡ <strong>'+dm.kcal.toLocaleString()+'</strong></div>';
+    } else {
+      cell.innerHTML = '<div style="font-family:\'Space Mono\',monospace;font-size:0.36rem;color:var(--stone);opacity:0.35;text-align:center;">—</div>';
+    }
+    wrap.appendChild(cell);
+
+    // Hover dropdown — breakdown by member
+    if(dm.kcal > 0 && Object.keys(dm.byMember||{}).length){
+      const dd = document.createElement('div');
+      dd.className = 'cal-macro-dropdown';
+      Object.entries(dm.byMember).forEach(([name, vals])=>{
+        const r = document.createElement('div');
+        r.className = 'cal-macro-dd-row';
+        r.innerHTML = '<span class="cal-macro-dd-label">'+escH(name)+'</span>'+
+          '<span class="cal-macro-dd-val ember">'+Math.round(vals.kcal).toLocaleString()+' kcal</span>';
+        dd.appendChild(r);
+      });
+      const total = document.createElement('div');
+      total.className = 'cal-macro-dd-row';
+      total.style.cssText = 'border-top:1px solid rgba(184,201,163,0.3);margin-top:3px;padding-top:3px;';
+      total.innerHTML = '<span class="cal-macro-dd-label">Total</span>'+
+        '<span class="cal-macro-dd-val ember">'+dm.kcal.toLocaleString()+' kcal</span>';
+      dd.appendChild(total);
+      wrap.appendChild(dd);
+    }
+
+    macroRow.appendChild(wrap);
   });
   cal.appendChild(macroRow);
 
@@ -10493,18 +10547,8 @@ function renderTripsPage(){
     // Pack drop zone — drag calendar entries here to unplan them
     // How-to hint bar
     const hintBar=document.createElement('div');
-    hintBar.style.cssText='display:flex;align-items:center;gap:1.2rem;padding:0.5rem 0.9rem;margin-bottom:0.2rem;background:rgba(184,201,163,0.1);border:1px solid rgba(184,201,163,0.3);border-radius:10px;flex-wrap:wrap;';
-    const hints=[
-      ['🍽️','Drag food items from packs below onto the calendar'],
-      ['↔️','Drag calendar entries between days & meals to rearrange'],
-      ['✕','Click an entry then tap Remove to unplan it'],
-    ];
-    hints.forEach(([icon,text])=>{
-      const tip=document.createElement('div');
-      tip.style.cssText="display:flex;align-items:center;gap:0.35rem;font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);opacity:0.75;white-space:nowrap;";
-      tip.innerHTML='<span style="font-size:0.7rem;">'+icon+'</span><span>'+text+'</span>';
-      hintBar.appendChild(tip);
-    });
+    hintBar.style.cssText='padding:0.35rem 0.9rem;font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);opacity:0.6;';
+    hintBar.textContent='Drag items from packs below onto the calendar · hover macro cells for breakdown';
     root.appendChild(hintBar);
 
     // Meal calendar below columns
@@ -10590,96 +10634,139 @@ function renderMemberGear(body, member, trip){
 }
 
 function renderMemberFood(body, member, trip, members){
-  const food = member.isMe
-    ? FOOD_ITEMS.filter(i=>i.s.includes(trip?trip.packId:foodSeason))
+  const packId = trip ? trip.packId : foodSeason;
+  const allFood = member.isMe
+    ? FOOD_ITEMS.filter(i=>i.s.includes(packId))
     : (member.food||[]);
 
-  if(!food.length){
-    body.innerHTML=`<div style="font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);opacity:0.6;padding:0.8rem 0.2rem;text-align:center;">No food items</div>`;
+  if(!allFood.length){
+    body.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:0.55rem;color:var(--stone);opacity:0.55;padding:1rem 0.5rem;text-align:center;">No food in this pack</div>';
     return;
   }
 
-  // Group by catId
-  const byCat={};
-  food.forEach(item=>{
-    const cid=item.catId||'other';
-    if(!byCat[cid]) byCat[cid]=[];
-    byCat[cid].push(item);
-  });
+  // Which items are scheduled on the calendar?
+  const mealPlan = trip ? (trip.mealPlan||[]) : [];
+  const memberId = member.isMe ? 'me' : member.id;
+  const scheduledIds = new Set(
+    mealPlan.filter(e=>e.itemRef.memberId===memberId).map(e=>e.itemRef.itemId)
+  );
 
-  // Track which items are on the meal plan for this trip
-  const onCalendar=new Set((trip?trip.mealPlan||[]:[]).filter(e=>e.itemRef.memberId===member.id).map(e=>e.itemRef.itemId));
+  const scheduled = allFood.filter(i=>scheduledIds.has(i.id));
+  const unplanned = allFood.filter(i=>!scheduledIds.has(i.id));
 
-  Object.entries(byCat).forEach(([catId,items])=>{
-    const hd=document.createElement('div');
-    hd.className='trip-section-hd';
-    const fc=FOOD_CATS.find(c=>c.id===catId);
-    hd.textContent=(fc?fc.icon+' '+fc.name:catId);
+  const totalKcal = allFood.reduce((s,i)=>s+(i.kcal_total||0),0);
+  const totalW    = allFood.reduce((s,i)=>s+(i.w_total||0),0);
+  const unplannedKcal = unplanned.reduce((s,i)=>s+(i.kcal_total||0),0);
+
+  // ── Summary pills ──
+  const pillsRow = document.createElement('div');
+  pillsRow.className = 'food-summary-pills';
+  pillsRow.innerHTML =
+    '<span class="food-sum-pill kcal">⚡ '+totalKcal.toLocaleString()+' kcal</span>'+
+    '<span class="food-sum-pill wt">⚖️ '+dwTrip(totalW)+'</span>'+
+    (unplannedKcal > 0 && trip?.days
+      ? '<span class="food-sum-pill unplanned">'+unplannedKcal.toLocaleString()+' kcal unplanned</span>'
+      : '');
+  body.appendChild(pillsRow);
+
+  function catColor(catId){
+    const c = FOOD_CATS.find(x=>x.id===catId);
+    const colors = {breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
+    return colors[catId] || '#8b8b8b';
+  }
+
+  function buildItemRow(item, isUnplanned){
+    const row = document.createElement('div');
+    row.className = 'food-item-row' + (isUnplanned ? ' unplanned' : '');
+
+    if(member.isMe && trip){
+      row.draggable = true;
+      row.title = 'Drag to calendar to plan';
+      row.addEventListener('dragstart', e=>{
+        window._calDrag = {memberId:'me', itemId:item.id};
+        e.dataTransfer.effectAllowed = 'copy';
+        try{ e.dataTransfer.setData('text/plain', JSON.stringify(window._calDrag)); }catch(_){}
+        row.style.opacity = '0.5';
+      });
+      row.addEventListener('dragend', ()=>{ row.style.opacity=''; window._calDrag=null; });
+      // Accept drops back from calendar to unplan
+      row.addEventListener('dragover', e=>{
+        if(!_draggedEntry) return;
+        e.preventDefault(); e.dataTransfer.dropEffect='move';
+        row.style.outline='2px solid var(--water)'; row.style.outlineOffset='1px';
+      });
+      row.addEventListener('dragleave', e=>{
+        if(!row.contains(e.relatedTarget)){ row.style.outline=''; row.style.outlineOffset=''; }
+      });
+      row.addEventListener('drop', e=>{
+        row.style.outline=''; row.style.outlineOffset='';
+        if(!_draggedEntry) return;
+        e.preventDefault(); e.stopPropagation();
+        document.body.classList.remove('cal-dragging');
+        const entry = _draggedEntry; _draggedEntry = null;
+        if(entry.itemRef.itemId !== item.id) return;
+        const idx = (trip.mealPlan||[]).indexOf(entry);
+        if(idx>-1){ trip.mealPlan.splice(idx,1); markDirty(); }
+        const grid = document.querySelector('[data-meal-cal-grid]');
+        if(grid) renderMealCalendar(grid, trip, members);
+        members.forEach(m=>{
+          const b = document.getElementById('col-body-'+m.id);
+          if(b){ b.innerHTML=''; renderMemberFood(b,m,trip,members); }
+        });
+      });
+    }
+
+    const dot = document.createElement('span');
+    dot.className = 'food-item-dot';
+    dot.style.background = catColor(item.catId);
+    row.appendChild(dot);
+
+    const name = document.createElement('span');
+    name.className = 'food-item-name';
+    name.textContent = item.name;
+    row.appendChild(name);
+
+    if(!isUnplanned){
+      // Find which day/meal it's scheduled
+      const entries = mealPlan.filter(e=>e.itemRef.memberId===memberId && e.itemRef.itemId===item.id);
+      if(entries.length){
+        const badge = document.createElement('span');
+        badge.className = 'food-planned-badge';
+        badge.textContent = entries.map(e=>'D'+e.day+' '+e.meal.charAt(0).toUpperCase()+e.meal.slice(1,3)).join(', ');
+        row.appendChild(badge);
+      }
+    }
+
+    const kcalEl = document.createElement('span');
+    kcalEl.className = 'food-item-kcal';
+    kcalEl.textContent = (item.kcal_total||0).toLocaleString()+'kcal';
+    row.appendChild(kcalEl);
+
+    const wEl = document.createElement('span');
+    wEl.className = 'food-item-w';
+    wEl.textContent = dwTrip(item.w_total||0);
+    row.appendChild(wEl);
+
+    return row;
+  }
+
+  // ── Scheduled section ──
+  if(scheduled.length){
+    const hd = document.createElement('div');
+    hd.className = 'food-sec-hd';
+    hd.textContent = 'Scheduled';
     body.appendChild(hd);
-    items.forEach(item=>{
-      const row=document.createElement('div');
-      row.className='trip-shared-item'+(trip?' trip-food-draggable':'');
-      if(trip){
-        row.draggable=true;
-        row.title='Drag to calendar to plan · Drop calendar items here to unplan';
-        row.addEventListener('dragstart',e=>{
-          window._calDrag={memberId:member.id, itemId:item.id};
-                    e.dataTransfer.effectAllowed='copy';
-          try{ e.dataTransfer.setData('text/plain', JSON.stringify(window._calDrag)); }catch(_){}
-          row.style.opacity='0.5';
-        });
-        row.addEventListener('dragend',()=>{ row.style.opacity=''; window._calDrag=null; });
-        // Accept calendar entries dropped back onto this food item (unplan)
-        row.addEventListener('dragover',e=>{
-          if(!_draggedEntry) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect='move';
-          row.style.outline='2px solid var(--water)';
-          row.style.outlineOffset='1px';
-        });
-        row.addEventListener('dragleave',e=>{
-          if(!row.contains(e.relatedTarget)){
-            row.style.outline='';
-            row.style.outlineOffset='';
-          }
-        });
-        row.addEventListener('drop',e=>{
-          row.style.outline='';
-          row.style.outlineOffset='';
-          if(!_draggedEntry) return;
-          e.preventDefault();
-          e.stopPropagation();
-          document.body.classList.remove('cal-dragging');
-          const entry = _draggedEntry;
-          _draggedEntry = null;
-          if(!entry) return;
-          if(entry.itemRef.itemId!==item.id) return;
-          const idx=(trip.mealPlan||[]).indexOf(entry);
-          if(idx>-1){ trip.mealPlan.splice(idx,1); scheduleSave(); }
-          const grid=document.querySelector('[data-meal-cal-grid]');
-          if(grid) renderMealCalendar(grid, trip, members);
-          members.forEach(m=>{
-            const body=document.getElementById('col-body-'+m.id);
-            if(body){ body.innerHTML=''; renderMemberFood(body,m,trip,members); }
-          });
-        });
-      }
-      const totalQty=item.qty||1;
-      const usedQty=calUsedQty(trip, member.id, item.id);
-      const remaining=totalQty-usedQty;
-      const fullyPlanned=remaining<=0;
-      let calIndicator='';
-      if(usedQty>0 && !fullyPlanned){
-        calIndicator=` <span style="font-size:0.42rem;font-family:'Space Mono',monospace;color:var(--water);opacity:0.8;">${usedQty}/${totalQty} planned</span>`;
-      } else if(fullyPlanned){
-        calIndicator=` <span style="font-size:0.42rem;font-family:'Space Mono',monospace;color:var(--sage);opacity:0.9;">\u2713 all planned</span>`;
-      }
-      row.innerHTML=`<span style="flex:1">${escH(item.name)}${calIndicator}</span>
-        <span class="trip-shared-w">${dwTrip(item.w_total||0)}</span>`;
-      if(fullyPlanned) row.style.opacity='0.5';
-      body.appendChild(row);
-    });
-  });
+    scheduled.forEach(item=> body.appendChild(buildItemRow(item, false)));
+  }
+
+  // ── Still in bag (unplanned) section ──
+  if(unplanned.length){
+    const hd = document.createElement('div');
+    hd.className = 'food-sec-hd';
+    hd.textContent = trip?.days ? 'Still in bag' : 'Food bag';
+    body.appendChild(hd);
+    unplanned.forEach(item=> body.appendChild(buildItemRow(item, true)));
+  }
 }
 
 function dismissFlag(tripId, flagId){
