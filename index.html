@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.42 — Gear Organizer</title>
+<title>BaseCamp v3.44 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1909,7 +1909,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.42</div>
+      <div class="logo-sub">Gear Organizer · v3.44</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5324,6 +5324,39 @@ function packInlineAddCancel(cid){
   if(form) form.remove();
 }
 
+// Auto-save drawer on close — no ✓ Save button required.
+// Silently saves if name is present, silently discards if name is empty.
+function autoSaveDrawer(cid, iid){
+  const cat = CATS.find(c=>c.id===cid);
+  const item = cat?.items.find(i=>i.id===iid);
+  const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
+  if(!item || !wrap) return;
+
+  const drawer = wrap.querySelector('.gw-drawer');
+  const name = (drawer?.querySelector('.gw-edit-name')?.value||'').trim();
+
+  if(!name){
+    // No name — discard new items, just close existing
+    if(item._new) cat.items = cat.items.filter(i=>i.id!==iid);
+    wrap.classList.remove('open');
+    if(item._new) renderAll();
+    return;
+  }
+
+  // Apply all drawer values
+  item.name = name;
+  item.w = toGrams(drawer?.querySelector('.gw-edit-w')?.value||0);
+  const extraInp = drawer?.querySelector('.gw-edit-extra');
+  if(extraInp) item.extra = extraInp.value.trim();
+  const linkInp = drawer?.querySelector('.gw-edit-link');
+  if(linkInp) item.link = linkInp.value.trim();
+  delete item._new;
+
+  wrap.classList.remove('open');
+  renderAll();
+  scheduleSave();
+}
+
 function saveDrawer(cid, iid, btn){
   const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
   const drawer = wrap?.querySelector('.gw-drawer');
@@ -5368,13 +5401,15 @@ function discardDrawer(cid, iid){
   if(!item) return;
 
   if(item._new){
-    // New item — remove entirely
+    // If user typed a name, auto-save instead of discarding
+    const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
+    const name = (wrap?.querySelector('.gw-edit-name')?.value||'').trim();
+    if(name){ autoSaveDrawer(cid, iid); return; }
     cat.items = cat.items.filter(i=>i.id!==iid);
     renderAll();
   } else {
-    // Existing item — just close the drawer, no changes applied
-    const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
-    if(wrap) wrap.classList.remove('open');
+    // Existing item — auto-save any changes then close
+    autoSaveDrawer(cid, iid);
   }
 }
 
@@ -6337,7 +6372,12 @@ function renderGearWall(){
         chip.addEventListener('click', e=>{
           if(e.target.closest('button')) return;
           if(_pdDidDrag) return;
-          wrap.classList.toggle('open');
+          if(wrap.classList.contains('open')){
+            // Closing — auto-save whatever is in the drawer
+            autoSaveDrawer(cat.id, item.id);
+          } else {
+            wrap.classList.add('open');
+          }
         });
 
         // DRAWER — full edit form
@@ -6832,7 +6872,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.42) ──
+// ── Persistence layer (rebuilt v3.44) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -10720,12 +10760,12 @@ function renderMemberFood(body, member, trip, members){
         window._calDrag = {memberId:'me', itemId:item.id};
         e.dataTransfer.effectAllowed = 'copy';
         try{ e.dataTransfer.setData('text/plain', JSON.stringify(window._calDrag)); }catch(_){}
-        // Custom drag image — just the item name, no kcal/weight clutter
+        // Custom drag image — just the item name
         const ghost = document.createElement('div');
         ghost.textContent = item.name;
-        ghost.style.cssText = 'position:fixed;top:-999px;left:-999px;padding:4px 10px;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;font-family:\'Nunito\',sans-serif;font-size:0.75rem;font-weight:700;color:var(--bark);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.12);';
+        ghost.style.cssText = 'position:fixed;top:-999px;left:0;padding:4px 10px;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;font-family:\'Nunito\',sans-serif;font-size:0.75rem;font-weight:700;color:var(--bark);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.12);pointer-events:none;';
         document.body.appendChild(ghost);
-        e.dataTransfer.setDragImage(ghost, ghost.offsetWidth/2, 16);
+        e.dataTransfer.setDragImage(ghost, 40, 16); // fixed offset — offsetWidth unreliable before paint
         setTimeout(()=>ghost.remove(), 0);
         row.style.opacity = '0.5';
       });
@@ -12043,6 +12083,20 @@ function sbSubscribeTrips(){
         _tripInvitesIn.push({...inv, inviter_name: p?.full_name || 'Someone'});
         renderTripsPage();
         toast('🏕️ New trip invite from ' + (p?.full_name || 'Someone') + '!');
+      })
+    // Watch profiles — crew member gear/food changes update the owner's shared trip view
+    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'profiles' },
+      async (payload)=>{
+        const changedUserId = payload.new?.id;
+        if(!changedUserId || changedUserId === _sbUser.id) return;
+        // Only care if this person is in a trip we own or share
+        const hasConnection = TRIPS.some(t=>
+          (!t._shared && (t.memberIds||[]).includes(changedUserId)) ||
+          (t._shared && t._ownerId === changedUserId)
+        );
+        if(!hasConnection) return;
+        await sbPullSharedTrips();
+        renderTripsPage();
       })
     .subscribe();
 }
