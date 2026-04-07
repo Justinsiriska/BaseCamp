@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.74 — Gear Organizer</title>
+<title>BaseCamp v3.75 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.74</div>
+      <div class="logo-sub">Gear Organizer · v3.75</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11158,13 +11158,14 @@ function renderTripsPage(){
                   const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
                   const carrierKey = m.isMe ? 'me' : m.id;
 
-                  // Planned kcal = own food on calendar (carrier cost)
+                  // Planned kcal = own food on calendar (my eaten share = entry / numEaters)
                   const ownPlannedKcal2 = (trip.mealPlan||[])
                     .filter(e=> m.isMe ? isMeId(e.itemRef.memberId) : e.itemRef.memberId===carrierKey)
                     .reduce((s,e)=>{
                       const it=itemForEntry(e,members); if(!it) return s;
                       const qf=Math.min(1,(e.qty||1)/(it.qty||1));
-                      return s+(it.kcal_total||0)*qf;
+                      const numEaters=Math.max(1,(e.eatenBy||[]).length);
+                      return s+(it.kcal_total||0)*qf/numEaters;
                     },0);
 
                   // Received kcal (others carry, I eat a share) — apply qtyFrac
