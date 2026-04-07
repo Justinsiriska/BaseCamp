@@ -1275,6 +1275,24 @@ html.dark .meal-calendar{background:rgba(14,22,12,0.85);border-color:rgba(60,95,
 .food-item-kcal{font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--ember);flex-shrink:0;}
 .food-item-w{font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);flex-shrink:0;margin-left:3px;}
 .food-planned-badge{font-family:'Space Mono',monospace;font-size:0.36rem;background:rgba(74,143,168,0.12);color:var(--water);border-radius:4px;padding:1px 5px;flex-shrink:0;}
+.food-give-btn{background:none;border:1.5px solid rgba(184,201,163,0.4);border-radius:5px;cursor:pointer;font-size:0.55rem;padding:1px 5px;color:var(--stone);flex-shrink:0;line-height:1.4;transition:background 0.15s,color 0.15s;}
+.food-give-btn:hover{background:rgba(74,143,168,0.12);color:var(--water);border-color:var(--water);}
+.food-give-btn.active{background:rgba(74,143,168,0.18);color:var(--water);border-color:var(--water);}
+.food-give-pop{position:absolute;right:0;top:100%;z-index:200;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;padding:0.5rem 0.6rem;box-shadow:0 4px 18px rgba(0,0,0,0.13);min-width:160px;display:flex;flex-direction:column;gap:0.3rem;}
+.food-give-pop-title{font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+.food-give-member-btn{background:rgba(184,201,163,0.08);border:1.5px solid rgba(184,201,163,0.35);border-radius:7px;padding:3px 8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.45rem;color:var(--bark);text-align:left;transition:background 0.12s;}
+.food-give-member-btn:hover{background:rgba(74,143,168,0.12);border-color:var(--water);color:var(--water);}
+.food-give-member-btn.given{background:rgba(74,143,168,0.15);border-color:var(--water);color:var(--water);}
+.food-received-row{background:rgba(74,143,168,0.06);border-radius:6px;margin:1px 0;}
+.food-received-badge{font-family:'Space Mono',monospace;font-size:0.34rem;background:rgba(74,143,168,0.12);color:var(--water);border-radius:4px;padding:1px 5px;flex-shrink:0;}
+.food-received-section-hd{font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--water);opacity:0.75;text-transform:uppercase;letter-spacing:0.5px;padding:4px 10px 2px;display:flex;align-items:center;gap:6px;}
+.food-received-section-hd::after{content:'';flex:1;height:1px;background:rgba(74,143,168,0.2);}
+html.dark .food-give-pop{background:rgba(14,22,12,0.97);border-color:rgba(55,85,40,0.5);}
+html.dark .food-give-member-btn{background:rgba(15,25,12,0.7);border-color:rgba(55,85,40,0.4);color:#b8dea8;}
+html.dark .food-give-member-btn:hover,html.dark .food-give-member-btn.given{background:rgba(74,143,168,0.18);border-color:rgba(74,143,168,0.6);color:#7ba7bc;}
+html.dark .food-received-row{background:rgba(74,143,168,0.07);}
+html.dark .food-give-btn{color:#6a8f5a;border-color:rgba(55,85,40,0.4);}
+html.dark .food-give-btn:hover,html.dark .food-give-btn.active{background:rgba(74,143,168,0.18);color:#7ba7bc;border-color:rgba(74,143,168,0.6);}
 /* macro row dropdown */
 .cal-macro-cell-wrap{position:relative;cursor:default;}
 .cal-macro-cell-wrap:hover .cal-macro-dropdown{display:block;}
@@ -8521,9 +8539,12 @@ function getMyDayMacros(trip, members){
     else{ const c=members.find(m=>m.id===memberId); item=c&&(c.food||[]).find(i=>i.id===itemId); }
     if(!item||!byDay[entry.day]) return;
 
-    const kcal = item.kcal_total||0;
-    const prot = item.protein||0;
-    const carbs = item.carbs||0;
+    // Compute effective kcal/macros accounting for food shared away
+    const sharedAway = (item.sharedTo||[]).reduce((s,x)=>s+(x.portion||0),0);
+    const myFraction = Math.max(0, 1 - sharedAway);
+    const kcal = (item.kcal_total||0) * myFraction;
+    const prot = (item.protein||0) * myFraction;
+    const carbs = (item.carbs||0) * myFraction;
 
     // Total day column
     byDay[entry.day].protein += prot;
@@ -8537,6 +8558,21 @@ function getMyDayMacros(trip, members){
     if(!byDay[entry.day].byMember[mName]) byDay[entry.day].byMember[mName]={kcal:0,prot:0};
     byDay[entry.day].byMember[mName].kcal += kcal;
     byDay[entry.day].byMember[mName].prot += prot;
+
+    // Add received portions to each recipient's breakdown
+    (item.sharedTo||[]).forEach(share=>{
+      if(!share.userId || !share.portion) return;
+      const rMember = members.find(m=>m.id===share.userId);
+      if(!rMember) return;
+      const rKcal = (item.kcal_total||0) * share.portion;
+      const rProt = (item.protein||0) * share.portion;
+      if(!byDay[entry.day].byMember[rMember.name]) byDay[entry.day].byMember[rMember.name]={kcal:0,prot:0};
+      byDay[entry.day].byMember[rMember.name].kcal += rKcal;
+      byDay[entry.day].byMember[rMember.name].prot += rProt;
+      byDay[entry.day].protein += rProt;
+      byDay[entry.day].carbs   += (item.carbs||0) * share.portion;
+      byDay[entry.day].kcal    += rKcal;
+    });
   });
 
   return Object.values(byDay).map(d=>({
@@ -10283,7 +10319,7 @@ function renderTripsPage(){
   }
   const maxW = Math.max(...members.map(m=>memberGearWeight(m,trip.packId)+memberFoodWeight(m,trip.packId)),1);
   const totalGroupW = members.reduce((s,m)=>s+memberGearWeight(m,trip.packId)+memberFoodWeight(m,trip.packId),0);
-  const totalGroupKcal = members.reduce((s,m)=>s+memberFoodKcal(m,trip.packId),0);
+  const totalGroupKcal = (()=>{ const pid=trip.packId; let tot=0; members.forEach(m=>{ const food=m.isMe?FOOD_ITEMS.filter(i=>i.s.includes(pid)):(m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(pid)); food.forEach(i=>tot+=(i.kcal_total||0)); }); return tot; })();
 
   // ── TOP ROW: left=header/flags/toggle, right=map+stats ──
   // We use a simple flex row. The right panel has a fixed height of 260px.
@@ -10562,14 +10598,22 @@ function renderTripsPage(){
                  <span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`
               : (()=>{
                   const packId2 = trip.packId;
+                  const mId = m.isMe ? (_sbUser?.id||'me') : m.id;
                   const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
                   const mPlan = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===(m.isMe?'me':m.id));
                   const plannedIds = new Set(mPlan.map(e=>e.itemRef.itemId));
-                  const consumedKcal = mFood.filter(i=>plannedIds.has(i.id)).reduce((s,i)=>s+(i.kcal_total||0),0);
-                  const totalKcal2 = mFood.reduce((s,i)=>s+(i.kcal_total||0),0);
+                  // Effective kcal = owned minus shared away
+                  const ownedKcal = mFood.reduce((s,i)=>{ const away=(i.sharedTo||[]).reduce((a,x)=>a+(x.portion||0),0); return s+(i.kcal_total||0)*Math.max(0,1-away); },0);
+                  // Received from others
+                  const receivedKcal2 = members.filter(d=>d.id!==m.id&&!(m.isMe&&d.isMe)).reduce((s,donor)=>{
+                    const df = donor.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (donor.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
+                    return s+df.reduce((a,i)=>{ const sh=(i.sharedTo||[]).find(x=>x.userId===mId); return a+(sh?((i.kcal_total||0)*sh.portion):0); },0);
+                  },0);
+                  const totalKcal2 = Math.round(ownedKcal + receivedKcal2);
+                  const consumedKcal = mFood.filter(i=>plannedIds.has(i.id)).reduce((s,i)=>{ const away=(i.sharedTo||[]).reduce((a,x)=>a+(x.portion||0),0); return s+(i.kcal_total||0)*Math.max(0,1-away); },0);
                   return '<span class="trip-col-stat">🍽 <strong>'+dwTrip(foodW)+'</strong></span>'
                     +'<span class="trip-col-stat">⚡ <strong>'+totalKcal2.toLocaleString()+'kcal</strong></span>'
-                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+consumedKcal.toLocaleString()+'kcal planned</span>':'');
+                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+Math.round(consumedKcal).toLocaleString()+'kcal planned</span>':'');
                 })()
             }
           </div>
@@ -10711,7 +10755,39 @@ function renderMemberFood(body, member, trip, members){
     ? FOOD_ITEMS.filter(i=>i.s.includes(packId))
     : (member.food||[]).filter(i=>!i.s || i.s.length===0 || i.s.includes(packId));
 
-  if(!allFood.length){
+  // ── Compute received food (items shared TO this member by others) ──
+  const myId = member.isMe ? (_sbUser?.id||'me') : member.id;
+  const receivedItems = []; // [{item, fromMember, portion}]
+  if(trip){
+    members.forEach(donor=>{
+      if(donor.id === member.id || (member.isMe && donor.isMe)) return;
+      const donorFood = donor.isMe
+        ? FOOD_ITEMS.filter(i=>i.s.includes(packId))
+        : (donor.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId));
+      donorFood.forEach(item=>{
+        const share = (item.sharedTo||[]).find(x=>x.userId===myId);
+        if(share && share.portion > 0){
+          receivedItems.push({item, fromMember:donor, portion:share.portion});
+        }
+      });
+    });
+  }
+
+  // Effective kcal for owned items (subtract shared-away portions)
+  function effectiveKcal(item){
+    const sharedAway = (item.sharedTo||[]).reduce((s,x)=>s+(x.portion||0),0);
+    return (item.kcal_total||0) * Math.max(0, 1 - sharedAway);
+  }
+
+  const ownedKcal    = allFood.reduce((s,i)=>s+effectiveKcal(i),0);
+  const receivedKcal = receivedItems.reduce((s,r)=>s+(r.item.kcal_total||0)*r.portion,0);
+  const totalKcal    = ownedKcal + receivedKcal;
+  const totalW       = allFood.reduce((s,i)=>s+(i.w_total||0),0);
+  const totalProtein = allFood.reduce((s,i)=>s+(i.protein||0),0) + receivedItems.reduce((s,r)=>s+(r.item.protein||0)*r.portion,0);
+  const totalCarbs   = allFood.reduce((s,i)=>s+(i.carbs||0),0)   + receivedItems.reduce((s,r)=>s+(r.item.carbs||0)*r.portion,0);
+  const totalFat     = allFood.reduce((s,i)=>s+(i.fat||0),0)     + receivedItems.reduce((s,r)=>s+(r.item.fat||0)*r.portion,0);
+
+  if(!allFood.length && !receivedItems.length){
     body.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:0.55rem;color:var(--stone);opacity:0.55;padding:1rem 0.5rem;text-align:center;">No food in this pack</div>';
     return;
   }
@@ -10726,19 +10802,14 @@ function renderMemberFood(body, member, trip, members){
   const scheduled = allFood.filter(i=>scheduledIds.has(i.id));
   const unplanned = allFood.filter(i=>!scheduledIds.has(i.id));
 
-  const totalKcal    = allFood.reduce((s,i)=>s+(i.kcal_total||0),0);
-  const totalW       = allFood.reduce((s,i)=>s+(i.w_total||0),0);
-  const totalProtein = allFood.reduce((s,i)=>s+(i.protein||0),0);
-  const totalCarbs   = allFood.reduce((s,i)=>s+(i.carbs||0),0);
-  const totalFat     = allFood.reduce((s,i)=>s+(i.fat||0),0);
-  const scheduledKcal = scheduled.reduce((s,i)=>s+(i.kcal_total||0),0);
-  const unplannedKcal = unplanned.reduce((s,i)=>s+(i.kcal_total||0),0);
+  const scheduledKcal = scheduled.reduce((s,i)=>s+effectiveKcal(i),0);
+  const unplannedKcal = unplanned.reduce((s,i)=>s+effectiveKcal(i),0);
 
   // ── Macro summary row ──
   const pillsRow = document.createElement('div');
   pillsRow.className = 'food-summary-pills';
   pillsRow.innerHTML =
-    '<span class="food-sum-pill kcal">⚡ '+totalKcal.toLocaleString()+' kcal</span>'+
+    '<span class="food-sum-pill kcal">⚡ '+Math.round(totalKcal).toLocaleString()+' kcal</span>'+
     '<span class="food-sum-pill wt">⚖️ '+dwTrip(totalW)+'</span>'+
     (totalProtein>0 ? '<span class="food-sum-pill wt">🥩 '+Math.round(totalProtein)+'g prot</span>' : '')+
     (totalCarbs>0  ? '<span class="food-sum-pill wt">🌾 '+Math.round(totalCarbs)+'g carbs</span>' : '')+
@@ -10749,6 +10820,95 @@ function renderMemberFood(body, member, trip, members){
     const c = FOOD_CATS.find(x=>x.id===catId);
     const colors = {breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
     return colors[catId] || '#8b8b8b';
+  }
+
+  // ── Give-food popup ──
+  // Only rendered for the "me" card when there are other crew members
+  function buildGiveBtn(item){
+    const crewMembers = members.filter(m=>!m.isMe);
+    if(!crewMembers.length) return null;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:flex;align-items:center;';
+
+    const btn = document.createElement('button');
+    btn.className = 'food-give-btn' + ((item.sharedTo||[]).length ? ' active' : '');
+    btn.title = 'Share this food with crew';
+    btn.textContent = '➤';
+
+    let popEl = null;
+    function closePopup(){ if(popEl){ popEl.remove(); popEl=null; btn.classList.remove('active'); } }
+    function openPopup(){
+      if(popEl){ closePopup(); return; }
+      btn.classList.add('active');
+      popEl = document.createElement('div');
+      popEl.className = 'food-give-pop';
+
+      const title = document.createElement('div');
+      title.className = 'food-give-pop-title';
+      title.textContent = 'Share with…';
+      popEl.appendChild(title);
+
+      const portions = [0, 0.25, 0.5, 0.75, 1.0];
+      const portionLabels = ['None','25%','50%','75%','All'];
+
+      crewMembers.forEach(cm=>{
+        const existing = (item.sharedTo||[]).find(x=>x.userId===cm.id);
+        const currentPortion = existing ? existing.portion : 0;
+
+        const memberRow = document.createElement('div');
+        memberRow.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.style.cssText = 'font-family:\'Nunito\',sans-serif;font-size:0.45rem;font-weight:700;color:var(--bark);padding:2px 0 1px;';
+        nameDiv.textContent = cm.name;
+        memberRow.appendChild(nameDiv);
+
+        const portionRow = document.createElement('div');
+        portionRow.style.cssText = 'display:flex;gap:3px;flex-wrap:wrap;';
+
+        portions.forEach((p, pi)=>{
+          const pbtn = document.createElement('button');
+          pbtn.className = 'food-give-member-btn' + (Math.abs(currentPortion - p) < 0.01 ? ' given' : '');
+          pbtn.textContent = portionLabels[pi];
+          pbtn.addEventListener('click', ()=>{
+            // Update sharedTo array
+            if(!item.sharedTo) item.sharedTo = [];
+            const idx = item.sharedTo.findIndex(x=>x.userId===cm.id);
+            if(p === 0){
+              if(idx > -1) item.sharedTo.splice(idx, 1);
+            } else {
+              const shareObj = {userId:cm.id, userName:cm.name, portion:p};
+              if(idx > -1) item.sharedTo[idx] = shareObj;
+              else item.sharedTo.push(shareObj);
+            }
+            markDirty();
+            if(trip) sbPushTrip(trip);
+            closePopup();
+            // Re-render all member food columns
+            members.forEach(m=>{
+              const b = document.getElementById('col-body-'+m.id);
+              if(b){ b.innerHTML=''; renderMemberFood(b,m,trip,members); }
+            });
+          });
+          portionRow.appendChild(pbtn);
+        });
+        memberRow.appendChild(portionRow);
+        popEl.appendChild(memberRow);
+      });
+
+      wrap.appendChild(popEl);
+      // Close on outside click
+      setTimeout(()=>{
+        document.addEventListener('click', function handler(e){
+          if(!wrap.contains(e.target)){ closePopup(); document.removeEventListener('click',handler); }
+        });
+      }, 0);
+    }
+
+    btn.addEventListener('click', e=>{ e.stopPropagation(); openPopup(); });
+    wrap.appendChild(btn);
+    return wrap;
   }
 
   function buildItemRow(item, isUnplanned){
@@ -10820,9 +10980,14 @@ function renderMemberFood(body, member, trip, members){
       }
     }
 
+    // Show shared-away indicator
+    const sharedAway = (item.sharedTo||[]).reduce((s,x)=>s+(x.portion||0),0);
+    const displayKcal = Math.round((item.kcal_total||0) * Math.max(0,1-sharedAway));
+
     const kcalEl = document.createElement('span');
     kcalEl.className = 'food-item-kcal';
-    kcalEl.textContent = (item.kcal_total||0).toLocaleString()+'kcal';
+    kcalEl.textContent = displayKcal.toLocaleString()+'kcal';
+    if(sharedAway > 0) kcalEl.title = 'Original: '+(item.kcal_total||0)+'kcal, shared away '+Math.round(sharedAway*100)+'%';
     row.appendChild(kcalEl);
 
     const wEl = document.createElement('span');
@@ -10830,6 +10995,39 @@ function renderMemberFood(body, member, trip, members){
     wEl.textContent = dwTrip(item.w_total||0);
     row.appendChild(wEl);
 
+    // Give button (owner only, trip context only, crew present)
+    if(member.isMe && trip){
+      const giveWrap = buildGiveBtn(item);
+      if(giveWrap) row.appendChild(giveWrap);
+    }
+
+    return row;
+  }
+
+  // ── Row for received food ──
+  function buildReceivedRow(r){
+    const row = document.createElement('div');
+    row.className = 'food-item-row food-received-row';
+    const dot = document.createElement('span');
+    dot.className = 'food-item-dot';
+    dot.style.background = catColor(r.item.catId);
+    row.appendChild(dot);
+    const name = document.createElement('span');
+    name.className = 'food-item-name';
+    name.textContent = r.item.name;
+    row.appendChild(name);
+    const badge = document.createElement('span');
+    badge.className = 'food-received-badge';
+    badge.textContent = 'from '+r.fromMember.name+(r.portion < 1 ? ' ('+Math.round(r.portion*100)+'%)' : '');
+    row.appendChild(badge);
+    const kcalEl = document.createElement('span');
+    kcalEl.className = 'food-item-kcal';
+    kcalEl.textContent = Math.round((r.item.kcal_total||0)*r.portion).toLocaleString()+'kcal';
+    row.appendChild(kcalEl);
+    const wEl = document.createElement('span');
+    wEl.className = 'food-item-w';
+    wEl.textContent = dwTrip(Math.round((r.item.w_total||0)*r.portion));
+    row.appendChild(wEl);
     return row;
   }
 
@@ -10837,7 +11035,7 @@ function renderMemberFood(body, member, trip, members){
     const hd = document.createElement('div');
     hd.className = 'food-sec-hd';
     hd.innerHTML = escH(label)
-      + (kcal > 0 ? ' <span style="opacity:0.5;font-weight:400;">'+kcal.toLocaleString()+' kcal</span>' : '');
+      + (kcal > 0 ? ' <span style="opacity:0.5;font-weight:400;">'+Math.round(kcal).toLocaleString()+' kcal</span>' : '');
     return hd;
   }
 
@@ -10851,6 +11049,15 @@ function renderMemberFood(body, member, trip, members){
   if(unplanned.length){
     body.appendChild(secHd(trip?.days ? 'Unplanned' : 'Food bag', unplannedKcal));
     unplanned.forEach(item=> body.appendChild(buildItemRow(item, false)));
+  }
+
+  // ── Received from crew section ──
+  if(receivedItems.length){
+    const recHd = document.createElement('div');
+    recHd.className = 'food-received-section-hd';
+    recHd.innerHTML = '🤝 Received from crew <span style="opacity:0.5;font-weight:400;font-size:0.34rem;">'+Math.round(receivedKcal).toLocaleString()+' kcal</span>';
+    body.appendChild(recHd);
+    receivedItems.forEach(r=> body.appendChild(buildReceivedRow(r)));
   }
 }
 
