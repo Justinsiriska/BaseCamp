@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.47 — Gear Organizer</title>
+<title>BaseCamp v3.49 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1930,7 +1930,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.47</div>
+      <div class="logo-sub">Gear Organizer · v3.49</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7487,6 +7487,7 @@ function renderFoodBag(){
         <div class="food-item-left">
           <span class="food-item-drag-handle">⠿</span>
           <span class="food-item-name">${escH(item.name)}</span>
+          ${qty>1?`<span style="font-family:'Space Mono',monospace;font-size:0.36rem;color:var(--stone);opacity:0.6;margin-left:2px;">${Math.round(totalKcal/qty)}kcal · ${dw(Math.round(totalW/qty))} each</span>`:''}
         </div>
         <div class="food-item-right">
           <div class="food-qty-stepper" title="Adjust serving size">
@@ -7496,10 +7497,10 @@ function renderFoodBag(){
           </div>
           <div class="food-count-stepper" title="Adjust quantity (×${qty})">
             <button class="food-count-btn" onclick="event.stopPropagation();foodAdjustCount('${item.id}',-1)">−</button>
-            <span class="food-count-val">×${qty}</span>
+            <span class="food-count-val" style="font-weight:800;color:${qty>1?'var(--sun)':'var(--stone)'}">×${qty}</span>
             <button class="food-count-btn" onclick="event.stopPropagation();foodAdjustCount('${item.id}',1)">＋</button>
           </div>
-          <span class="food-item-kcal">${totalKcal}kcal</span>
+          <span class="food-item-kcal">${qty>1?`<span style="opacity:0.5;font-weight:400;">${Math.round(totalKcal/qty)}×${qty}=</span>`:''}${totalKcal}kcal</span>
           <span class="food-item-w">${dw(totalW)}</span>
           <button class="del-btn" onclick="event.stopPropagation();foodRemoveItem('${item.id}')">✕</button>
         </div>
@@ -8797,11 +8798,12 @@ function buildCalEntry(entry, trip, members, refresh){
   nameEl.textContent=name;
   el.appendChild(nameEl);
 
-  // Show qty badge if > 1
-  if((entry.qty||1) > 1){
+  // Always show qty badge
+  {
+    const qty = entry.qty||1;
     const qtyBadge=document.createElement('span');
-    qtyBadge.style.cssText="font-family:'Space Mono',monospace;font-size:0.38rem;background:rgba(74,103,65,0.15);border-radius:4px;padding:1px 4px;color:var(--forest);font-weight:700;flex-shrink:0;";
-    qtyBadge.textContent='\xd7'+(entry.qty||1);
+    qtyBadge.style.cssText="font-family:'Space Mono',monospace;font-size:0.38rem;background:"+(qty>1?'rgba(232,168,53,0.18)':'rgba(74,103,65,0.12)')+";border-radius:4px;padding:1px 5px;color:"+(qty>1?'var(--sun)':'var(--stone)')+";font-weight:800;flex-shrink:0;";
+    qtyBadge.textContent='\xd7'+qty;
     el.appendChild(qtyBadge);
   }
 
@@ -9153,14 +9155,35 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
   sub.textContent=itemName;
   box.appendChild(sub);
 
-  // Quantity stepper — only if more than 1 available
+  // Get per-unit kcal/weight for context
+  let perUnitKcal=0, perUnitW=0;
+  if(dragData.memberId==='me'){
+    const it2=FOOD_ITEMS.find(i=>i.id===dragData.itemId);
+    if(it2){ perUnitKcal=Math.round((it2.kcal_total||0)/(it2.qty||1)); perUnitW=Math.round((it2.w_total||0)/(it2.qty||1)); }
+  } else {
+    const c2=members.find(m=>m.id===dragData.memberId);
+    const it2=c2&&(c2.food||[]).find(i=>i.id===dragData.itemId);
+    if(it2){ perUnitKcal=Math.round((it2.kcal_total||0)/(it2.qty||1)); perUnitW=Math.round((it2.w_total||0)/(it2.qty||1)); }
+  }
+
+  // Per-unit context line
+  if(maxQty>0 && perUnitKcal>0){
+    const unitCtx=document.createElement('div');
+    unitCtx.style.cssText="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);text-align:center;margin:0.1rem 0 0.5rem;opacity:0.75;";
+    unitCtx.textContent= maxQty>1
+      ? perUnitKcal+'kcal · '+dwTrip(perUnitW)+' per unit · '+available+' available'
+      : perUnitKcal+'kcal · '+dwTrip(perUnitW);
+    box.appendChild(unitCtx);
+  }
+
+  // Quantity stepper — always show when maxQty >= 1
   let chosenQty=1;
-  if(maxQty>1){
+  {
     const qtyRow=document.createElement('div');
-    qtyRow.style.cssText='display:flex;align-items:center;gap:0.6rem;margin:0.55rem 0 0.25rem;justify-content:center;';
+    qtyRow.style.cssText='display:flex;align-items:center;gap:0.6rem;margin:0.3rem 0 0.55rem;justify-content:center;';
 
     const qtyLbl=document.createElement('span');
-    qtyLbl.style.cssText="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);text-transform:uppercase;letter-spacing:0.5px;";
+    qtyLbl.style.cssText="font-family:'Space Mono',monospace;font-size:0.44rem;color:var(--stone);text-transform:uppercase;letter-spacing:0.5px;";
     qtyLbl.textContent='Qty';
 
     const btnStyle='width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(184,201,163,0.6);background:transparent;cursor:pointer;font-size:0.95rem;display:flex;align-items:center;justify-content:center;color:var(--forest);font-weight:700;line-height:1;';
@@ -9176,15 +9199,18 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
     plusBtn.style.cssText=btnStyle;
     plusBtn.textContent='\uff0b';
 
-    const avail=document.createElement('span');
-    avail.style.cssText="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);opacity:0.6;";
-    avail.textContent='/ '+available+' available';
+    // Live kcal preview
+    const kcalPreview=document.createElement('span');
+    kcalPreview.style.cssText="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--ember);font-weight:700;min-width:60px;";
 
     const updateQty=v=>{
       chosenQty=Math.max(1,Math.min(available,v));
       qtyVal.textContent=chosenQty;
       minusBtn.style.opacity=chosenQty<=1?'0.25':'1';
       plusBtn.style.opacity=chosenQty>=available?'0.25':'1';
+      if(perUnitKcal>0) kcalPreview.textContent='= '+(chosenQty*perUnitKcal).toLocaleString()+'kcal';
+      // Update split section if it exists
+      if(typeof splitEl!=='undefined' && splitEl._rebuildRows) splitEl._rebuildRows();
     };
     minusBtn.onclick=()=>updateQty(chosenQty-1);
     plusBtn.onclick=()=>updateQty(chosenQty+1);
@@ -9194,12 +9220,14 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
     qtyRow.appendChild(minusBtn);
     qtyRow.appendChild(qtyVal);
     qtyRow.appendChild(plusBtn);
-    qtyRow.appendChild(avail);
+    if(perUnitKcal>0) qtyRow.appendChild(kcalPreview);
     box.appendChild(qtyRow);
 
-    const divLine=document.createElement('div');
-    divLine.style.cssText='height:1px;background:rgba(184,201,163,0.3);margin:0.5rem 0 0.35rem;';
-    box.appendChild(divLine);
+    if(maxQty>1){
+      const divLine=document.createElement('div');
+      divLine.style.cssText='height:1px;background:rgba(184,201,163,0.3);margin:0.1rem 0 0.5rem;';
+      box.appendChild(divLine);
+    }
   }
 
   const whoLbl=document.createElement('div');
@@ -10752,9 +10780,11 @@ function renderTripsPage(){
                     },0);
                   },0);
                   const totalKcal2 = Math.round(mFood.reduce((s,i)=>s+(i.kcal_total||0),0) - sharedAwayKcal + receivedKcal2);
-                  return '<span class="trip-col-stat">🍽 <strong>'+dwTrip(foodW)+'</strong></span>'
+                  const unplannedKcal2 = Math.round(totalKcal2 - consumedKcal);
+                  return '<span class="trip-col-stat">📦 <strong>'+dwTrip(foodW)+'</strong></span>'
                     +'<span class="trip-col-stat">⚡ <strong>'+totalKcal2.toLocaleString()+'kcal</strong></span>'
-                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+Math.round(consumedKcal).toLocaleString()+'kcal planned</span>':'');
+                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+Math.round(consumedKcal).toLocaleString()+'kcal planned</span>':'')
+                    +(unplannedKcal2>0?'<span class="trip-col-stat" style="color:var(--stone);opacity:0.65;">· '+unplannedKcal2.toLocaleString()+'kcal unplanned</span>':'');
                 })()
             }
           </div>
@@ -10973,9 +11003,21 @@ function renderMemberFood(body, member, trip, members){
   const effProt = Math.round(totalProtein + receivedEntries.reduce((s,r)=>s+(r.item.protein||0)*r.frac,0));
   const effCarbs = Math.round(totalCarbs + receivedEntries.reduce((s,r)=>s+(r.item.carbs||0)*r.frac,0));
   const effFat   = Math.round(totalFat   + receivedEntries.reduce((s,r)=>s+(r.item.fat||0)*r.frac,0));
+  // Planned kcal = items on calendar (carrier entries only, effective after splits)
+  const plannedKcalPills = mealPlan.filter(e=>{
+    const cid=e.itemRef.memberId;
+    return (member.isMe&&cid==='me')||(!member.isMe&&cid===memberId);
+  }).reduce((s,e)=>{
+    const it=allFood.find(i=>i.id===e.itemRef.itemId);
+    if(!it) return s;
+    const myFrac = e.splits ? (e.splits[memberId]??(1/Math.max(1,(e.eatenBy||[]).length))) : 1;
+    return s+(it.kcal_total||0)*myFrac*(e.qty||1);
+  },0) + receivedEntries.reduce((s,r)=>s+(r.item.kcal_total||0)*r.frac,0);
+  const unplannedKcalPills = Math.max(0, Math.round(effKcal - plannedKcalPills));
   pillsRow.innerHTML =
     '<span class="food-sum-pill kcal">⚡ '+effKcal.toLocaleString()+' kcal</span>'+
-    '<span class="food-sum-pill wt">⚖️ '+dwTrip(totalW)+'</span>'+
+    (Math.round(plannedKcalPills)>0 ? '<span class="food-sum-pill wt" style="color:var(--water);border-color:rgba(74,143,168,0.3);">✓ '+Math.round(plannedKcalPills).toLocaleString()+'kcal planned</span>' : '')+
+    (unplannedKcalPills>0 ? '<span class="food-sum-pill unplanned">· '+unplannedKcalPills.toLocaleString()+'kcal unplanned</span>' : '')+
     (effProt>0  ? '<span class="food-sum-pill wt">🥩 '+effProt+'g prot</span>' : '')+
     (effCarbs>0 ? '<span class="food-sum-pill wt">🌾 '+effCarbs+'g carbs</span>' : '')+
     (effFat>0   ? '<span class="food-sum-pill wt">🫙 '+effFat+'g fat</span>' : '');
@@ -11055,11 +11097,25 @@ function renderMemberFood(body, member, trip, members){
       }
     }
 
+    // Qty badge
+    const qty = item.qty||1;
+    if(qty > 1){
+      const qtyBadge = document.createElement('span');
+      qtyBadge.style.cssText = "font-family:'Space Mono',monospace;font-size:0.36rem;background:rgba(232,168,53,0.15);border-radius:4px;padding:1px 5px;color:var(--sun);font-weight:800;flex-shrink:0;";
+      qtyBadge.textContent = '×'+qty;
+      row.appendChild(qtyBadge);
+    }
+
     const kcalEl = document.createElement('span');
     kcalEl.className = 'food-item-kcal';
     const dispKcal = Math.round(effectiveKcal(item));
-    kcalEl.textContent = dispKcal.toLocaleString()+'kcal';
-    if(dispKcal < (item.kcal_total||0)) kcalEl.title = 'Original: '+(item.kcal_total||0)+'kcal (sharing some away)';
+    if(qty > 1){
+      const perUnit = Math.round((item.kcal_total||0)/qty);
+      kcalEl.innerHTML = '<span style="opacity:0.5;font-weight:400;">'+perUnit+'×'+qty+'=</span>'+dispKcal.toLocaleString()+'kcal';
+    } else {
+      kcalEl.textContent = dispKcal.toLocaleString()+'kcal';
+    }
+    if(dispKcal < (item.kcal_total||0) && qty===1) kcalEl.title = 'Original: '+(item.kcal_total||0)+'kcal (sharing some away)';
     row.appendChild(kcalEl);
 
     const wEl = document.createElement('span');
