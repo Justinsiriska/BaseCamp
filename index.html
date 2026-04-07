@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.66 — Gear Organizer</title>
+<title>BaseCamp v3.67 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.66</div>
+      <div class="logo-sub">Gear Organizer · v3.67</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9555,15 +9555,11 @@ function openEaterPickerEdit(dragData, day, mealId, trip, members, existingEaten
     if(selected.size===0){ alert('Select at least one person.'); return; }
     const splits = getSplits();
     if(!trip.mealPlan) trip.mealPlan=[];
-    // qty = how many units being planned in this entry (default: all of item's qty)
-    const dragItem = dragData.memberId && (isMeId(dragData.memberId)
-      ? FOOD_ITEMS.find(i=>i.id===dragData.itemId)
-      : null);
-    const planQty = dragItem ? (dragItem.qty||1) : 1;
     trip.mealPlan.push({
       id:'mp_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
       itemRef:{memberId:dragData.memberId, itemId:dragData.itemId},
-      day, meal:mealId, eatenBy:[...selected], splits, qty: planQty
+      day, meal:mealId, eatenBy:[...selected], splits
+      // qty not set here — openEaterPicker (the main path) sets it via chosenQty
     });
     scheduleSave(); sbPushTrip(trip); overlay.remove(); onDone();
   };
@@ -9651,8 +9647,8 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
     box.appendChild(unitCtx);
   }
 
-  // Quantity stepper — always show when maxQty >= 1
-  let chosenQty=1;
+  // Quantity stepper — default to all available units
+  let chosenQty = available; // default: schedule everything available
   {
     const qtyRow=document.createElement('div');
     qtyRow.style.cssText='display:flex;align-items:center;gap:0.6rem;margin:0.3rem 0 0.55rem;justify-content:center;';
@@ -9668,7 +9664,7 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
 
     const qtyVal=document.createElement('span');
     qtyVal.style.cssText="font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:800;color:var(--forest);min-width:1.8rem;text-align:center;";
-    qtyVal.textContent='1';
+    qtyVal.textContent=String(available);
 
     const plusBtn=document.createElement('button');
     plusBtn.style.cssText=btnStyle;
