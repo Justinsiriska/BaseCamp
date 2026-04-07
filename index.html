@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.86 — Gear Organizer</title>
+<title>BaseCamp v3.87 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1988,7 +1988,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.86</div>
+      <div class="logo-sub">Gear Organizer · v3.87</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -11665,7 +11665,7 @@ function renderTripsPage(){
 
   // ── TRAILHEAD + WEATHER PANELS (constrained width) ──
   const panelWrap = document.createElement('div');
-  panelWrap.style.cssText = 'max-width:760px;';
+  panelWrap.style.cssText = 'width:520px;max-width:100%;';
   const thPanel = renderTrailheadPanel(trip);
   if(thPanel) panelWrap.appendChild(thPanel);
   const wxPanel = renderWeatherPanel(trip);
