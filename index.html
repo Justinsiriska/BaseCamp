@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.68 — Gear Organizer</title>
+<title>BaseCamp v3.70 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.68</div>
+      <div class="logo-sub">Gear Organizer · v3.70</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7582,7 +7582,7 @@ function renderFoodBag(){
             <span class="food-count-val" style="font-weight:800;color:${qty>1?'var(--sun)':'var(--stone)'}">×${qty}</span>
             <button class="food-count-btn" onclick="event.stopPropagation();foodAdjustCount('${item.id}',1)">＋</button>
           </div>
-          <span class="food-item-kcal">${qty>1?`<span style="opacity:0.5;font-weight:400;">${Math.round(totalKcal/qty)}×${qty}=</span>`:''}${totalKcal}kcal</span>
+          <span class="food-item-kcal">${totalKcal}kcal</span>
           <span class="food-item-w">${dw(totalW)}</span>
           <button class="del-btn" onclick="event.stopPropagation();foodRemoveItem('${item.id}')">✕</button>
         </div>
@@ -11608,14 +11608,7 @@ function renderMemberFood(body, member, trip, members){
     // ── Qty chip — right after item name, always visible ──
     // Shows "×4" in amber when all planned, "×2 of 3" in amber when partial, "×3" in amber when none planned
     if(!isUnplanned){
-      // Planned section row
-      if(itemTotalQty > 1){
-        const qtyChip = document.createElement('span');
-        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:3px;flex-shrink:0;";
-        qtyChip.textContent = '×'+itemSchedQty;
-        name.after(qtyChip); // insert right after the name span
-      }
-      // Day/meal badge
+      // Day/meal badge first
       const entries = mealPlan.filter(e=>{
         const cid = e.itemRef.memberId;
         return (member.isMe ? isMeId(cid) : cid===memberId) && e.itemRef.itemId===item.id;
@@ -11626,20 +11619,21 @@ function renderMemberFood(body, member, trip, members){
         badge.textContent = entries.map(e=>'D'+e.day+' '+e.meal.charAt(0).toUpperCase()+e.meal.slice(1,3)).join(', ');
         row.appendChild(badge);
       }
+      // Qty chip after the badge
+      if(itemTotalQty > 1){
+        const qtyChip = document.createElement('span');
+        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:2px;flex-shrink:0;";
+        qtyChip.textContent = '×'+itemSchedQty;
+        row.appendChild(qtyChip);
+      }
     } else {
-      // Unplanned section row — show remaining qty
-      if(itemSchedQty > 0){
-        // Partially planned — show only the remainder, same amber colour
+      // Unplanned section row — qty chip after name area, before kcal
+      const displayQty = itemSchedQty > 0 ? itemUnplannedQty : itemTotalQty;
+      if(displayQty > 1 || itemSchedQty > 0){
         const qtyChip = document.createElement('span');
-        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:3px;flex-shrink:0;";
-        qtyChip.textContent = '×'+itemUnplannedQty;
-        name.after(qtyChip);
-      } else if(itemTotalQty > 1){
-        // Fully unplanned
-        const qtyChip = document.createElement('span');
-        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:3px;flex-shrink:0;";
-        qtyChip.textContent = '×'+itemTotalQty;
-        name.after(qtyChip);
+        qtyChip.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);flex-shrink:0;";
+        qtyChip.textContent = '×'+displayQty;
+        row.appendChild(qtyChip);
       }
     }
 
@@ -11648,21 +11642,26 @@ function renderMemberFood(body, member, trip, members){
     const totalRaw = item.kcal_total||0;
     const perUnitKcal = Math.round(totalRaw / itemTotalQty);
 
-    if(isUnplanned && itemSchedQty > 0){
-      // Partially planned — show kcal for unplanned portion only
-      const unplannedKcalAmt = Math.round(perUnitKcal * itemUnplannedQty);
+    if(isUnplanned){
+      // Unplanned portion — show kcal for remaining units only
+      const unplannedKcalAmt = Math.round(perUnitKcal * (itemSchedQty > 0 ? itemUnplannedQty : itemTotalQty));
       kcalEl.textContent = unplannedKcalAmt.toLocaleString()+'kcal';
     } else {
-      const dispKcal = Math.round(effectiveKcal(item));
-      const isSharing = dispKcal < totalRaw;
-      if(itemTotalQty > 1 && !isSharing){
-        kcalEl.innerHTML = '<span style="opacity:0.5;font-weight:400;">'+perUnitKcal+'×'+itemTotalQty+'=</span>'+dispKcal.toLocaleString()+'kcal';
-      } else if(isSharing){
-        kcalEl.innerHTML = '<span style="opacity:0.4;font-weight:400;text-decoration:line-through;margin-right:3px;">'+totalRaw.toLocaleString()+'</span>'+dispKcal.toLocaleString()+'kcal';
-        kcalEl.title = 'After sharing: '+dispKcal+'kcal (original: '+totalRaw+'kcal)';
-      } else {
-        kcalEl.textContent = dispKcal.toLocaleString()+'kcal';
-      }
+      // Planned row — show what the carrier actually eats from scheduled entries
+      // = sum of (entryKcal * myFrac) across all entries for this item
+      const myId = member.isMe ? (_sbUser?.id||'me') : memberId;
+      const plannedEatKcal = mealPlan.filter(e=>{
+        const cid = e.itemRef.memberId;
+        return (member.isMe ? isMeId(cid) : cid===memberId) && e.itemRef.itemId===item.id;
+      }).reduce((s,e)=>{
+        const qf = Math.min(1,(e.qty||1)/(itemTotalQty||1));
+        const entryKcal = totalRaw * qf;
+        const myFrac = e.splits
+          ? (e.splits[myId] ?? (member.isMe && Object.entries(e.splits).find(([k])=>isMeId(k))?.[1]) ?? 0)
+          : ((e.eatenBy||[]).includes(myId) ? 1/Math.max(1,(e.eatenBy||[]).length) : 0);
+        return s + entryKcal * myFrac;
+      }, 0);
+      kcalEl.textContent = Math.round(plannedEatKcal).toLocaleString()+'kcal';
     }
     row.appendChild(kcalEl);
 
