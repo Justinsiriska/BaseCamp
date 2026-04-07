@@ -9209,8 +9209,6 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
       minusBtn.style.opacity=chosenQty<=1?'0.25':'1';
       plusBtn.style.opacity=chosenQty>=available?'0.25':'1';
       if(perUnitKcal>0) kcalPreview.textContent='= '+(chosenQty*perUnitKcal).toLocaleString()+'kcal';
-      // Update split section if it exists
-      if(typeof splitEl!=='undefined' && splitEl._rebuildRows) splitEl._rebuildRows();
     };
     minusBtn.onclick=()=>updateQty(chosenQty-1);
     plusBtn.onclick=()=>updateQty(chosenQty+1);
@@ -11015,7 +11013,6 @@ function renderMemberFood(body, member, trip, members){
   },0) + receivedEntries.reduce((s,r)=>s+(r.item.kcal_total||0)*r.frac,0);
   const unplannedKcalPills = Math.max(0, Math.round(effKcal - plannedKcalPills));
   pillsRow.innerHTML =
-    '<span class="food-sum-pill kcal">⚡ '+effKcal.toLocaleString()+' kcal</span>'+
     (Math.round(plannedKcalPills)>0 ? '<span class="food-sum-pill wt" style="color:var(--water);border-color:rgba(74,143,168,0.3);">✓ '+Math.round(plannedKcalPills).toLocaleString()+'kcal planned</span>' : '')+
     (unplannedKcalPills>0 ? '<span class="food-sum-pill unplanned">· '+unplannedKcalPills.toLocaleString()+'kcal unplanned</span>' : '')+
     (effProt>0  ? '<span class="food-sum-pill wt">🥩 '+effProt+'g prot</span>' : '')+
