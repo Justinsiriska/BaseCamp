@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.38 — Gear Organizer</title>
+<title>BaseCamp v3.42 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1269,7 +1269,7 @@ html.dark .meal-calendar{background:rgba(14,22,12,0.85);border-color:rgba(60,95,
 .food-sec-hd{font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--stone);padding:5px 10px 2px;display:flex;align-items:center;gap:6px;opacity:0.65;}
 .food-sec-hd::after{content:'';flex:1;height:1px;background:rgba(184,201,163,0.28);}
 .food-item-row{display:flex;align-items:center;gap:5px;padding:2px 10px;min-height:20px;}
-.food-item-row.unplanned{opacity:0.45;}
+.food-item-row.unplanned{opacity:1;}
 .food-item-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .food-item-name{flex:1;color:var(--bark);font-family:'Nunito',sans-serif;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .food-item-kcal{font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--ember);flex-shrink:0;}
@@ -1909,7 +1909,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.38</div>
+      <div class="logo-sub">Gear Organizer · v3.42</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6832,7 +6832,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.38) ──
+// ── Persistence layer (rebuilt v3.42) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -6868,7 +6868,12 @@ function markDirty(){
     clearTimeout(_sbCloudDebounce);
     _sbCloudDebounce = setTimeout(()=>{
       if(_isDirty || _lastCloudPushAt < _lastSavedAt) sbPushData();
-    }, 800); // short debounce — push quickly after mutations settle
+      // Also push active trip if it's collaborative (has members or is shared)
+      const activeTrip = TRIPS.find(t=>t.id===activeTripId);
+      if(activeTrip && (activeTrip._shared || (activeTrip.memberIds?.length))){
+        sbPushTrip(activeTrip);
+      }
+    }, 800);
   }
 }
 
@@ -8660,6 +8665,7 @@ function renderMealCalendar(container, trip, members){
           entry.day = d;
           entry.meal = meal.id;
           scheduleSave();
+          sbPushTrip(trip);
           refresh();
           return;
         }
@@ -8733,10 +8739,19 @@ function buildCalEntry(entry, trip, members, refresh){
   // ── Drag ──
   el.addEventListener('dragstart',ev=>{
     ev.stopPropagation();
-    _draggedEntry = entry;        // direct object reference — no IDs needed
+    _draggedEntry = entry;
     window._calDrag = null;
     try{ ev.dataTransfer.setData('text/plain','cal-entry'); }catch(_){}
     ev.dataTransfer.effectAllowed='move';
+    // Custom drag image — just the item name
+    if(item){
+      const ghost = document.createElement('div');
+      ghost.textContent = item.name;
+      ghost.style.cssText = 'position:fixed;top:-999px;left:-999px;padding:4px 10px;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;font-family:\'Nunito\',sans-serif;font-size:0.75rem;font-weight:700;color:var(--bark);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.12);';
+      document.body.appendChild(ghost);
+      ev.dataTransfer.setDragImage(ghost, ghost.offsetWidth/2, 16);
+      setTimeout(()=>ghost.remove(), 0);
+    }
     setTimeout(()=>{
       el.style.opacity='0.35';
       document.body.classList.add('cal-dragging');
@@ -8794,7 +8809,7 @@ function buildCalEntry(entry, trip, members, refresh){
       pop.remove(); el.classList.remove('active');
       document.removeEventListener('click',closePopover,true);
       const idx=trip.mealPlan.indexOf(entry);
-      if(idx>-1){ trip.mealPlan.splice(idx,1); scheduleSave(); }
+      if(idx>-1){ trip.mealPlan.splice(idx,1); scheduleSave(); sbPushTrip(trip); }
       refresh();
     });
     pop.appendChild(removeItem);
@@ -8886,7 +8901,7 @@ function openEaterPickerEdit(dragData, day, mealId, trip, members, existingEaten
       itemRef:{memberId:dragData.memberId, itemId:dragData.itemId},
       day, meal:mealId, eatenBy:[...selected]
     });
-    scheduleSave(); overlay.remove(); onDone();
+    scheduleSave(); sbPushTrip(trip); overlay.remove(); onDone();
   };
   btnRow.appendChild(confirmBtn);
   const cancelBtn=document.createElement('button'); cancelBtn.className='gw-cancel-btn'; cancelBtn.textContent='Cancel';
@@ -10362,14 +10377,14 @@ function renderTripsPage(){
     const t=TRIPS.find(x=>x.id===trip.id);
     if(!t) return;
     t.days=t.days>0.5 ? Math.round(((t.days)-0.5)*2)/2 : (t.days===0.5?null:null);
-    scheduleSave();
+    scheduleSave(); sbPushTrip(t);
     updateDaysUI();
   };
   daysPill.querySelectorAll('button')[1].onclick=()=>{
     const t=TRIPS.find(x=>x.id===trip.id);
     if(!t) return;
     t.days=Math.round(((t.days||0)+0.5)*2)/2;
-    scheduleSave();
+    scheduleSave(); sbPushTrip(t);
     updateDaysUI();
   };
 
@@ -10500,8 +10515,21 @@ function renderTripsPage(){
           <div class="trip-col-name">${escH(m.name)}</div>
           <div style="font-family:'Space Mono',monospace;font-size:0.42rem;opacity:0.55;margin-top:1px;">${roleLabel}</div>
           <div class="trip-col-stats">
-            <span class="trip-col-stat">Total <strong>${dwTrip(totalW)}</strong></span>
-            ${tripMode==='gear'?`<span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`:`<span class="trip-col-stat">Carries <strong>${dwTrip(foodW)}</strong></span>`}
+            ${tripMode==='gear'
+              ? `<span class="trip-col-stat">Total <strong>${dwTrip(totalW)}</strong></span>
+                 <span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`
+              : (()=>{
+                  const packId2 = trip.packId;
+                  const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]);
+                  const mPlan = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===(m.isMe?'me':m.id));
+                  const plannedIds = new Set(mPlan.map(e=>e.itemRef.itemId));
+                  const consumedKcal = mFood.filter(i=>plannedIds.has(i.id)).reduce((s,i)=>s+(i.kcal_total||0),0);
+                  const totalKcal2 = mFood.reduce((s,i)=>s+(i.kcal_total||0),0);
+                  return '<span class="trip-col-stat">🍽 <strong>'+dwTrip(foodW)+'</strong></span>'
+                    +'<span class="trip-col-stat">⚡ <strong>'+totalKcal2.toLocaleString()+'kcal</strong></span>'
+                    +(consumedKcal>0?'<span class="trip-col-stat" style="color:var(--water);">✓ '+consumedKcal.toLocaleString()+'kcal planned</span>':'');
+                })()
+            }
           </div>
         </div>
       </div>
@@ -10544,27 +10572,29 @@ function renderTripsPage(){
 
   // Populate food mode calendar
   if(tripMode==='food'){
-    // Pack drop zone — drag calendar entries here to unplan them
-    // How-to hint bar
-    const hintBar=document.createElement('div');
-    hintBar.style.cssText='padding:0.35rem 0.9rem;font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);opacity:0.6;';
-    hintBar.textContent='Drag items from packs below onto the calendar · hover macro cells for breakdown';
-    root.appendChild(hintBar);
+    if(!trip.days){
+      // No duration set — just show a nudge, no calendar clutter
+      const nudge = document.createElement('div');
+      nudge.style.cssText = 'padding:0.75rem 1rem;font-family:\'Space Mono\',monospace;font-size:0.44rem;color:var(--stone);opacity:0.6;text-align:center;';
+      nudge.textContent = '📅 Set trip duration above to unlock meal planning';
+      root.appendChild(nudge);
+    } else {
+      // Has duration — show hint + calendar
+      const hintBar = document.createElement('div');
+      hintBar.style.cssText = 'padding:0.35rem 0.9rem;font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);opacity:0.6;';
+      hintBar.textContent = 'Drag items from packs below onto the calendar · hover macro cells for breakdown';
+      root.appendChild(hintBar);
 
-    // Meal calendar below columns
-    const calContainer=document.createElement('div');
-    calContainer.setAttribute('data-cal-container','');
-    calContainer.style.cssText='margin-top:0.75rem;';
-    const calTitle=document.createElement('div');
-    calTitle.style.cssText='font-family:"Space Mono",monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;';
-    calTitle.innerHTML='🗓️ Meal Plan <span style="opacity:0.5;font-size:0.4rem;">drag food from packs below</span>';
-    calContainer.appendChild(calTitle);
-    const calGrid=document.createElement('div');
-    calGrid.setAttribute('data-cal-container','');
-    calGrid.setAttribute('data-meal-cal-grid','');
-    calContainer.appendChild(calGrid);
-    renderMealCalendar(calGrid, trip, members);
-    root.appendChild(calContainer);
+      const calContainer = document.createElement('div');
+      calContainer.setAttribute('data-cal-container','');
+      calContainer.style.cssText = 'margin-top:0.75rem;';
+      const calGrid = document.createElement('div');
+      calGrid.setAttribute('data-cal-container','');
+      calGrid.setAttribute('data-meal-cal-grid','');
+      calContainer.appendChild(calGrid);
+      renderMealCalendar(calGrid, trip, members);
+      root.appendChild(calContainer);
+    }
   }
 
   // Leaflet init — map div is position:absolute filling mapCard, but Leaflet
@@ -10654,19 +10684,23 @@ function renderMemberFood(body, member, trip, members){
   const scheduled = allFood.filter(i=>scheduledIds.has(i.id));
   const unplanned = allFood.filter(i=>!scheduledIds.has(i.id));
 
-  const totalKcal = allFood.reduce((s,i)=>s+(i.kcal_total||0),0);
-  const totalW    = allFood.reduce((s,i)=>s+(i.w_total||0),0);
+  const totalKcal    = allFood.reduce((s,i)=>s+(i.kcal_total||0),0);
+  const totalW       = allFood.reduce((s,i)=>s+(i.w_total||0),0);
+  const totalProtein = allFood.reduce((s,i)=>s+(i.protein||0),0);
+  const totalCarbs   = allFood.reduce((s,i)=>s+(i.carbs||0),0);
+  const totalFat     = allFood.reduce((s,i)=>s+(i.fat||0),0);
+  const scheduledKcal = scheduled.reduce((s,i)=>s+(i.kcal_total||0),0);
   const unplannedKcal = unplanned.reduce((s,i)=>s+(i.kcal_total||0),0);
 
-  // ── Summary pills ──
+  // ── Macro summary row ──
   const pillsRow = document.createElement('div');
   pillsRow.className = 'food-summary-pills';
   pillsRow.innerHTML =
     '<span class="food-sum-pill kcal">⚡ '+totalKcal.toLocaleString()+' kcal</span>'+
     '<span class="food-sum-pill wt">⚖️ '+dwTrip(totalW)+'</span>'+
-    (unplannedKcal > 0 && trip?.days
-      ? '<span class="food-sum-pill unplanned">'+unplannedKcal.toLocaleString()+' kcal unplanned</span>'
-      : '');
+    (totalProtein>0 ? '<span class="food-sum-pill wt">🥩 '+Math.round(totalProtein)+'g prot</span>' : '')+
+    (totalCarbs>0  ? '<span class="food-sum-pill wt">🌾 '+Math.round(totalCarbs)+'g carbs</span>' : '')+
+    (totalFat>0    ? '<span class="food-sum-pill wt">🫙 '+Math.round(totalFat)+'g fat</span>' : '');
   body.appendChild(pillsRow);
 
   function catColor(catId){
@@ -10686,6 +10720,13 @@ function renderMemberFood(body, member, trip, members){
         window._calDrag = {memberId:'me', itemId:item.id};
         e.dataTransfer.effectAllowed = 'copy';
         try{ e.dataTransfer.setData('text/plain', JSON.stringify(window._calDrag)); }catch(_){}
+        // Custom drag image — just the item name, no kcal/weight clutter
+        const ghost = document.createElement('div');
+        ghost.textContent = item.name;
+        ghost.style.cssText = 'position:fixed;top:-999px;left:-999px;padding:4px 10px;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;font-family:\'Nunito\',sans-serif;font-size:0.75rem;font-weight:700;color:var(--bark);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.12);';
+        document.body.appendChild(ghost);
+        e.dataTransfer.setDragImage(ghost, ghost.offsetWidth/2, 16);
+        setTimeout(()=>ghost.remove(), 0);
         row.style.opacity = '0.5';
       });
       row.addEventListener('dragend', ()=>{ row.style.opacity=''; window._calDrag=null; });
@@ -10706,7 +10747,7 @@ function renderMemberFood(body, member, trip, members){
         const entry = _draggedEntry; _draggedEntry = null;
         if(entry.itemRef.itemId !== item.id) return;
         const idx = (trip.mealPlan||[]).indexOf(entry);
-        if(idx>-1){ trip.mealPlan.splice(idx,1); markDirty(); }
+        if(idx>-1){ trip.mealPlan.splice(idx,1); markDirty(); sbPushTrip(trip); }
         const grid = document.querySelector('[data-meal-cal-grid]');
         if(grid) renderMealCalendar(grid, trip, members);
         members.forEach(m=>{
@@ -10750,22 +10791,24 @@ function renderMemberFood(body, member, trip, members){
     return row;
   }
 
-  // ── Scheduled section ──
-  if(scheduled.length){
+  function secHd(label, kcal){
     const hd = document.createElement('div');
     hd.className = 'food-sec-hd';
-    hd.textContent = 'Scheduled';
-    body.appendChild(hd);
+    hd.innerHTML = escH(label)
+      + (kcal > 0 ? ' <span style="opacity:0.5;font-weight:400;">'+kcal.toLocaleString()+' kcal</span>' : '');
+    return hd;
+  }
+
+  // ── Scheduled section ──
+  if(scheduled.length){
+    body.appendChild(secHd('Scheduled', scheduledKcal));
     scheduled.forEach(item=> body.appendChild(buildItemRow(item, false)));
   }
 
-  // ── Still in bag (unplanned) section ──
+  // ── Unplanned section ──
   if(unplanned.length){
-    const hd = document.createElement('div');
-    hd.className = 'food-sec-hd';
-    hd.textContent = trip?.days ? 'Still in bag' : 'Food bag';
-    body.appendChild(hd);
-    unplanned.forEach(item=> body.appendChild(buildItemRow(item, true)));
+    body.appendChild(secHd(trip?.days ? 'Unplanned' : 'Food bag', unplannedKcal));
+    unplanned.forEach(item=> body.appendChild(buildItemRow(item, false)));
   }
 }
 
@@ -11681,6 +11724,34 @@ async function sbSyncTrip(trip){
 // Keep sbPushSharedTrip as an alias so existing call sites don't break
 async function sbPushSharedTrip(trip){ return sbSyncTrip(trip); }
 
+// Push trip changes as a member (not the owner).
+// Only updates trip_data + updated_at — never touches owner_id or invites.
+async function sbSyncTripAsMember(trip){
+  const sb = sbClient();
+  if(!sb || !_sbUser) return;
+  const { error } = await sb.from('shared_trips')
+    .update({
+      trip_data: {
+        ...trip,
+        _shared: undefined,
+        _ownerId: undefined,
+      },
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', trip.id);
+  if(error) console.error('sbSyncTripAsMember error:', error);
+}
+
+// Push any trip — owner uses sbSyncTrip, member uses sbSyncTripAsMember
+async function sbPushTrip(trip){
+  if(!trip || !_sbUser) return;
+  if(trip._shared){
+    await sbSyncTripAsMember(trip);
+  } else if(trip.memberIds?.length){
+    await sbSyncTrip(trip);
+  }
+}
+
 // Load pending invites for the current user (trips they were invited to)
 async function sbLoadTripInvites(){
   const sb = sbClient();
@@ -11926,15 +11997,29 @@ function sbSubscribeTrips(){
 
         const idx = TRIPS.findIndex(t=>t.id===tripId);
         if(isOwner){
-          // Owner: refresh status map only — never overwrite local trip with _shared flag
+          // Owner: pull updated trip_data in case a member pushed changes
+          if(data?.trip_data){
+            const updatedTrip = data.trip_data;
+            const ownerIdx = TRIPS.findIndex(t=>t.id===tripId && !t._shared);
+            if(ownerIdx >= 0){
+              // Merge member-editable fields: mealPlan, days
+              const local = TRIPS[ownerIdx];
+              if((data.trip_data.mealPlan||[]).length >= (local.mealPlan||[]).length){
+                local.mealPlan = data.trip_data.mealPlan || local.mealPlan;
+              }
+              if(data.trip_data.days !== undefined) local.days = data.trip_data.days;
+            }
+          }
           await sbLoadTripMemberStatus();
           renderTripsPage();
+          saveState();
         } else {
           // Member: update our local copy of the shared trip
           const d = {...data.trip_data, _shared:true, _ownerId:data.owner_id,
             _updatedAt: new Date(data.updated_at).getTime()};
           delete d._confirmedMembers;
           if(idx >= 0) TRIPS[idx] = d; else TRIPS.push(d);
+          saveState();
           renderTripsPage();
           toast('🔄 Trip updated');
         }
