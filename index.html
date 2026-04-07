@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.76 — Gear Organizer</title>
+<title>BaseCamp v3.77 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1936,7 +1936,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.76</div>
+      <div class="logo-sub">Gear Organizer · v3.77</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9604,7 +9604,7 @@ function openEaterPicker(dragData, day, mealId, trip, members, onDone){
     };
     minusBtn.onclick=()=>updateQty(chosenQty-1);
     plusBtn.onclick=()=>updateQty(chosenQty+1);
-    updateQty(1);
+    updateQty(available); // default to all available units
 
     qtyRow.appendChild(qtyLbl);
     qtyRow.appendChild(minusBtn);
