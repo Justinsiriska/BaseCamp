@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.45 — Gear Organizer</title>
+<title>BaseCamp v3.46 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1909,7 +1909,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.45</div>
+      <div class="logo-sub">Gear Organizer · v3.46</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6872,7 +6872,7 @@ function migratePayload(d){
 //     headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+getJWT() },
 //     body: JSON.stringify(getPayload()) });
 //   localStorage.setItem(SAVE_KEY, JSON.stringify(getPayload())); // keep as offline cache
-// ── Persistence layer (rebuilt v3.45) ──
+// ── Persistence layer (rebuilt v3.46) ──
 // localStorage is the primary store — synchronous, always written immediately.
 // Supabase is the backup/cross-device sync layer — push-only from the client.
 // On startup: load from localStorage first (instant), then pull from Supabase
@@ -9290,14 +9290,16 @@ function memberGearWeight(member, packId){
   return member.cats.reduce((s,c)=>s+c.items.filter(i=>i.s && i.s.includes(pid)).reduce((a,i)=>a+(i.w||0),0),0);
 }
 
-function memberFoodWeight(member){
-  if(member.isMe) return FOOD_ITEMS.filter(i=>i.s.includes(foodSeason)).reduce((s,i)=>s+(i.w_total||0),0);
-  return (member.food||[]).reduce((s,i)=>s+(i.w_total||0),0);
+function memberFoodWeight(member, packId){
+  const pid = packId || foodSeason;
+  if(member.isMe) return FOOD_ITEMS.filter(i=>i.s.includes(pid)).reduce((s,i)=>s+(i.w_total||0),0);
+  return (member.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(pid)).reduce((s,i)=>s+(i.w_total||0),0);
 }
 
-function memberFoodKcal(member){
-  if(member.isMe) return FOOD_ITEMS.filter(i=>i.s.includes(foodSeason)).reduce((s,i)=>s+(i.kcal_total||0),0);
-  return (member.food||[]).reduce((s,i)=>s+(i.kcal_total||0),0);
+function memberFoodKcal(member, packId){
+  const pid = packId || foodSeason;
+  if(member.isMe) return FOOD_ITEMS.filter(i=>i.s.includes(pid)).reduce((s,i)=>s+(i.kcal_total||0),0);
+  return (member.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(pid)).reduce((s,i)=>s+(i.kcal_total||0),0);
 }
 
 function getMemberItems(member, packId){
@@ -10279,9 +10281,9 @@ function renderTripsPage(){
       }
     }
   }
-  const maxW = Math.max(...members.map(m=>memberGearWeight(m,trip.packId)+memberFoodWeight(m)),1);
-  const totalGroupW = members.reduce((s,m)=>s+memberGearWeight(m,trip.packId)+memberFoodWeight(m),0);
-  const totalGroupKcal = members.reduce((s,m)=>s+memberFoodKcal(m),0);
+  const maxW = Math.max(...members.map(m=>memberGearWeight(m,trip.packId)+memberFoodWeight(m,trip.packId)),1);
+  const totalGroupW = members.reduce((s,m)=>s+memberGearWeight(m,trip.packId)+memberFoodWeight(m,trip.packId),0);
+  const totalGroupKcal = members.reduce((s,m)=>s+memberFoodKcal(m,trip.packId),0);
 
   // ── TOP ROW: left=header/flags/toggle, right=map+stats ──
   // We use a simple flex row. The right panel has a fixed height of 260px.
@@ -10541,7 +10543,7 @@ function renderTripsPage(){
   const cols=document.createElement('div'); cols.className='trip-columns'; cols.style.marginTop='0';
   members.forEach(m=>{
     const col=document.createElement('div'); col.className='trip-col';
-    const gearW=memberGearWeight(m,trip.packId), foodW=memberFoodWeight(m), totalW=gearW+foodW;
+    const gearW=memberGearWeight(m,trip.packId), foodW=memberFoodWeight(m,trip.packId), totalW=gearW+foodW;
     const barPct=Math.round((totalW/maxW)*100);
     const roleLabel = m.isMe && trip.leaderId===(_sbUser?.id||'me') ? '⛰️ leader'
       : m.isMe ? 'you'
@@ -10560,7 +10562,7 @@ function renderTripsPage(){
                  <span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`
               : (()=>{
                   const packId2 = trip.packId;
-                  const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]);
+                  const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s.includes(packId2)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(packId2));
                   const mPlan = (trip.mealPlan||[]).filter(e=>e.itemRef.memberId===(m.isMe?'me':m.id));
                   const plannedIds = new Set(mPlan.map(e=>e.itemRef.itemId));
                   const consumedKcal = mFood.filter(i=>plannedIds.has(i.id)).reduce((s,i)=>s+(i.kcal_total||0),0);
@@ -10707,7 +10709,7 @@ function renderMemberFood(body, member, trip, members){
   const packId = trip ? trip.packId : foodSeason;
   const allFood = member.isMe
     ? FOOD_ITEMS.filter(i=>i.s.includes(packId))
-    : (member.food||[]);
+    : (member.food||[]).filter(i=>!i.s || i.s.length===0 || i.s.includes(packId));
 
   if(!allFood.length){
     body.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:0.55rem;color:var(--stone);opacity:0.55;padding:1rem 0.5rem;text-align:center;">No food in this pack</div>';
