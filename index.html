@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.22 — Gear Organizer</title>
+<title>BaseCamp v4.23 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2038,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.22</div>
+      <div class="logo-sub">Gear Organizer · v4.23</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5364,7 +5364,7 @@ function _buildGearWallImport(container){
     pills.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;';
     packOnlyCats.forEach(cat=>{
       const btn = document.createElement('button');
-      btn.style.cssText = 'display:flex;align-items:center;gap:0.3rem;background:rgba(74,103,65,0.08);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;padding:0.25rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--forest);cursor:pointer;';
+      btn.style.cssText = 'display:flex;align-items:center;gap:0.3rem;background:rgba(74,103,65,0.08);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;padding:0.25rem 0.6rem;font-family:Nunito,sans-serif;font-size:0.68rem;font-weight:700;color:var(--forest);cursor:pointer;';
       btn.innerHTML = (cat.icon&&!_DEFAULT_CAT_ICONS.has(cat.icon)?cat.icon+' ':'')+cat.name+' <span style="opacity:0.5;font-size:0.6rem;margin-left:2px;">＋</span>';
       btn.onclick = ()=>{ catEditClose(); _importCatToGearWall(cat.id); };
       pills.appendChild(btn);
