@@ -611,23 +611,17 @@ html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.28);}
 .item-field-pill .pill-icon{font-size:0.62rem;}
 html.dark .item-field-pill{background:rgba(15,25,12,0.8);color:#7a9f6a;border-color:rgba(55,85,40,0.4);}
 /* ── Fields section inside gear wall drawer ── */
-.gw-fields-section{margin:0.4rem 0 0.2rem;border-top:1px solid rgba(184,201,163,0.3);padding-top:0.45rem;}
-.gw-fields-label{font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.7;margin-bottom:0.35rem;}
-.gw-field-chips{display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.4rem;}
+.gw-fields-section{margin:0.2rem 0;}
+.gw-fields-label{font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.7;margin-bottom:0.3rem;padding-top:0.1rem;}
+.gw-field-chips{display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.3rem;}
 .gw-field-chip{display:inline-flex;align-items:center;gap:3px;font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:700;border:1.5px solid rgba(184,201,163,0.45);border-radius:20px;padding:2px 9px;cursor:pointer;background:transparent;color:var(--stone);transition:all 0.15s;}
 .gw-field-chip:hover{background:rgba(184,201,163,0.2);border-color:var(--sage);color:var(--forest);}
 .gw-field-chip.active{background:rgba(74,103,65,0.18);border-color:var(--moss);color:var(--forest);font-weight:800;}
 html.dark .gw-field-chip{color:#7a9f6a;border-color:rgba(55,85,40,0.5);}
 html.dark .gw-field-chip:hover{background:rgba(25,40,18,0.9);border-color:#4a7a3a;color:#a8d890;}
 html.dark .gw-field-chip.active{background:rgba(30,55,22,0.85);border-color:#5a9a48;color:#c8eab8;}
-.gw-active-fields{display:flex;flex-direction:column;gap:0.3rem;margin-bottom:0.2rem;}
-.gw-active-field-row{display:flex;align-items:center;gap:0.4rem;background:rgba(184,201,163,0.08);border-radius:7px;padding:3px 6px 3px 4px;}
-.gw-active-field-icon{font-size:0.75rem;flex-shrink:0;width:18px;text-align:center;}
-.gw-active-field-lbl{font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--stone);flex-shrink:0;width:62px;}
-.gw-active-field-inp{flex:1;background:transparent;border:none;border-bottom:1.5px solid rgba(184,201,163,0.4);font-family:'Nunito',sans-serif;font-size:0.72rem;color:var(--bark);outline:none;padding:1px 3px;min-width:0;}
-.gw-active-field-inp:focus{border-bottom-color:var(--moss);}
-html.dark .gw-active-field-inp{color:#c8e8b0;border-bottom-color:rgba(55,85,40,0.5);}
-.gw-active-field-remove{background:none;border:none;cursor:pointer;font-size:0.6rem;color:var(--stone);opacity:0.4;padding:0 2px;line-height:1;transition:opacity 0.15s;}
+.gw-active-fields{display:flex;flex-direction:column;}
+.gw-active-field-remove{background:none;border:none;cursor:pointer;font-size:0.6rem;color:var(--stone);opacity:0.4;padding:0 2px;line-height:1;transition:opacity 0.15s;flex-shrink:0;}
 .gw-active-field-remove:hover{opacity:0.9;}
 .gw-new-field-form{display:none;flex-direction:column;gap:0.3rem;background:rgba(184,201,163,0.1);border:1.5px dashed rgba(184,201,163,0.4);border-radius:8px;padding:0.5rem 0.6rem;margin-top:0.25rem;}
 .gw-new-field-form.open{display:flex;}
@@ -4145,21 +4139,21 @@ function renderItemFieldPills(item){
 function buildDrawerFieldsSection(item){
   const defs=getFieldDefs();
   const itemFields=item.fields||{};
+  // Active field rows — use same .gw-field layout as Name/Weight/Temp
+  const activeRows=defs.filter(def=>itemFields[def.key]!==undefined&&itemFields[def.key]!=='').map(def=>`
+    <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
+      <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
+      <input class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" type="${def.type==='number'?'number':'text'}" value="${escH(String(itemFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      <button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${item.id}','${def.key}',this)" title="Remove">✕</button>
+    </div>`).join('');
   const chips=defs.map(def=>{
     const hasValue=itemFields[def.key]!==undefined&&itemFields[def.key]!=='';
     return`<button type="button" class="gw-field-chip${hasValue?' active':''}" onclick="drawerToggleField('${item.id}','${def.key}',this)" title="${escH(def.label)}">${def.icon} ${escH(def.label)}</button>`;
   }).join('');
-  const activeRows=defs.filter(def=>itemFields[def.key]!==undefined&&itemFields[def.key]!=='').map(def=>`
-    <div class="gw-active-field-row" data-field-key="${def.key}">
-      <span class="gw-active-field-icon">${def.icon}</span>
-      <span class="gw-active-field-lbl">${escH(def.label)}</span>
-      <input class="gw-active-field-inp gw-field-val-inp" data-field-key="${def.key}" type="${def.type==='number'?'number':'text'}" value="${escH(String(itemFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
-      <button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${item.id}','${def.key}',this)" title="Remove field">✕</button>
-    </div>`).join('');
   return`<div class="gw-fields-section">
-    <div class="gw-fields-label">Data Fields</div>
-    <div class="gw-field-chips">${chips}<button type="button" class="gw-field-chip" onclick="drawerShowNewFieldForm(this)" style="border-style:dashed;opacity:0.6;">＋ Custom</button></div>
     <div class="gw-active-fields">${activeRows}</div>
+    <div class="gw-fields-label" style="margin-top:0.35rem;">Add Data Field</div>
+    <div class="gw-field-chips">${chips}<button type="button" class="gw-field-chip" onclick="drawerShowNewFieldForm(this)" style="border-style:dashed;opacity:0.6;">＋ Custom</button></div>
     <div class="gw-new-field-form" id="gw-new-field-form-${item.id}">
       <div class="gw-new-field-row">
         <input class="gw-field-inp" id="gnf-label-${item.id}" type="text" placeholder="Field name (e.g. Color)" style="flex:2;">
@@ -4195,8 +4189,8 @@ function drawerToggleField(iid,fieldKey,chipBtn){
   } else {
     chipBtn.classList.add('active');
     const row=document.createElement('div');
-    row.className='gw-active-field-row';row.dataset.fieldKey=fieldKey;
-    row.innerHTML=`<span class="gw-active-field-icon">${def.icon}</span><span class="gw-active-field-lbl">${escH(def.label)}</span><input class="gw-active-field-inp gw-field-val-inp" data-field-key="${fieldKey}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${fieldKey}',this)" title="Remove">✕</button>`;
+    row.className='gw-field gw-active-field-row';row.dataset.fieldKey=fieldKey;
+    row.innerHTML=`<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp" data-field-key="${fieldKey}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${fieldKey}',this)" title="Remove">✕</button>`;
     activeFields.appendChild(row);row.querySelector('input')?.focus();
   }
 }
@@ -4233,8 +4227,8 @@ function drawerSaveNewField(iid,btn){
   chipsEl.insertBefore(newChip,customBtn);
   const activeFields=section.querySelector('.gw-active-fields');
   const row=document.createElement('div');
-  row.className='gw-active-field-row';row.dataset.fieldKey=key;
-  row.innerHTML=`<span class="gw-active-field-icon">${def.icon}</span><span class="gw-active-field-lbl">${escH(def.label)}</span><input class="gw-active-field-inp gw-field-val-inp" data-field-key="${key}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${key}',this)" title="Remove">✕</button>`;
+  row.className='gw-field gw-active-field-row';row.dataset.fieldKey=key;
+  row.innerHTML=`<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp" data-field-key="${key}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${key}',this)" title="Remove">✕</button>`;
   activeFields.appendChild(row);row.querySelector('input')?.focus();
 }
 
@@ -8591,7 +8585,6 @@ function migratePayload(d){
     d.schema=7;
   }
   if(d.schema < 8){
-    // Add fields:{} to all existing items
     if(d.cats) d.cats.forEach(c=>{ (c.items||[]).forEach(i=>{ if(!i.fields) i.fields={}; }); });
     if(!d.customFieldDefs) d.customFieldDefs=[];
     d.schema=8;
@@ -8856,7 +8849,6 @@ function loadState(){
     }
 
     _stateLoaded = true;
-    // Restore custom field definitions
     window.CUSTOM_FIELD_DEFS = mergeFieldDefs(d.customFieldDefs||[]);
     return true;
   } catch(e){ return false; }
