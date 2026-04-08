@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.48 — Gear Organizer</title>
+<title>BaseCamp v4.49 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.48</div>
+      <div class="logo-sub">Gear Organizer · v4.49</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7749,7 +7749,8 @@ function getPayload(){
     cats: CATS.map(cat=>({
       id:cat.id, name:cat.name, icon:cat.icon, color:cat.color,
       hasExtra:cat.hasExtra, extraLabel:cat.extraLabel||'',
-      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s})),
+      onGearWall: cat.onGearWall!==false,
+      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s,gwCatId:i.gwCatId||cat.id})),
       packs: cat.packs||null
     })),
     foodSeason,
