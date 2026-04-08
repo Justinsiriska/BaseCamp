@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.57 — Gear Organizer</title>
+<title>BaseCamp v4.59 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -474,18 +474,18 @@ html.dark .cat-card.collapsed{}
 .cat-card.cat-dragging{opacity:0.35;}
 .cat-card.cat-drop-above{border-top:2px solid var(--water)!important;}
 .cat-card.cat-drop-below{border-bottom:2px solid var(--water)!important;}
-.cat-head{padding:0.32rem 0.5rem 0.32rem 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:0.4rem;border-bottom:1px solid rgba(184,201,163,0.35);}
-html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.35);}
-.cat-card.collapsed .cat-head{border-bottom-color:rgba(184,201,163,0.2);}
+.cat-head{padding:0.18rem 0.4rem 0.18rem 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:0.4rem;border-bottom:1px solid rgba(184,201,163,0.22);}
+html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.28);}
+.cat-card.collapsed .cat-head{border-bottom-color:rgba(184,201,163,0.15);}
 .cat-head-l{display:flex;align-items:center;gap:0.35rem;min-width:0;padding-left:0.6rem;}
 
 /* Category left-colour accent */
-.cc-sleep   .cat-head{border-left:3px solid #4a6741;padding-left:0.55rem;}
-.cc-pack    .cat-head{border-left:3px solid #8b7355;padding-left:0.55rem;}
-.cc-cooking .cat-head{border-left:3px solid #c85a2a;padding-left:0.55rem;}
-.cc-clothes .cat-head{border-left:3px solid #7ab8c8;padding-left:0.55rem;}
-.cc-general .cat-head{border-left:3px solid #4a8fa8;padding-left:0.55rem;}
-.cc-uncategorised .cat-head{border-left:3px solid #8b8b8b;padding-left:0.55rem;}
+.cc-sleep   .cat-head{border-left:2px solid rgba(74,103,65,0.7);padding-left:0.55rem;}
+.cc-pack    .cat-head{border-left:2px solid rgba(139,115,85,0.7);padding-left:0.55rem;}
+.cc-cooking .cat-head{border-left:2px solid rgba(200,90,42,0.7);padding-left:0.55rem;}
+.cc-clothes .cat-head{border-left:2px solid rgba(122,184,200,0.7);padding-left:0.55rem;}
+.cc-general .cat-head{border-left:2px solid rgba(74,143,168,0.7);padding-left:0.55rem;}
+.cc-uncategorised .cat-head{border-left:2px solid rgba(139,139,139,0.5);padding-left:0.55rem;}
 
 /* Cat drag handle — hidden, drag now triggered from header hold */
 .cat-drag-handle{
@@ -503,14 +503,14 @@ html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.35);}
 .cat-edit-btn:hover{background:var(--cream);border-color:var(--stone);color:var(--bark);}
 
 .cat-icon{font-size:0.85rem;flex-shrink:0;}
-.cat-name{font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:400;text-transform:uppercase;letter-spacing:1.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--stone);}
+.cat-name{font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:400;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--stone);opacity:0.65;}
 .cat-name-clickable{cursor:pointer;border-radius:4px;padding:1px 3px;transition:background 0.15s;}
 .cat-name-clickable:hover{background:rgba(74,103,65,0.1);}
-.cat-meta{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);flex-shrink:0;opacity:0.7;}
-.cat-pill{font-family:'Nunito',sans-serif;font-size:0.56rem;font-weight:800;padding:0.1rem 0.45rem;border-radius:100px;color:white;flex-shrink:0;}
-.caret{background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.65rem;transition:transform 0.3s;margin-left:0.1rem;}
+.cat-meta{font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);flex-shrink:0;opacity:0.45;}
+.cat-pill{font-family:'Nunito',sans-serif;font-size:0.5rem;font-weight:800;padding:0.06rem 0.38rem;border-radius:100px;color:white;flex-shrink:0;}
+.caret{background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.52rem;opacity:0.45;transition:transform 0.3s;margin-left:0.1rem;}
 .cat-card.collapsed .caret{transform:rotate(-90deg);}
-.cat-body{padding:0.3rem 0.5rem 0.5rem 0.5rem;}
+.cat-body{padding:0.15rem 0.5rem 0 0.5rem;}
 .cat-card.collapsed .cat-body{display:none;}
 /* Inline cat name edit popover */
 .cat-inline-edit{position:fixed;z-index:9000;background:var(--paper);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,0.18);border:1.5px solid var(--lichen);padding:0.75rem 0.85rem;display:flex;flex-direction:column;gap:0.45rem;min-width:220px;}
@@ -575,8 +575,8 @@ html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.35);}
 .pack-item-drag-handle:active{cursor:grabbing;}
 .pack-item-row{
   display:flex;align-items:center;justify-content:space-between;
-  padding:0.28rem 0.2rem;
-  border-bottom:1px solid rgba(184,201,163,0.22);
+  padding:0.14rem 0.2rem;
+  border-bottom:1px solid rgba(184,201,163,0.15);
   gap:0.4rem;
 }
 .pack-item-row:last-child{border-bottom:none;}
@@ -2111,7 +2111,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.57</div>
+      <div class="logo-sub">Gear Organizer · v4.59</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5848,8 +5848,8 @@ function renderCats(){
             </div>
             <div style="display:flex;align-items:center;gap:0.3rem">
               <button onclick="event.stopPropagation();addItemFromPack('${cat.id}')"
-                style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;transition:opacity 0.15s;"
-                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>
+                style="background:none;border:1px solid rgba(184,201,163,0.4);border-radius:5px;padding:0px 5px;font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:400;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.5;transition:opacity 0.15s;"
+                onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='0.5'">+ Add</button>
               <div class="cat-pill ${cat.pc}" data-cid="${cat.id}">${dw(w)}</div>
               <button class="caret">▼</button>
             </div>
