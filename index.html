@@ -7706,14 +7706,17 @@ function renderGearWall(){
         <button class="gw-cat-del-btn" title="Delete category from Gear Wall"
           onclick="event.stopPropagation();confirmDeleteCat('${cat.id}')"
           style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
+        <button class="gw-cat-edit-btn" title="Edit category"
+          onclick="event.stopPropagation();catEditOpen('${cat.id}')"
+          style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;padding:1px 7px;color:var(--stone);opacity:0;transition:opacity 0.15s;line-height:1.6;">✏︎</button>
         <button class="gw-cat-add-btn" title="Add item"
           onclick="event.stopPropagation();gwInlineAdd('${cat.id}')"
           style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;padding:1px 7px;color:var(--stone);opacity:0.55;transition:opacity 0.15s;line-height:1.6;"
           onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.55'">＋ Add</button>
         <span class="gw-cat-caret">▾</span>
       </div>`;
-    hd.addEventListener('mouseenter',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0.5'; });
-    hd.addEventListener('mouseleave',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0'; });
+    hd.addEventListener('mouseenter',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0.5'; hd.querySelector('.gw-cat-edit-btn').style.opacity='0.55'; });
+    hd.addEventListener('mouseleave',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0'; hd.querySelector('.gw-cat-edit-btn').style.opacity='0'; });
 
     hd.addEventListener('click',()=>{gwCollapsed[cat.id]=!gwCollapsed[cat.id];renderGearWall();});
     group.appendChild(hd);
