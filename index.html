@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.97 — Gear Organizer</title>
+<title>BaseCamp v3.98 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -246,7 +246,7 @@ html.dark .p1-left{
 .gw-cat{margin-bottom:0;}
 .gw-cat-hd{
   display:flex;align-items:center;justify-content:space-between;
-  padding:0.5rem 0.9rem 0.38rem 0.7rem;cursor:pointer;user-select:none;
+  padding:0.28rem 0.9rem 0.22rem 0.7rem;cursor:pointer;user-select:none;
   background:var(--cream);
   border-top:2px solid var(--lichen);
   border-left:4px solid transparent;
@@ -1196,7 +1196,7 @@ html.dark .trip-personal-section{background:rgba(15,25,12,0.5);border-color:rgba
 .trip-personal-item{
   display:flex;align-items:center;gap:0.4rem;padding:0.18rem 0.2rem;
   border-radius:5px;font-family:'Nunito',sans-serif;font-size:0.68rem;
-  color:var(--stone);opacity:0.65;margin-bottom:0.08rem;
+  color:var(--stone);opacity:1;margin-bottom:0.08rem;
 }
 .trip-personal-item:last-child{margin-bottom:0;}
 .trip-personal-w{font-family:'Nunito',sans-serif;font-size:0.62rem;margin-left:auto;flex-shrink:0;}
@@ -1895,6 +1895,18 @@ html.dark .followers-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,9
 .followers-name{font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:700;color:var(--bark);flex:1;}
 html.dark .followers-name{color:#c0d8a8;}
 
+/* ── Mini donut in trip profile header ── */
+.trip-col-mini-donut{flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+
+/* ── Food item popup ── */
+.food-item-popup{position:fixed;z-index:9999;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,0.13);padding:0.65rem 0.85rem;min-width:170px;font-family:'Space Mono',monospace;}
+html.dark .food-item-popup{background:rgba(18,28,16,0.97);border-color:rgba(60,95,45,0.5);}
+.food-item-popup-name{font-family:'Playfair Display',serif;font-size:0.8rem;font-weight:700;color:var(--forest);margin-bottom:0.4rem;}
+.food-item-popup-row{display:flex;justify-content:space-between;gap:1rem;font-size:0.5rem;color:var(--stone);padding:0.12rem 0;}
+.food-item-popup-val{font-weight:700;color:var(--bark);}
+html.dark .food-item-popup-val{color:#c0d8a8;}
+.food-item-popup-divider{height:1px;background:rgba(184,201,163,0.25);margin:0.3rem 0;}
+
 /* ── Trail map widget ── */
 .trip-layout{display:block;}
 .trip-top-row{
@@ -2026,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.97</div>
+      <div class="logo-sub">Gear Organizer · v3.98</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2085,7 +2097,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="cat-head-wrap">
         <div class="cat-head" onclick="toggleCat('sleep')">
           <div class="cat-head-l">
-            <span class="cat-icon">🌙</span>
+            
             <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('sleep',this)">Sleep System</span>
             <span class="cat-meta">(0)</span>
           </div>
@@ -2103,7 +2115,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="cat-head-wrap">
         <div class="cat-head" onclick="toggleCat('pack')">
           <div class="cat-head-l">
-            <span class="cat-icon">🎒</span>
+            
             <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('pack',this)">Pack</span>
             <span class="cat-meta">(0)</span>
           </div>
@@ -2121,7 +2133,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="cat-head-wrap">
         <div class="cat-head" onclick="toggleCat('cooking')">
           <div class="cat-head-l">
-            <span class="cat-icon">🔥</span>
+            
             <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('cooking',this)">Cooking &amp; Water</span>
             <span class="cat-meta">(0)</span>
           </div>
@@ -2139,7 +2151,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="cat-head-wrap">
         <div class="cat-head" onclick="toggleCat('clothes')">
           <div class="cat-head-l">
-            <span class="cat-icon">🧥</span>
+            
             <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('clothes',this)">Clothes</span>
             <span class="cat-meta">(0)</span>
           </div>
@@ -2157,7 +2169,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="cat-head-wrap">
         <div class="cat-head" onclick="toggleCat('uncategorised')">
           <div class="cat-head-l">
-            <span class="cat-icon">📦</span>
+            
             <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('uncategorised',this)">Uncategorised</span>
             <span class="cat-meta">(0)</span>
           </div>
@@ -2189,7 +2201,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div style="font-family:'Space Mono',monospace;font-size:0.6rem;line-height:1.6;opacity:0.7;">Use the category add buttons<br>below to start building your kit</div>
     </div><div class="gw-cat"><div class="gw-cat-hd" style="border-left-color: rgb(74, 103, 65);">
       <div class="gw-cat-label">
-        <span class="gw-cat-icon">🌙</span>
+        
         <span>Sleep System</span>
         <span class="gw-cat-count">(0)</span>
       </div>
@@ -2198,7 +2210,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
         <span class="gw-cat-caret">▾</span>
       </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="sleep">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Sleep System item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(139, 115, 85);">
       <div class="gw-cat-label">
-        <span class="gw-cat-icon">🎒</span>
+        
         <span>Pack</span>
         <span class="gw-cat-count">(0)</span>
       </div>
@@ -2207,7 +2219,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
         <span class="gw-cat-caret">▾</span>
       </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="pack">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Pack item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(200, 90, 42);">
       <div class="gw-cat-label">
-        <span class="gw-cat-icon">🔥</span>
+        
         <span>Cooking &amp; Water</span>
         <span class="gw-cat-count">(0)</span>
       </div>
@@ -2216,7 +2228,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
         <span class="gw-cat-caret">▾</span>
       </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="cooking">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Cooking &amp; Water item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(123, 167, 188);">
       <div class="gw-cat-label">
-        <span class="gw-cat-icon">🧥</span>
+        
         <span>Clothes</span>
         <span class="gw-cat-count">(0)</span>
       </div>
@@ -2225,7 +2237,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
         <span class="gw-cat-caret">▾</span>
       </div></div><div class="gw-items"><div class="gw-drop-hint" data-cat-id="clothes">Drop here to remove from trip_1775334408956 pack</div><div class="gw-empty">No items yet</div><button class="gw-add-btn">+ Add Clothes item</button></div></div><div class="gw-cat gw-collapsed"><div class="gw-cat-hd" style="border-left-color: rgb(139, 139, 139);">
       <div class="gw-cat-label">
-        <span class="gw-cat-icon">📦</span>
+        
         <span>Uncategorised</span>
         <span class="gw-cat-count">(0)</span>
       </div>
@@ -2308,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <button class="fridge-filter-pill" onclick="fridgeActivecat='fruit';fridgeExpandedItem=null;renderFridge()">🍎 Fruit</button>
       <button class="fridge-filter-pill" onclick="fridgeActivecat='meat';fridgeExpandedItem=null;renderFridge()">🥩 Meat</button>
       <button class="fridge-filter-pill" onclick="fridgeActivecat='carbs';fridgeExpandedItem=null;renderFridge()">🌾 Carbs</button>
-      <button class="fridge-filter-pill" onclick="fridgeActivecat='meals';fridgeExpandedItem=null;renderFridge()">🍲 Meals</button>
+      <button class="fridge-filter-pill" onclick="fridgeActivecat='custom';fridgeExpandedItem=null;renderFridge()">✏️ Custom</button>
       <button class="fridge-filter-pill" onclick="fridgeActivecat='snacks';fridgeExpandedItem=null;renderFridge()">🍫 Snacks</button>
       <button class="fridge-filter-pill" onclick="fridgeActivecat='drinks';fridgeExpandedItem=null;renderFridge()">💧 Drinks</button></div>
           <!-- Sort pills -->
@@ -3572,6 +3584,8 @@ let _sbCloudDebounce = null;
 let _sbUser = null;  // forward-declare so markDirty can reference it safely
 let _sb = null;
 
+const _DEFAULT_CAT_ICONS = new Set(['🌙','🎒','🔥','🧥','📦']);
+function _catIcon(cat){ return (cat.icon && !_DEFAULT_CAT_ICONS.has(cat.icon)) ? '<span class="gw-cat-icon">'+cat.icon+'</span>' : ''; }
 const CATS=[
   {id:'sleep',         name:'Sleep System',    icon:'🌙',color:'#4a6741',pc:'pill-sleep',    cc:'cc-sleep',    hasExtra:true, extraLabel:'Temp / R-Value', items:[],packs:null},
   {id:'pack',          name:'Pack',            icon:'🎒',color:'#8b7355',pc:'pill-pack',     cc:'cc-pack',     hasExtra:true, extraLabel:'Volume (L)',     items:[],packs:null},
@@ -3723,8 +3737,8 @@ function dw(g){
     const lb = Math.floor(totalOz/16);
     const oz = (totalOz % 16).toFixed(1);
     if(lb===0) return oz+' oz';
-    if(parseFloat(oz)===0) return lb+'lb';
-    return lb+'lb '+oz+' oz';
+    if(parseFloat(oz)===0) return lb+'lbs';
+    return lb+'lbs '+oz+' oz';
   }
   return g+'g';
 }
@@ -3765,7 +3779,7 @@ function initDefaultCollapsed(){
   }
   // Fridge — collapse all sections except Fruit (first)
   if(Object.keys(fridgeCollapsed).length === 0){
-    const fridgeSections = ['meat','carbs','meals','snacks','drinks'];
+    const fridgeSections = ['meat','carbs','custom','snacks','drinks'];
     fridgeSections.forEach(cat => { fridgeCollapsed[cat] = true; });
   }
 }
@@ -5567,8 +5581,8 @@ function addItemFromPack(cid, targetPackId){
     </div>
     <div style="display:flex;align-items:center;gap:0.4rem;">
       <span style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);width:56px;text-align:right;flex-shrink:0;">Weight</span>
-      <input class="gw-field-inp mono" id="pia-weight-${iid}" type="number" min="0" placeholder="0" style="flex:1;">
-      <span style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--stone);">${U.v==='oz'?'oz':'g'}</span>
+      <input class="gw-field-inp mono" id="pia-weight-${iid}" type="number" min="0" step="${U.v==='oz'?'0.1':'1'}" placeholder="0" style="flex:1;">
+      <button id="pia-unit-${iid}" onclick="event.stopPropagation();(function(){const b=document.getElementById('pia-unit-${iid}');b._u=b._u||'${U.v}';b._u=b._u==='oz'?'g':'oz';b.textContent=b._u;})()" style="font-family:'Space Mono',monospace;font-size:0.55rem;padding:2px 7px;border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;background:rgba(184,201,163,0.15);color:var(--forest);cursor:pointer;">${U.v==='oz'?'oz':'g'}</button>
     </div>
     ${extraField}
     <div style="display:flex;gap:0.4rem;margin-top:0.1rem;">
@@ -5604,7 +5618,10 @@ function packInlineAddSave(cid, iid){
     if(inp){ inp.style.borderColor='var(--ember)'; inp.focus(); setTimeout(()=>inp.style.borderColor='',1000); }
     return;
   }
-  const w = toGrams(document.getElementById(`pia-weight-${iid}`)?.value||0);
+  const _piaUnitBtn = document.getElementById(`pia-unit-${iid}`);
+  const _piaUnit = _piaUnitBtn?._u || U.v;
+  const _piaRaw = parseFloat(document.getElementById(`pia-weight-${iid}`)?.value||0)||0;
+  const w = _piaUnit==='oz' ? Math.round(_piaRaw*28.3495) : _piaRaw;
   const extra = (document.getElementById(`pia-extra-${iid}`)?.value||'').trim();
   // Use explicit targetPack if set (e.g. from trips page), otherwise fall back to active season
   const catCard2 = document.querySelector(`.cat-card[data-cid="${cid}"]`);
@@ -6595,7 +6612,7 @@ function renderGearWall(){
     hd.style.borderLeftColor=cat.color;
     hd.innerHTML=`
       <div class="gw-cat-label">
-        <span class="gw-cat-icon">${cat.icon}</span>
+        ${_catIcon(cat)}
         <span>${cat.name}</span>
         <span class="gw-cat-count">(${cat.items.length})</span>
       </div>
@@ -7799,6 +7816,15 @@ function _renderNutrLabel(){
 }
 
 // ── Food Bag render ──
+// Auto-expand collapsed food cat on drag hover
+let _foodDragExpandTimer = null;
+function _foodCatDragEnter(catId){
+  _foodDragExpandTimer = setTimeout(()=>{
+    if(foodCatCollapsed[catId]){ foodCatCollapsed[catId]=false; renderFoodBag(); }
+  }, 600);
+}
+function _foodCatDragLeave(){ clearTimeout(_foodDragExpandTimer); }
+
 function renderFoodBag(){
   const cont = document.getElementById('food-cats');
   if(!cont) return;
@@ -7839,7 +7865,7 @@ function renderFoodBag(){
 
     const isBuiltin = ['breakfast','lunch','dinner','snacks','drinks'].includes(cat.id);
     card.innerHTML=`
-      <div class="food-cat-head" onclick="foodCatCollapsed['${cat.id}']=!foodCatCollapsed['${cat.id}'];renderFoodBag()">
+      <div class="food-cat-head" onclick="foodCatCollapsed['${cat.id}']=!foodCatCollapsed['${cat.id}'];renderFoodBag()" ondragenter="_foodCatDragEnter('${cat.id}')" ondragleave="_foodCatDragLeave()">
         <div class="food-cat-head-l">
           <span class="food-cat-icon">${cat.icon}</span>
           <span class="food-cat-name cat-name-clickable" title="Click to rename${!isBuiltin?' or delete':''}" onclick="event.stopPropagation();foodCatRename('${cat.id}')">${cat.name}</span>
@@ -7927,7 +7953,7 @@ function renderFridgeBars(){
       {id:'fruit',label:'🍎 Fruit'},
       {id:'meat',label:'🥩 Meat'},
       {id:'carbs',label:'🌾 Carbs'},
-      {id:'meals',label:'🍲 Meals'},
+      {id:'custom',label:'✏️ Custom'},
       {id:'snacks',label:'🍫 Snacks'},
       {id:'drinks',label:'💧 Drinks'},
     ];
@@ -7962,7 +7988,7 @@ function renderFridge(){
   const perLabel = '/100kcal';
 
   // Custom items float to top in default sort — they're user-specific
-  let allItems = [...FRIDGE_CUSTOM, ...FRIDGE_DB];
+  let allItems = (fridgeActivecat==='custom') ? [...FRIDGE_CUSTOM] : [...FRIDGE_CUSTOM, ...FRIDGE_DB];
 
   // Filter by search
   if(q) allItems = allItems.filter(f=>f.name.toLowerCase().includes(q)||(f.note||'').toLowerCase().includes(q));
@@ -9128,6 +9154,7 @@ function profilePhotoSelected(input){
       _cropState.y = (vp - img.naturalHeight*initScale)/2;
       _cropApplyTransform();
       document.getElementById('profile-crop-modal').classList.add('open');
+      const sl=document.getElementById('crop-zoom-slider'); if(sl) sl.value=_cropState.scale;
     };
     img.src = e.target.result;
   };
@@ -9183,10 +9210,20 @@ function _cropClamp(){
       _cropState.y = cy - (cy - _cropState.y) * (newScale/_cropState.scale);
       _cropState.scale = newScale;
       _cropClamp(); _cropApplyTransform();
+      const sl=document.getElementById('crop-zoom-slider'); if(sl) sl.value=newScale;
     }, {passive:false});
   });
 })();
 
+
+function _cropZoomFromSlider(val){
+  const newScale = parseFloat(val);
+  const cx=120, cy=120;
+  _cropState.x = cx - (cx - _cropState.x) * (newScale/_cropState.scale);
+  _cropState.y = cy - (cy - _cropState.y) * (newScale/_cropState.scale);
+  _cropState.scale = newScale;
+  _cropClamp(); _cropApplyTransform();
+}
 
 function profileStartNameEdit(){
   const nameEl = document.getElementById('profile-name-display');
@@ -9582,14 +9619,33 @@ function buildCalEntry(entry, trip, members, refresh){
 
     const popHd=document.createElement('div');
     popHd.style.cssText='padding:0.2rem 0.65rem 0.35rem;border-bottom:1px solid rgba(184,201,163,0.3);margin-bottom:0.25rem;';
+    // Compute personal share macros for the logged-in user
+    const _myId = _sbUser?.id||'me';
+    const _numEaters = Math.max(1,(entry.eatenBy||[]).length);
+    const _qtyFrac = Math.min(1,(entry.qty||1)/((item.qty)||1));
+    const _myFrac = (entry.eatenBy||[]).some(id=>id===_myId||(id==='me'&&!_sbUser)) ? 1/_numEaters : 0;
+    const _myKcal = Math.round((item.kcal_total||0)*_qtyFrac*_myFrac);
+    const _myProt = Math.round((item.protein||0)*_qtyFrac*_myFrac);
+    const _myCarbs= Math.round((item.carbs||0)*_qtyFrac*_myFrac);
+    const _myFat  = Math.round((item.fat||0)*_qtyFrac*_myFrac);
+    const _myWg   = dwTrip(Math.round((item.w_total||0)*_qtyFrac/_numEaters));
+    const macroHtml = _myFrac>0
+      ? '<div style="font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);margin-top:3px;display:flex;gap:0.4rem;flex-wrap:wrap;">'
+        +'<span>'+_myWg+'</span><span style="opacity:0.4;">·</span>'
+        +'<span><strong style="color:var(--bark);">'+_myKcal+'</strong> kcal</span><span style="opacity:0.4;">·</span>'
+        +'<span>P <strong style="color:var(--bark);">'+_myProt+'g</strong></span>'
+        +'<span>C <strong style="color:var(--bark);">'+_myCarbs+'g</strong></span>'
+        +'<span>F <strong style="color:var(--bark);">'+_myFat+'g</strong></span></div>'
+      : '';
     popHd.innerHTML='<div style="font-family:\'Playfair Display\',serif;font-size:0.72rem;font-weight:700;color:var(--forest);">'+escH(name)+'</div>'
       +'<div style="font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);margin-top:2px;">Carried by '+escH(carrier?carrier.name:'?')+'</div>'
-      +'<div style="font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);">Eaten by '+escH(eaterNames)+'</div>';
+      +'<div style="font-family:\'Space Mono\',monospace;font-size:0.38rem;color:var(--stone);">Eaten by '+escH(eaterNames)+'</div>'
+      + macroHtml;
     pop.appendChild(popHd);
 
     const editItem=document.createElement('div');
     editItem.className='meal-entry-popover-item';
-    editItem.innerHTML="👥 &nbsp;Edit who's eating";
+    editItem.innerHTML="✏️ &nbsp;Edit who's eating"; editItem.style.cssText='font-weight:600;';
     editItem.addEventListener('mousedown',ev2=>{
       ev2.preventDefault(); ev2.stopPropagation();
       pop.remove(); el.classList.remove('active');
@@ -9610,7 +9666,8 @@ function buildCalEntry(entry, trip, members, refresh){
 
     const removeItem=document.createElement('div');
     removeItem.className='meal-entry-popover-item danger';
-    removeItem.innerHTML='↩ &nbsp;Return to pack';
+    removeItem.style.cssText='font-weight:700;font-size:0.68rem;background:rgba(200,90,42,0.08);border-radius:6px;margin:0.1rem 0;';
+    removeItem.innerHTML='↩ &nbsp;<strong>Return to pack</strong>';
     removeItem.addEventListener('mousedown',ev2=>{
       ev2.preventDefault(); ev2.stopPropagation();
       pop.remove(); el.classList.remove('active');
@@ -9697,10 +9754,11 @@ function openEaterPickerEdit(dragData, day, mealId, trip, members, existingEaten
   }
   const sub=document.createElement('div'); sub.className='eater-picker-sub'; sub.textContent=itemName; box.appendChild(sub);
 
-  const selected=new Set(existingEatenBy||members.map(m=>m.id));
+  const selected=new Set(existingEatenBy||(members.filter(m=>m.isMe).map(m=>m.id)));
   const { el: splitEl, getSplits } = buildSplitSection(members, selected, existingSplits||null);
 
-  members.forEach(m=>{
+  const _sortedMembers = [...members].sort((a,b)=>b.isMe-a.isMe);
+  _sortedMembers.forEach(m=>{
     const row=document.createElement('div');
     row.className='eater-picker-member';
     const isOn=selected.has(m.id);
@@ -10014,6 +10072,31 @@ function openInviteModal(trip, currentMembers){
     box.appendChild(hint);
   }
 
+  // Followers — visible but greyed out (must be crew to invite on trip)
+  const followersOnTrip = _following.filter(f=>!inviteFriends.some(fr=>fr.id===f.following_id));
+  if(followersOnTrip.length){
+    const followSep=document.createElement('div');
+    followSep.style.cssText='height:1px;background:rgba(184,201,163,0.3);margin:0.5rem 0;';
+    box.appendChild(followSep);
+    const followLbl=document.createElement('div');
+    followLbl.style.cssText="font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--stone);opacity:0.6;padding:0.2rem 0 0.4rem;";
+    followLbl.textContent='Followers — add to crew to invite';
+    box.appendChild(followLbl);
+    followersOnTrip.forEach(f=>{
+      const pub=_publicUsers.find(u=>u.id===f.following_id);
+      if(!pub) return;
+      const row=document.createElement('div');
+      row.className='eater-picker-member';
+      row.style.opacity='0.4';
+      row.style.cursor='default';
+      row.style.pointerEvents='none';
+      const dot=document.createElement('div'); dot.className='eater-picker-dot'; dot.style.background=pub.gear_data?.profile?.color||'var(--sage)';
+      const nm=document.createElement('span'); nm.textContent=pub.full_name||'Follower';
+      row.appendChild(dot); row.appendChild(nm);
+      box.appendChild(row);
+    });
+  }
+
   const btnRow=document.createElement('div');
   btnRow.style.cssText='display:flex;margin-top:1rem;';
   const doneBtn=document.createElement('button');
@@ -10058,7 +10141,7 @@ function getTripMembers(trip, confirmedIds){
     avatar: f.photo
       ? `<img src="${f.photo}" style="width:100%;height:100%;object-fit:cover;">`
       : f.avatar_url ? `<img src="${f.avatar_url}" style="width:100%;height:100%;object-fit:cover;">` : null,
-    color: '#7a9e6e',
+    color: f.gear_data?.profile?.color || '#7a9e6e',
     cats: f.gear_data?.cats || [],
     food: f.gear_data?.foodItems || [],
     isMe: false
@@ -11851,7 +11934,7 @@ function renderTripsPage(){
   // ── BOTTOM ROW: person columns — full width ──
   const cols=document.createElement('div'); cols.className='trip-columns'; cols.style.marginTop='0';
   members.forEach(m=>{
-    const col=document.createElement('div'); col.className='trip-col';
+    const col=document.createElement('div'); col.className='trip-col'; col.dataset.memberId=m.isMe?(_sbUser?.id||'me'):m.id;
     const gearW=memberGearWeight(m,trip.packId), foodW=memberFoodWeight(m,trip.packId), totalW=gearW+foodW;
     const barPct=Math.round((totalW/maxW)*100);
     const roleLabel = m.isMe && trip.leaderId===(_sbUser?.id||'me') ? '⛰️ leader'
@@ -11859,8 +11942,30 @@ function renderTripsPage(){
       : m.isLeader ? '⛰️ leader'
       : (trip.leaderId && m.id===trip.leaderId) ? '⛰️ leader'
       : 'crew member';
+    // Drag from calendar onto profile col returns food to pack
+    col.addEventListener('dragover',e=>{
+      if(!_draggedEntry) return;
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
+      col.style.outline='2px dashed rgba(74,143,168,0.5)';
+    });
+    col.addEventListener('dragleave',e=>{
+      if(!col.contains(e.relatedTarget)) col.style.outline='';
+    });
+    col.addEventListener('drop',e=>{
+      col.style.outline='';
+      if(!_draggedEntry) return;
+      e.preventDefault(); e.stopPropagation();
+      const entry=_draggedEntry; _draggedEntry=null;
+      const idx=trip.mealPlan.indexOf(entry);
+      if(idx>-1){ trip.mealPlan.splice(idx,1); scheduleSave(); sbPushTrip(trip); }
+      document.body.classList.remove('cal-dragging');
+      const grid=document.querySelector('[data-meal-cal-grid]');
+      if(grid) renderMealCalendar(grid,trip,members);
+      members.forEach(mem=>{const b=document.getElementById('col-body-'+mem.id);if(b){b.innerHTML='';renderMemberFood(b,mem,trip,members);}});
+    });
     col.innerHTML=`
       <div class="trip-col-header">
+        <div class="trip-col-mini-donut"></div>
         <div class="trip-col-avatar" style="${m.avatar&&m.avatar.startsWith('<img')?'':'background:'+(m.color||'var(--sage)')}">${m.avatar||m.name[0]}</div>
         <div class="trip-col-header-right">
           <div class="trip-col-name">${escH(m.name)}</div>
@@ -11922,6 +12027,25 @@ function renderTripsPage(){
       </div>
       <div class="trip-col-body" id="col-body-${m.id}"></div>`;
     cols.appendChild(col);
+    // ── Mini donut injection (runs after innerHTML is set) ──
+    const _miniDonutWrap = col.querySelector('.trip-col-mini-donut');
+    if(_miniDonutWrap){
+      if(tripMode==='gear'){
+        const _gSegs = m.cats ? m.cats.map(cat=>({
+          color: cat.color||'#999',
+          value: cat.items ? cat.items.filter(i=>i.s&&i.s.includes(trip.packId||'default')).reduce((s,i)=>s+(i.w||0),0) : 0
+        })).filter(s=>s.value>0) : [];
+        _miniDonutWrap.appendChild(_buildMiniDonut(_gSegs, gearW, 44));
+      } else {
+        const _fColors={breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
+        const _mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(trip.packId));
+        const _fCatMap={};
+        _mFood.forEach(i=>{ _fCatMap[i.catId]=(_fCatMap[i.catId]||0)+(i.w_total||0); });
+        const _fSegs=Object.entries(_fCatMap).map(([cat,w])=>({color:_fColors[cat]||'#8b8b8b',value:w}));
+        const _fTotal=_mFood.reduce((s,i)=>s+(i.w_total||0),0);
+        _miniDonutWrap.appendChild(_buildMiniDonut(_fSegs, _fTotal, 44));
+      }
+    }
   });
 
   // Add grayed-out pending invite columns
@@ -11934,6 +12058,7 @@ function renderTripsPage(){
     col.innerHTML = `
       <div class="trip-mini-bar" style="visibility:hidden;"><div class="trip-mini-bar-label">0g</div><div class="trip-mini-bar-track"></div></div>
       <div class="trip-col-header">
+        <div class="trip-col-mini-donut"></div>
         <div class="trip-col-avatar" style="background:#aaa;border:2px dashed rgba(0,0,0,0.2);">
           ${m.avatar||`<span style="font-size:1rem;font-weight:800;color:white;">${m.name[0]}</span>`}
         </div>
@@ -12050,6 +12175,60 @@ function renderMemberGear(body, member, trip){
   }
 }
 
+function catInPackForMember(cat, trip){
+  if(!cat.packs) return true;
+  return cat.packs.includes(trip.packId||'default');
+}
+function _buildMiniDonut(segments, total, size){
+  // segments: [{color, value}], total: number, size: px
+  size = size||44;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  canvas.style.cssText = 'display:block;flex-shrink:0;';
+  const ctx = canvas.getContext('2d');
+  const cx=size/2, cy=size/2, r=size/2-2, inner=r*0.52;
+  const validSegs = segments.filter(s=>s.value>0);
+  if(!validSegs.length || total<=0){
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle='rgba(184,201,163,0.3)'; ctx.lineWidth=r-inner; ctx.stroke();
+    return canvas;
+  }
+  let startAngle = -Math.PI/2;
+  validSegs.forEach(seg=>{
+    const sweep = (seg.value/total)*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,(r+inner)/2,startAngle,startAngle+sweep);
+    ctx.strokeStyle = seg.color;
+    ctx.lineWidth = r-inner;
+    ctx.lineCap = 'butt';
+    ctx.stroke();
+    startAngle+=sweep;
+  });
+  return canvas;
+}
+
+function showFoodItemPopup(el, item, myKcal, myProt, myCarbs, myFat, myW){
+  document.querySelectorAll('.food-item-popup').forEach(p=>p.remove());
+  const pop = document.createElement('div');
+  pop.className = 'food-item-popup';
+  const wLabel = myW !== undefined ? dwTrip(myW) : dwTrip(item.w_total||0);
+  pop.innerHTML = '<div class="food-item-popup-name">'+escH(item.name)+'</div>'
+    +'<div class="food-item-popup-row"><span>Weight</span><span class="food-item-popup-val">'+wLabel+'</span></div>'
+    +'<div class="food-item-popup-divider"></div>'
+    +'<div class="food-item-popup-row"><span>Calories</span><span class="food-item-popup-val">'+(Math.round(myKcal)||0)+' kcal</span></div>'
+    +'<div class="food-item-popup-row"><span>Protein</span><span class="food-item-popup-val">'+(Math.round(myProt)||0)+'g</span></div>'
+    +'<div class="food-item-popup-row"><span>Carbs</span><span class="food-item-popup-val">'+(Math.round(myCarbs)||0)+'g</span></div>'
+    +'<div class="food-item-popup-row"><span>Fat</span><span class="food-item-popup-val">'+(Math.round(myFat)||0)+'g</span></div>';
+  document.body.appendChild(pop);
+  const rect = el.getBoundingClientRect();
+  let top = rect.bottom + 6 + window.scrollY;
+  let left = rect.left + window.scrollX;
+  if(top + 160 > window.innerHeight + window.scrollY) top = rect.top - 160 + window.scrollY;
+  if(left + 180 > window.innerWidth) left = window.innerWidth - 185;
+  pop.style.top = top+'px'; pop.style.left = left+'px';
+  const close = e=>{ if(!pop.contains(e.target)){ pop.remove(); document.removeEventListener('click',close,true); }};
+  setTimeout(()=>document.addEventListener('click',close,true), 10);
+}
 function renderMemberFood(body, member, trip, members){
   const packId = trip ? trip.packId : foodSeason;
   const allFood = member.isMe
@@ -12348,6 +12527,20 @@ function renderMemberFood(body, member, trip, members){
     wEl.className = 'food-item-w';
     wEl.textContent = dwTrip(item.w_total||0);
     row.appendChild(wEl);
+
+    // Click to show macro popup
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', e=>{
+      if(e.target.closest('button')) return;
+      const qty = isUnplanned ? 1 : Math.max(1, scheduledQtyMap[item.id]||1);
+      const qtyFrac = Math.min(1, qty/(item.qty||1));
+      const myK = (item.kcal_total||0)*qtyFrac;
+      const myP = (item.protein||0)*qtyFrac;
+      const myC = (item.carbs||0)*qtyFrac;
+      const myF = (item.fat||0)*qtyFrac;
+      const myW2 = (item.w_total||0)*qtyFrac;
+      showFoodItemPopup(row, item, myK, myP, myC, myF, myW2);
+    });
 
     return row;
   }
@@ -13398,13 +13591,19 @@ async function sbPushSharedTrip(trip){ return sbSyncTrip(trip); }
 async function sbSyncTripAsMember(trip){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
+  // Read current cloud version, merge mealPlan, then write back
+  // This prevents racing with the owner's writes from wiping entries
+  const { data: cur } = await sb.from('shared_trips').select('trip_data').eq('id', trip.id).single();
+  const cloudPlan = cur?.trip_data?.mealPlan || [];
+  const localPlan = trip.mealPlan || [];
+  const merged = [...cloudPlan];
+  localPlan.forEach(le=>{
+    if(le.id && !merged.find(ce=>ce.id===le.id)) merged.push(le);
+    else if(le.id){ const ci=merged.findIndex(ce=>ce.id===le.id); if(ci>-1) merged[ci]=le; }
+  });
   const { error } = await sb.from('shared_trips')
     .update({
-      trip_data: {
-        ...trip,
-        _shared: undefined,
-        _ownerId: undefined,
-      },
+      trip_data: { ...trip, mealPlan: merged, _shared: undefined, _ownerId: undefined },
       updated_at: new Date().toISOString()
     })
     .eq('id', trip.id);
@@ -13620,6 +13819,15 @@ async function sbPullSharedTrips(){
     const idx = TRIPS.findIndex(t=>t.id===st.id);
     if(idx === -1){ TRIPS.push(d); changed = true; }
     else if(new Date(st.updated_at).getTime() > (TRIPS[idx]._updatedAt||0)){
+      // Merge mealPlan: keep all unique entries by id from both local and cloud
+      // This prevents a member's additions from being wiped when the owner re-syncs
+      const localPlan = TRIPS[idx].mealPlan || [];
+      const cloudPlan = d.mealPlan || [];
+      const merged = [...cloudPlan];
+      localPlan.forEach(le=>{
+        if(le.id && !merged.find(ce=>ce.id===le.id)) merged.push(le);
+      });
+      d.mealPlan = merged;
       TRIPS[idx] = {...d, _updatedAt: new Date(st.updated_at).getTime()};
       changed = true;
     }
@@ -13774,9 +13982,16 @@ function sbSubscribeTrips(){
 <div class="modal-overlay" id="profile-crop-modal">
   <div class="modal" style="max-width:340px;">
     <div class="modal-title">📷 Crop Photo</div>
-    <div class="modal-sub">Drag to reposition · Pinch or scroll to zoom</div>
+    <div class="modal-sub">Drag to reposition · Use slider to zoom</div>
     <div id="crop-viewport" style="width:240px;height:240px;border-radius:12px;overflow:hidden;position:relative;cursor:grab;margin:0 auto 1rem;border:2px solid rgba(184,201,163,0.5);background:#222;">
       <img id="crop-img" style="position:absolute;transform-origin:0 0;user-select:none;-webkit-user-drag:none;">
+    </div>
+    <div style="padding:0 0.5rem 0.8rem;display:flex;align-items:center;gap:0.6rem;">
+      <span style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);flex-shrink:0;">🔍</span>
+      <input type="range" id="crop-zoom-slider" min="0.5" max="5" step="0.05" value="1"
+        style="flex:1;accent-color:var(--forest);cursor:pointer;"
+        oninput="_cropZoomFromSlider(this.value)">
+      <span style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);flex-shrink:0;">🔎</span>
     </div>
     <div class="modal-btns">
       <button class="btn btn-add" onclick="cropConfirm()">✓ Use Photo</button>
