@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.21 — Gear Organizer</title>
+<title>BaseCamp v4.22 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -354,10 +354,10 @@ body.dragging-active, body.dragging-active *{
 .gw-sdot{width:4px;height:4px;border-radius:50%;opacity:0.35;background:var(--moss);}
 .gw-sdot.on{opacity:1;}
 .gw-toggle-btn{
-  background:none;border:1.5px solid currentColor;border-radius:50%;
-  cursor:pointer;font-size:0.75rem;padding:0 3px;
-  opacity:0.55;transition:opacity 0.15s, background 0.15s, transform 0.1s;
-  flex-shrink:0;line-height:1.4;width:20px;height:20px;
+  background:none;border:none;border-radius:50%;
+  cursor:pointer;font-size:0.88rem;padding:0 2px;
+  opacity:0.5;transition:opacity 0.15s, transform 0.1s;
+  flex-shrink:0;line-height:1;width:20px;height:20px;
   display:flex;align-items:center;justify-content:center;
 }
 .gw-item.in-season .gw-toggle-btn{color:var(--ember);opacity:0.75;}
@@ -2038,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.21</div>
+      <div class="logo-sub">Gear Organizer · v4.22</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2252,7 +2252,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     </div>
     <span class="gw-cat-caret" style="transform:rotate(-90deg)">▾</span></div></div></div>
       </div>
-      <button class="add-cat-btn" onclick="catEditOpenNew()">＋ New Category</button>
+      <button class="add-cat-btn" onclick="catEditOpenNew(true)">＋ New Gear Wall Category</button>
     </div>
   </div>
 </div>
@@ -3448,6 +3448,13 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="cat-edit-lbl">Colour</div>
       <div class="cat-edit-color-row" id="ce-colors"></div>
     </div>
+    <div class="cat-edit-row" id="ce-gearwall-row" style="display:none;">
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);">
+        <input type="checkbox" id="ce-gearwall-chk" style="width:14px;height:14px;accent-color:var(--forest);">
+        Also add to Gear Wall
+      </label>
+    </div>
+    <div id="ce-gearwall-import" style="display:none;"></div>
     <div style="display:flex;gap:0.5rem;margin-top:0.3rem;">
       <button class="btn btn-add" onclick="catEditSave()" style="flex:1">✅ Save</button>
       <button class="btn btn-dis" onclick="catEditClose()">Cancel</button>
@@ -3455,7 +3462,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   </div>
 </div>
 
-<script id="tw-data">window.__TW_DATA__={"schema":6,"season":"winter","unit":"g","packs":[{"id":"winter","name":"Winter Alpine","icon":"❄️"},{"id":"shoulder","name":"Shoulder Season","icon":"🍂"},{"id":"summer","name":"Summer Fast","icon":"☀️"}],"cats":[{"id":"sleep","name":"Sleep System","icon":"🌙","color":"#4a6741","hasExtra":true,"extraLabel":"Temp / R-Value","items":[],"packs":["winter","shoulder","summer"]},{"id":"pack","name":"Pack","icon":"🎒","color":"#8b7355","hasExtra":true,"extraLabel":"Volume (L)","items":[],"packs":["winter","shoulder","summer"]},{"id":"cooking","name":"Cooking & Water","icon":"🔥","color":"#c85a2a","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"clothes","name":"Clothes","icon":"🧥","color":"#7ba7bc","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"uncategorised","name":"Uncategorised","icon":"📦","color":"#8b8b8b","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]}],"foodSeason":"winter","foodItems":[],"foodCatsCustom":[],"fridgeCustom":[],"fridgeHistory":[],"trailLibrary":[],"trips":[],"deletedTrips":[],"activeTripId":null,"profile":{"name":"","bio":"","color":"#4a8fa8","photo":null}};</script>
+<script id="tw-data">window.__TW_DATA__={"schema":7,"season":"winter","unit":"g","packs":[{"id":"winter","name":"Winter Alpine","icon":"❄️"},{"id":"shoulder","name":"Shoulder Season","icon":"🍂"},{"id":"summer","name":"Summer Fast","icon":"☀️"}],"cats":[{"id":"sleep","name":"Sleep System","icon":"🌙","color":"#4a6741","hasExtra":true,"extraLabel":"Temp / R-Value","items":[],"packs":["winter","shoulder","summer"]},{"id":"pack","name":"Pack","icon":"🎒","color":"#8b7355","hasExtra":true,"extraLabel":"Volume (L)","items":[],"packs":["winter","shoulder","summer"]},{"id":"cooking","name":"Cooking & Water","icon":"🔥","color":"#c85a2a","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"clothes","name":"Clothes","icon":"🧥","color":"#7ba7bc","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"uncategorised","name":"Uncategorised","icon":"📦","color":"#8b8b8b","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]}],"foodSeason":"winter","foodItems":[],"foodCatsCustom":[],"fridgeCustom":[],"fridgeHistory":[],"trailLibrary":[],"trips":[],"deletedTrips":[],"activeTripId":null,"profile":{"name":"","bio":"","color":"#4a8fa8","photo":null}};</script>
 <script>
 // ============================================================
 // STATE
@@ -5102,7 +5109,7 @@ function renderAll(){
 function renderCats(){
   const cont=document.getElementById('cats');
   cont.innerHTML='';
-  CATS.filter(cat=>catInPack(cat)).forEach(cat=>{
+  CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     const w=cw(cat);
     const tot=total();
@@ -5172,9 +5179,44 @@ function renderCats(){
   });
 
   // Show categories on gear wall but not in this pack
+  // ── Uncategorised open canvas in pack col (no header) ──
+  const uncatCat = CATS.find(c=>c.id==='uncategorised');
+  if(uncatCat && catInPack(uncatCat)){
+    const ucItems = sItems(uncatCat);
+    const ucCard = document.createElement('div');
+    ucCard.style.cssText = 'margin-bottom:0.5rem;';
+    if(ucItems.length > 0){
+      const ucLbl = document.createElement('div');
+      ucLbl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.55;padding:0.3rem 0 0.2rem;";
+      ucLbl.textContent = 'Uncategorised';
+      ucCard.appendChild(ucLbl);
+      const rows = ucItems.map(item=>`<div class="pack-item-row">
+        <div class="pack-item-left">
+          <div class="g-dot" style="background:#8b8b8b"></div>
+          <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('uncategorised','${item.id}','name',this.value)"/>
+        </div>
+        <div class="pack-item-right">
+          <span class="item-weight-display" data-iid="${item.id}" onclick="startWeightEdit(this,'uncategorised','${item.id}')">${dw(item.w)}</span>
+          <button class="del-btn" onclick="delItem('uncategorised','${item.id}')">✕</button>
+        </div>
+      </div>`).join('');
+      const rowsDiv = document.createElement('div');
+      rowsDiv.className = 'pack-items-list';
+      rowsDiv.innerHTML = rows;
+      ucCard.appendChild(rowsDiv);
+    }
+    const ucAddBtn = document.createElement('button');
+    ucAddBtn.className = 'add-btn-ghost';
+    ucAddBtn.style.cssText = 'opacity:0.7;font-size:0.62rem;';
+    ucAddBtn.textContent = '＋ Add item without category';
+    ucAddBtn.onclick = ()=>addItemFromPack('uncategorised');
+    ucCard.appendChild(ucAddBtn);
+    cont.appendChild(ucCard);
+  }
+
   const hiddenBar = document.getElementById('hidden-cats-bar');
   if(hiddenBar){
-    const hidden = CATS.filter(c=>c.id!=='uncategorised' && !catInPack(c));
+    const hidden = CATS.filter(c=>c.id!=='uncategorised' && !catInPack(c) && c.packs && c.packs.length>0);
     if(hidden.length){
       hiddenBar.innerHTML = `
         <div style="margin:0.4rem 0 0.4rem;font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--stone);opacity:0.7;">Not in this pack config:</div>
@@ -5307,24 +5349,79 @@ const CAT_COLORS=['#4a6741','#8b7355','#c85a2a','#4a8fa8','#c8963a','#7ba7bc','#
 let _ceEditId=null;
 let _ceIcon=null;
 let _ceColor=null;
+let _ceFromGearWall=false; // true when opened from gear wall
+
+function _buildGearWallImport(container){
+  container.innerHTML = '';
+  // Pack cats that are NOT on gear wall
+  const packOnlyCats = CATS.filter(c=>c.id!=='uncategorised' && !c.onGearWall && c.packs && c.packs.length);
+  if(packOnlyCats.length){
+    const lbl = document.createElement('div');
+    lbl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.4rem;opacity:0.8;";
+    lbl.textContent = 'Import from a pack config:';
+    container.appendChild(lbl);
+    const pills = document.createElement('div');
+    pills.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;';
+    packOnlyCats.forEach(cat=>{
+      const btn = document.createElement('button');
+      btn.style.cssText = 'display:flex;align-items:center;gap:0.3rem;background:rgba(74,103,65,0.08);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;padding:0.25rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--forest);cursor:pointer;';
+      btn.innerHTML = (cat.icon&&!_DEFAULT_CAT_ICONS.has(cat.icon)?cat.icon+' ':'')+cat.name+' <span style="opacity:0.5;font-size:0.6rem;margin-left:2px;">＋</span>';
+      btn.onclick = ()=>{ catEditClose(); _importCatToGearWall(cat.id); };
+      pills.appendChild(btn);
+    });
+    container.appendChild(pills);
+    const divider = document.createElement('div');
+    divider.style.cssText = 'height:1px;background:rgba(184,201,163,0.25);margin:0.4rem 0;';
+    container.appendChild(divider);
+  }
+  const lbl2 = document.createElement('div');
+  lbl2.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.35rem;opacity:0.8;";
+  lbl2.textContent = 'Or create new:';
+  container.appendChild(lbl2);
+}
+
+function _importCatToGearWall(catId){
+  const cat = CATS.find(c=>c.id===catId);
+  if(!cat) return;
+  cat.onGearWall = true;
+  // Auto-move items whose gwCatId is 'uncategorised' AND catId matches into this category
+  CATS.forEach(c=>{
+    c.items.forEach(i=>{
+      if(i.gwCatId==='uncategorised' && i.catId===catId) i.gwCatId=catId;
+    });
+  });
+  // Also fix items in this cat itself
+  cat.items.forEach(i=>{ if(i.gwCatId==='uncategorised') i.gwCatId=catId; });
+  scheduleSave(); renderAll();
+  toast(`✅ "${cat.name}" added to Gear Wall`);
+}
 
 function catEditOpen(catId){
   const cat=CATS.find(c=>c.id===catId);
   if(!cat) return;
-  _ceEditId=catId; _ceIcon=cat.icon; _ceColor=cat.color;
+  _ceEditId=catId; _ceIcon=cat.icon; _ceColor=cat.color; _ceFromGearWall=false;
   document.getElementById('ce-name').value=cat.name;
   document.getElementById('cat-edit-modal').querySelector('.cat-edit-title').textContent='✏️ Edit Category';
   _buildCatEditPickers(cat.icon, cat.color);
+  const gwRow = document.getElementById('ce-gearwall-row');
+  const gwImport = document.getElementById('ce-gearwall-import');
+  if(gwRow) gwRow.style.display='none';
+  if(gwImport) gwImport.style.display='none';
   document.getElementById('cat-edit-modal').classList.add('open');
   setTimeout(()=>document.getElementById('ce-name').focus(),80);
 }
 
-function catEditOpenNew(){
-  _ceEditId=null;
+function catEditOpenNew(fromGearWall){
+  _ceEditId=null; _ceFromGearWall=!!fromGearWall;
   _ceIcon='🏕️'; _ceColor='#4a8fa8';
   document.getElementById('ce-name').value='';
   document.getElementById('cat-edit-modal').querySelector('.cat-edit-title').textContent='＋ New Category';
   _buildCatEditPickers(_ceIcon, _ceColor);
+  // Show/hide the gear wall checkbox and gear wall import section
+  const gwRow = document.getElementById('ce-gearwall-row');
+  const gwImport = document.getElementById('ce-gearwall-import');
+  if(gwRow) gwRow.style.display = fromGearWall ? 'none' : 'flex';
+  if(gwImport){ _buildGearWallImport(gwImport); gwImport.style.display = fromGearWall ? 'block' : 'none'; }
   document.getElementById('cat-edit-modal').classList.add('open');
   setTimeout(()=>document.getElementById('ce-name').focus(),80);
 }
@@ -5363,14 +5460,18 @@ function catEditSave(){
     }
   } else {
     // Create new
+    const gwChk = document.getElementById('ce-gearwall-chk');
+    const addToGearWall = _ceFromGearWall || (gwChk && gwChk.checked);
     const id='cat_'+Date.now();
     CATS.push({
       id, name, icon:_ceIcon||'🏕️', color:_ceColor||'#4a8fa8',
       pc:'pill-general', cc:'cc-general',
       hasExtra:false, extraLabel:'', items:[],
-      packs:[season]   // only in the current pack config by default
+      packs: _ceFromGearWall ? null : [season],
+      onGearWall: addToGearWall
     });
-    toast(`✅ "${name}" category created for this pack`);
+    if(_ceFromGearWall) toast(`✅ "${name}" added to Gear Wall`);
+    else toast(`✅ "${name}" category created${addToGearWall?' (+ Gear Wall)':''} for this pack`);
   }
   catEditClose();
   scheduleSave();
@@ -5464,21 +5565,47 @@ function confirmDeleteCat(catId){
   if(!cat) return;
   closeCatInline();
 
-  // Show confirmation inside a styled modal-like banner
+  const inPacks = cat.packs && cat.packs.length > 0;
+  const onGW = cat.onGearWall !== false;
+
   const conf = document.createElement('div');
   conf.id = 'cat-del-confirm';
   conf.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
     background:var(--paper);border-radius:16px;padding:1.4rem 1.6rem;
     box-shadow:0 8px 40px rgba(0,0,0,0.22);border:1.5px solid rgba(200,90,42,0.25);
-    z-index:600;max-width:340px;width:calc(100vw - 3rem);text-align:center;`;
+    z-index:600;max-width:360px;width:calc(100vw - 3rem);text-align:center;`;
+
+  let btns = '';
+  if(onGW && inPacks){
+    // Linked — offer two choices
+    btns = `
+      <div style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);line-height:1.6;margin-bottom:0.8rem;">Items will move to <strong>Uncategorised</strong> on whichever side is removed.</div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <button onclick="deleteCatFromGearWall('${catId}')" style="background:rgba(200,90,42,0.12);border:1.5px solid var(--ember);border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.72rem;color:var(--ember);cursor:pointer;">📤 Remove from Gear Wall only</button>
+        <button onclick="removeCatFromPack('${catId}')" style="background:rgba(200,90,42,0.12);border:1.5px solid var(--ember);border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.72rem;color:var(--ember);cursor:pointer;">📦 Remove from this pack only</button>
+        <button onclick="deleteCat('${catId}')" style="background:var(--ember);border:none;border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.72rem;color:white;cursor:pointer;">🗑 Delete entirely (all packs + wall)</button>
+        <button onclick="document.getElementById('cat-del-confirm').remove();document.getElementById('cat-del-backdrop').remove();" style="background:var(--cream);border:1.5px solid var(--lichen);border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.72rem;color:var(--bark);cursor:pointer;">Cancel</button>
+      </div>`;
+  } else if(onGW && !inPacks){
+    btns = `
+      <div style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);line-height:1.6;margin-bottom:0.8rem;">Items will move to <strong>Uncategorised</strong> on the Gear Wall.</div>
+      <div style="display:flex;gap:0.5rem;">
+        <button onclick="deleteCatFromGearWall('${catId}')" style="flex:1;background:var(--ember);border:none;border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.78rem;color:white;cursor:pointer;">Yes, remove</button>
+        <button onclick="document.getElementById('cat-del-confirm').remove();document.getElementById('cat-del-backdrop').remove();" style="flex:1;background:var(--cream);border:1.5px solid var(--lichen);border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.78rem;color:var(--bark);cursor:pointer;">Cancel</button>
+      </div>`;
+  } else {
+    btns = `
+      <div style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);line-height:1.6;margin-bottom:0.8rem;">Items will move to <strong>Uncategorised</strong>.</div>
+      <div style="display:flex;gap:0.5rem;">
+        <button onclick="deleteCat('${catId}')" style="flex:1;background:var(--ember);border:none;border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.78rem;color:white;cursor:pointer;">Yes, delete</button>
+        <button onclick="document.getElementById('cat-del-confirm').remove();document.getElementById('cat-del-backdrop').remove();" style="flex:1;background:var(--cream);border:1.5px solid var(--lichen);border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.78rem;color:var(--bark);cursor:pointer;">Cancel</button>
+      </div>`;
+  }
+
   conf.innerHTML = `
     <div style="font-size:1.5rem;margin-bottom:0.5rem;">🗑️</div>
-    <div style="font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--bark);margin-bottom:0.35rem;">Delete "${escH(cat.name)}"?</div>
-    <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--stone);line-height:1.6;margin-bottom:1rem;">Items will move to <strong>Uncategorised</strong>.<br>Nothing is deleted from your Gear Wall.</div>
-    <div style="display:flex;gap:0.5rem;">
-      <button onclick="deleteCat('${catId}')" style="flex:1;background:var(--ember);border:none;border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.78rem;color:white;cursor:pointer;">Yes, delete</button>
-      <button onclick="document.getElementById('cat-del-confirm').remove()" style="flex:1;background:var(--cream);border:1.5px solid var(--lichen);border-radius:9px;padding:0.45rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.78rem;color:var(--bark);cursor:pointer;">Cancel</button>
-    </div>`;
+    <div style="font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--bark);margin-bottom:0.35rem;">"${escH(cat.name)}"</div>
+    ${btns}`;
 
   // Dim backdrop
   const backdrop = document.createElement('div');
@@ -5502,6 +5629,26 @@ function removeCatFromPack(catId){
   toast(`📤 "${cat.name}" hidden from this pack — still on Gear Wall`);
 }
 
+// Delete category from gear wall only (items get gwCatId=uncategorised, cat stays for packs)
+function deleteCatFromGearWall(catId){
+  document.getElementById('cat-del-confirm')?.remove();
+  document.getElementById('cat-del-backdrop')?.remove();
+  const cat = CATS.find(c=>c.id===catId);
+  if(!cat) return;
+  cat.onGearWall = false;
+  // Items lose their gear wall category — move to uncategorised on gear wall
+  cat.items.forEach(item=>{ if(item.gwCatId===catId) item.gwCatId='uncategorised'; });
+  // Also fix items in other cats that point to this gwCatId
+  CATS.forEach(c=>c.items.forEach(i=>{ if(i.gwCatId===catId) i.gwCatId='uncategorised'; }));
+  // If no packs use it either, remove it entirely
+  if(!cat.packs || cat.packs.length===0){
+    const idx = CATS.findIndex(c=>c.id===catId);
+    if(idx>-1) CATS.splice(idx,1);
+  }
+  scheduleSave(); renderAll();
+  toast(`📤 "${cat.name}" removed from Gear Wall — items moved to Uncategorised`);
+}
+
 // Delete category entirely from gear wall (and all packs)
 function deleteCat(catId){
   document.getElementById('cat-del-confirm')?.remove();
@@ -5511,17 +5658,22 @@ function deleteCat(catId){
   if(idx===-1) return;
   const cat = CATS[idx];
 
-  // Move all items to Uncategorised
+  // Move all items to Uncategorised (both pack catId and gwCatId)
   let uncat = CATS.find(c=>c.id==='uncategorised');
   if(!uncat){
-    uncat = {id:'uncategorised',name:'Uncategorised',icon:'📦',color:'#8b8b8b',pc:'pill-uncategorised',cc:'cc-uncategorised',hasExtra:false,extraLabel:'',items:[],packs:[...PACKS.map(p=>p.id)]};
+    uncat = {id:'uncategorised',name:'Uncategorised',icon:'📦',color:'#8b8b8b',pc:'pill-uncategorised',cc:'cc-uncategorised',hasExtra:false,extraLabel:'',items:[],packs:[...PACKS.map(p=>p.id)],onGearWall:true};
     CATS.push(uncat);
   }
-  cat.items.forEach(item=>uncat.items.push(item));
+  cat.items.forEach(item=>{
+    item.gwCatId = 'uncategorised';
+    uncat.items.push(item);
+  });
+  // Any items in other cats with gwCatId pointing here
+  CATS.forEach(c=>c.items.forEach(i=>{ if(i.gwCatId===catId) i.gwCatId='uncategorised'; }));
 
   CATS.splice(idx,1);
-  renderAll();
-  toast(`🗑 "${cat.name}" deleted from Gear Wall — items moved to Uncategorised`);
+  scheduleSave(); renderAll();
+  toast(`🗑 "${cat.name}" deleted — items moved to Uncategorised`);
 }
 
 
@@ -5537,7 +5689,7 @@ function addItem(cid){
   const cat=CATS.find(c=>c.id===cid);
   const activePill = document.querySelector('.s-pill.active');
   const activePack = activePill?.dataset?.s || season;
-  const newItem={id:uid(),name:'',w:0,extra:'',link:'',s:[activePack],_new:true};
+  const newItem={id:uid(),name:'',w:0,extra:'',link:'',s:[activePack],_new:true,gwCatId:cid};
   cat.items.push(newItem);
   gwCollapsed[cid]=false;
   renderAll();
@@ -5631,7 +5783,8 @@ function packInlineAddSave(cid, iid){
   const activePillPack = activePill?.dataset?.s;
   const targetPack = formTargetPack || activePillPack || season;
   console.log('[BaseCamp] packInlineAddSave: targetPack='+targetPack+', activePillPack='+activePillPack+', season='+season);
-  const newItem = {id:uid(), name, w, extra, link:'', s:[targetPack]};
+  const cat2 = CATS.find(c=>c.id===cid);
+  const newItem = {id:uid(), name, w, extra, link:'', s:[targetPack], gwCatId: cat2?.onGearWall!==false ? cid : 'uncategorised'};
   // Also ensure the cat includes this pack
   const catObj = CATS.find(c=>c.id===cid);
   if(catObj && catObj.packs && !catObj.packs.includes(targetPack)) catObj.packs.push(targetPack);
@@ -6603,7 +6756,36 @@ function renderGearWall(){
     </div>`;
   }
 
+  // Build gear wall groups: group all items by gwCatId
+  // Only show categories that have onGearWall:true OR have items with gwCatId pointing to them
+  const gwGroups = new Map(); // catId -> {cat, items:[]}
+  // Add all onGearWall cats
+  CATS.filter(cat=>cat.onGearWall!==false).forEach(cat=>{
+    gwGroups.set(cat.id, {cat, items:[]});
+  });
+  // Ensure uncategorised always exists
+  if(!gwGroups.has('uncategorised')){
+    const uc = CATS.find(c=>c.id==='uncategorised') || {id:'uncategorised',name:'Uncategorised',icon:'📦',color:'#8b8b8b',pc:'pill-uncategorised',cc:'cc-uncategorised',onGearWall:true,items:[]};
+    gwGroups.set('uncategorised', {cat:uc, items:[]});
+  }
+  // Distribute all items into groups by gwCatId
   CATS.forEach(cat=>{
+    cat.items.forEach(item=>{
+      const gwId = item.gwCatId || cat.id;
+      if(gwGroups.has(gwId)){
+        gwGroups.get(gwId).items.push({...item, _srcCatId: cat.id});
+      } else {
+        // gwCatId points to a non-gearwall cat — put in uncategorised
+        gwGroups.get('uncategorised').items.push({...item, _srcCatId: cat.id, gwCatId:'uncategorised'});
+      }
+    });
+  });
+
+  // Remove uncategorised from its normal position so we can render it last (no header)
+  const uncatGroup = gwGroups.get('uncategorised');
+  gwGroups.delete('uncategorised');
+
+  [...gwGroups.values()].forEach(({cat, items})=>{
     const group=document.createElement('div');
     group.className=`gw-cat${gwCollapsed[cat.id]?' gw-collapsed':''}`;
 
@@ -6629,6 +6811,10 @@ function renderGearWall(){
 
     const itemsDiv=document.createElement('div');
     itemsDiv.className='gw-items';
+    itemsDiv.dataset.gwDropTarget = cat.id;
+    itemsDiv.addEventListener('dragover', e=>{ if(e.dataTransfer.types.includes('gw-move')){ e.preventDefault(); itemsDiv.style.background='rgba(184,201,163,0.1)'; }});
+    itemsDiv.addEventListener('dragleave', ()=>{ itemsDiv.style.background=''; });
+    itemsDiv.addEventListener('drop', e=>{ itemsDiv.style.background=''; _gwCatDrop(e, cat.id); });
 
     // Drop hint — shows when dragging an active-pack item back to the wall
     const dropHint=document.createElement('div');
@@ -6637,13 +6823,14 @@ function renderGearWall(){
     dropHint.dataset.catId=cat.id;
     itemsDiv.appendChild(dropHint);
 
-    if(cat.items.length===0){
+    if(items.length===0){
       const empty=document.createElement('div');
       empty.className='gw-empty';empty.textContent='No items yet';
       itemsDiv.appendChild(empty);
     } else {
-      cat.items.forEach(item=>{
+      items.forEach(item=>{
         const inSeason=item.s.includes(season);
+        const srcCatId = item._srcCatId || cat.id;
 
         // Outer wrap holds chip + drawer together
         const wrap=document.createElement('div');
@@ -6673,12 +6860,22 @@ function renderGearWall(){
             <span class="gw-item-weight">${dw(item.w)}</span>
             ${hasLink?`<span class="gw-link-indicator" title="Has product link">🔗</span>`:''}
             <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
-              onclick="event.stopPropagation();toggleItemSeason('${cat.id}','${item.id}')">
+              onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">
               ${inSeason?'⊖':'⊕'}
             </button>
           </div>`;
 
         // Click-and-hold anywhere on chip → drag; quick click → expand drawer
+        // Drag between GW categories
+        chip.draggable = true;
+        chip.addEventListener('dragstart', e=>{
+          e.stopPropagation();
+          e.dataTransfer.setData('gw-move', JSON.stringify({iid:item.id, fromCatId:srcCatId}));
+          e.dataTransfer.effectAllowed='move';
+          setTimeout(()=>chip.style.opacity='0.35',0);
+        });
+        chip.addEventListener('dragend', ()=>chip.style.opacity='');
+
         let _pdHoldTimer = null;
         let _pdDidDrag = false;
         chip.addEventListener('pointerdown', e=>{
@@ -6687,7 +6884,7 @@ function renderGearWall(){
           _pdDidDrag = false;
           _pdHoldTimer = setTimeout(()=>{
             _pdDidDrag = true;
-            pdStart(e, item, cat.id, chip);
+            pdStart(e, item, srcCatId, chip);
           }, 180);
         });
         chip.addEventListener('pointerup', ()=>{ clearTimeout(_pdHoldTimer); });
@@ -6733,12 +6930,12 @@ function renderGearWall(){
             <span class="gw-field-lbl">Link</span>
             <input class="gw-drawer-url gw-edit-link" type="url" placeholder="Paste product URL…"
               value="${escH(item.link||'')}"/>
-            <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${cat.id}','${item.id}',this)">Find all data</button>
+            <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${srcCatId}','${item.id}',this)">Find all data</button>
           </div>
           ${hasLink?`<a class="gw-open-link" href="${escH(item.link)}" target="_blank">↗ Open product page</a>`:''}
           <div class="gw-confirm-row">
-            <button class="gw-confirm-btn" onclick="saveDrawer('${cat.id}','${item.id}',this)">✓ Save</button>
-            <button class="gw-cancel-btn" onclick="discardDrawer('${cat.id}','${item.id}')">✕ Discard</button>
+            <button class="gw-confirm-btn" onclick="saveDrawer('${srcCatId}','${item.id}',this)">✓ Save</button>
+            <button class="gw-cancel-btn" onclick="discardDrawer('${srcCatId}','${item.id}')">✕ Discard</button>
           </div>
         `;
 
@@ -6760,6 +6957,62 @@ function renderGearWall(){
     group.appendChild(itemsDiv);
     body.appendChild(group);
   });
+
+  // ── Uncategorised gear wall section (no header) ──
+  if(uncatGroup && uncatGroup.items.length > 0){
+    const ucDiv = document.createElement('div');
+    ucDiv.className = 'gw-cat';
+    ucDiv.dataset.gwCat = 'uncategorised';
+    ucDiv.style.cssText = 'border-top:1px dashed rgba(184,201,163,0.3);margin-top:0.3rem;';
+
+    const ucHd = document.createElement('div');
+    ucHd.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.6;padding:0.5rem 0.7rem 0.2rem;";
+    ucHd.textContent = 'Uncategorised (' + uncatGroup.items.length + ')';
+    ucDiv.appendChild(ucHd);
+
+    const ucItems = document.createElement('div');
+    ucItems.className = 'gw-items';
+    // Drop target for dragging items into uncategorised
+    ucItems.dataset.gwDropTarget = 'uncategorised';
+    ucItems.addEventListener('dragover', e=>{ e.preventDefault(); ucItems.style.background='rgba(184,201,163,0.08)'; });
+    ucItems.addEventListener('dragleave', ()=>{ ucItems.style.background=''; });
+    ucItems.addEventListener('drop', e=>{ ucItems.style.background=''; _gwCatDrop(e,'uncategorised'); });
+
+    uncatGroup.items.forEach(item=>{
+      const srcCatId = item._srcCatId || 'uncategorised';
+      const inSeason = item.s.includes(season);
+      const wrap = document.createElement('div');
+      wrap.className='gw-item-wrap'; wrap.dataset.iid=item.id; wrap.dataset.cid=srcCatId;
+      const chip = document.createElement('div');
+      chip.className=`gw-item${inSeason?' in-season':''}`;
+      chip.draggable = true;
+      chip.innerHTML=`<div class="gw-drag-handle">⠿</div>
+        <div class="gw-item-left">
+          <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
+          <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>
+        </div>
+        <div class="gw-item-right">
+          <span class="gw-item-weight">${dw(item.w)}</span>
+          <button class="gw-toggle-btn" onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">${inSeason?'⊖':'⊕'}</button>
+        </div>`;
+      chip.addEventListener('dragstart', e=>{
+        e.dataTransfer.setData('gw-move', JSON.stringify({iid:item.id,fromCatId:srcCatId}));
+        e.dataTransfer.effectAllowed='move';
+        setTimeout(()=>chip.style.opacity='0.35',0);
+      });
+      chip.addEventListener('dragend', ()=>chip.style.opacity='');
+      wrap.appendChild(chip); ucItems.appendChild(wrap);
+    });
+    ucDiv.appendChild(ucItems);
+    body.appendChild(ucDiv);
+  }
+
+  // ── New Gear Wall Category button ──
+  const gwNewCatBtn = document.createElement('button');
+  gwNewCatBtn.className = 'add-cat-btn';
+  gwNewCatBtn.textContent = '＋ New Gear Wall Category';
+  gwNewCatBtn.onclick = ()=>catEditOpenNew(true);
+  body.appendChild(gwNewCatBtn);
 
   // ── Recently Deleted section ──
   const rdGroup = document.createElement('div');
@@ -6808,6 +7061,23 @@ function renderGearWall(){
     rdGroup.appendChild(rdItems);
   }
   body.appendChild(rdGroup);
+}
+
+
+// Handle dropping an item into a gear wall category (changes gwCatId)
+function _gwCatDrop(e, toCatId){
+  e.preventDefault(); e.stopPropagation();
+  let data;
+  try{ data = JSON.parse(e.dataTransfer.getData('gw-move')); }catch(_){ return; }
+  if(!data || !data.iid) return;
+  const {iid} = data;
+  let found = false;
+  CATS.forEach(cat=>{
+    cat.items.forEach(item=>{
+      if(item.id === iid){ item.gwCatId = toCatId; found = true; }
+    });
+  });
+  if(found){ scheduleSave(); renderGearWall(); }
 }
 
 function toggleItemSeason(catId,itemId){
@@ -7122,7 +7392,7 @@ const SAVE_KEY = 'basecamp_cache';
 function getPayload(){
   const BUILTIN_FOOD_CAT_IDS = ['breakfast','lunch','dinner','snacks','drinks'];
   return {
-    schema: 6,
+    schema: 7,
     savedAt: Date.now(),
     season,
     unit: U.v,
@@ -7186,6 +7456,13 @@ function migratePayload(d){
     if(d.foodItems) d.foodItems=d.foodItems.filter(i=>!demoFridge.has(i.fridgeId));
     if(d.trips) d.trips=d.trips.filter(t=>t.id!=='trip_1');
     d.schema=6;
+  }
+  if(d.schema < 7){
+    // Add onGearWall to all cats (all existing cats are on gear wall)
+    if(d.cats) d.cats.forEach(c=>{ if(c.onGearWall===undefined) c.onGearWall=true; });
+    // Add gwCatId to all items (defaults to their current catId = linked)
+    if(d.cats) d.cats.forEach(c=>{ (c.items||[]).forEach(i=>{ if(!i.gwCatId) i.gwCatId=c.id; }); });
+    d.schema=7;
   }
   return d;
 }
@@ -7283,7 +7560,7 @@ async function saveToFile(){
 
     // Replace __TW_DATA__ with clean defaults — no personal data ever goes in
     const cleanPayload = {
-      schema: 6,
+      schema: 7,
       season: 'winter',
       unit: 'g',
       packs: [
@@ -7380,12 +7657,13 @@ function loadState(){
         hasExtra: c.hasExtra||false, extraLabel: c.extraLabel||'',
         pc: PC_MAP[c.id] || 'pill-general',
         cc: CC_MAP[c.id] || 'cc-general',
-        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[]})),
-        packs: c.packs||null
+        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id})),
+        packs: c.packs||null,
+        onGearWall: c.onGearWall !== false
       });
     });
     if(!CATS.find(c=>c.id==='uncategorised')){
-      CATS.push({id:'uncategorised',name:'Uncategorised',icon:'📦',color:'#8b8b8b',pc:'pill-uncategorised',cc:'cc-uncategorised',hasExtra:false,extraLabel:'',items:[]});
+      CATS.push({id:'uncategorised',name:'Uncategorised',icon:'📦',color:'#8b8b8b',pc:'pill-uncategorised',cc:'cc-uncategorised',hasExtra:false,extraLabel:'',items:[],onGearWall:true});
     }
 
     if(d.foodSeason) foodSeason = d.foodSeason;
