@@ -1,4 +1,4 @@
-<html lang="en" class="light"><head> 
+<html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BaseCamp v4.66 — Gear Organizer</title>
@@ -7771,6 +7771,9 @@ function renderGearWall(){
           <div class="gw-item-right">
             <span class="gw-item-weight">${dw(item.w)}</span>
             ${hasLink?`<span class="gw-link-indicator" title="Has product link">🔗</span>`:''}
+            <button class="gw-item-edit-btn" title="Edit item"
+              onclick="event.stopPropagation();(()=>{if(wrap.classList.contains('open')){autoSaveDrawer('${srcCatId}','${item.id}');}else{wrap.classList.add('open');requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());}})();"
+              style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
             <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
               onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">
               ${inSeason?'⊖':'⊕'}
@@ -7790,6 +7793,8 @@ function renderGearWall(){
           _pdDidDrag = true;
           pdStart(e, item, srcCatId, chip);
         });
+        chip.addEventListener('mouseenter',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0.45'; });
+        chip.addEventListener('mouseleave',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0'; });
         chip.addEventListener('click', e=>{ if(e.target.closest('button')) return; });
         chip.addEventListener('dblclick', e=>{
           if(e.target.closest('button')) return;
