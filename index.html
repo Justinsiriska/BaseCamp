@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.36 — Gear Organizer</title>
+<title>BaseCamp v4.37 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.36</div>
+      <div class="logo-sub">Gear Organizer · v4.37</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7461,15 +7461,17 @@ function _pdHitTest(x, y){
     if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom)
       return 'season-'+pill.dataset.s;
   }
-  // Check pack col cat cards
+  // Check pack col cat cards FIRST (left panel)
   for(const card of document.querySelectorAll('.cat-card[data-cid]')){
     const r = card.getBoundingClientRect();
     if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'pack-cat-'+card.dataset.cid;
   }
-  // Check gear wall cat sections (separate zone prefix so we know it's GW→GW)
+  // Check gear wall cat sections (right panel) — exclude source category
   for(const gwCat of document.querySelectorAll('.gw-cat[data-cid]')){
+    const cid = gwCat.dataset.cid;
+    if(cid === PD.catId) continue; // skip source category
     const r = gwCat.getBoundingClientRect();
-    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'gw-cat-'+gwCat.dataset.cid;
+    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'gw-cat-'+cid;
   }
   return null;
 }
