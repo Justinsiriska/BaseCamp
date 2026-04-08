@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.41 — Gear Organizer</title>
+<title>BaseCamp v4.42 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.41</div>
+      <div class="logo-sub">Gear Organizer · v4.42</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7532,8 +7532,10 @@ function _pdCancel(){
 }
 
 function _pdCommit(zone){
-  const {item, catId} = PD;
-  console.log('[PD] _pdCommit zone='+zone+' catId='+catId+' item='+item?.name);
+  const {item: _pdItem, catId} = PD;
+  // CRITICAL: PD.item may be a spread copy from gwGroups — resolve the live original from CATS
+  const item = CATS.flatMap(c=>c.items).find(i=>i.id===_pdItem?.id) || _pdItem;
+  console.log('[PD] _pdCommit zone='+zone+' catId='+catId+' item='+item?.name+' live='+!!CATS.flatMap(c=>c.items).find(i=>i.id===_pdItem?.id));
   _pdCleanup(); // always clean up first before any renderAll
 
   if(zone==='trash'){
