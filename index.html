@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.42 — Gear Organizer</title>
+<title>BaseCamp v4.44 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.42</div>
+      <div class="logo-sub">Gear Organizer · v4.44</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5238,12 +5238,9 @@ function renderCats(){
 
     const rows=items.map(item=>{
       const extraTag = item.extra ? `<span class="pack-item-extra">${escH(item.extra)}</span>` : '';
-      return `<div class="pack-item-row">
+      return `<div class="pack-item-row" data-pack-cid="${cat.id}" data-pack-iid="${item.id}">
         <div class="pack-item-left">
-          <span class="pack-item-drag-handle" draggable="true"
-            ondragstart="packItemDragStart(event,'${cat.id}','${item.id}')"
-            ondragend="packItemDragEnd(event)"
-            title="Drag to move">⠿</span>
+          <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
           <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('${cat.id}','${item.id}','name',this.value)"/>
           ${extraTag}
@@ -5306,6 +5303,22 @@ function renderCats(){
         </div>`;
     }
 
+    // Delegate pointerdown on drag handles to trigger pdStart
+    card.addEventListener('pointerdown', e=>{
+      const handle = e.target.closest('.pack-item-drag-handle');
+      if(!handle) return;
+      const row = handle.closest('.pack-item-row');
+      if(!row) return;
+      const cid = row.dataset.packCid;
+      const iid = row.dataset.packIid;
+      if(!cid || !iid) return;
+      const cat2 = CATS.find(c=>c.id===cid);
+      const item2 = cat2?.items.find(i=>i.id===iid);
+      if(!item2) return;
+      console.log('[PD] pack handle pointerdown item='+item2.name+' cid='+cid);
+      pdStart(e, item2, cid, handle);
+    });
+
     // Accept drops from pack item drag
     card.addEventListener('dragover', e=>{
       if(!e.dataTransfer.types.includes('pack-item-move')) return;
@@ -5362,6 +5375,20 @@ function renderCats(){
     ucCard.className = 'cat-card cc-uncategorised';
     ucCard.dataset.cid = 'uncategorised';
     ucCard.style.cssText = 'margin-bottom:0.5rem;border:1.5px dashed rgba(184,201,163,0.4);background:rgba(184,201,163,0.04);';
+    // Delegate pointerdown on uc drag handles
+    ucCard.addEventListener('pointerdown', e=>{
+      const handle = e.target.closest('.pack-item-drag-handle');
+      if(!handle) return;
+      const row = handle.closest('.pack-item-row');
+      if(!row) return;
+      const cid = row.dataset.packCid || 'uncategorised';
+      const iid = row.dataset.packIid;
+      const cat2 = CATS.find(c=>c.id===cid);
+      const item2 = cat2?.items.find(i=>i.id===iid);
+      if(!item2) return;
+      pdStart(e, item2, cid, handle);
+    });
+
     // Accept drops from pack item drag
     ucCard.addEventListener('dragover', e=>{
       if(!e.dataTransfer.types.includes('pack-item-move')) return;
@@ -5393,12 +5420,9 @@ function renderCats(){
     ucHdr.innerHTML = '<span>Uncategorised</span><button onclick="addItemFromPack(&apos;uncategorised&apos;)" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:Nunito,sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity=&apos;1&apos;" onmouseout="this.style.opacity=&apos;0.7&apos;">＋ Add</button>';
     ucCard.appendChild(ucHdr);
     if(ucItems.length > 0){
-      const rows = ucItems.map(item=>`<div class="pack-item-row">
+      const rows = ucItems.map(item=>`<div class="pack-item-row" data-pack-cid="uncategorised" data-pack-iid="${item.id}">
         <div class="pack-item-left">
-          <span class="pack-item-drag-handle" draggable="true"
-            ondragstart="packItemDragStart(event,'uncategorised','${item.id}')"
-            ondragend="packItemDragEnd(event)"
-            title="Drag to move">⠿</span>
+          <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
           <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('uncategorised','${item.id}','name',this.value)"/>
         </div>
@@ -5830,10 +5854,28 @@ function removeCatFromPack(catId){
   document.getElementById('cat-del-backdrop')?.remove();
   const cat = CATS.find(c=>c.id===catId);
   if(!cat) return;
+
+  // Ensure uncategorised cat exists
+  let uncat = CATS.find(c=>c.id==='uncategorised');
+  if(!uncat){
+    uncat = {id:'uncategorised',name:'Uncategorised',icon:'📦',color:'#8b8b8b',pc:'pill-uncategorised',cc:'cc-uncategorised',hasExtra:false,extraLabel:'',items:[],packs:[...PACKS.map(p=>p.id)],onGearWall:true};
+    CATS.push(uncat);
+  }
+
+  // Move all items from this cat into uncategorised
+  // Update gwCatId: if item's gwCatId was this cat (linked), set to 'uncategorised' on GW too
+  cat.items.forEach(item=>{
+    if(item.gwCatId === catId) item.gwCatId = 'uncategorised';
+    uncat.items.push(item);
+  });
+  cat.items = [];
+
+  // Remove this season from cat's packs
   cat.packs = (cat.packs||PACKS.map(p=>p.id)).filter(p=>p!==season);
+
   scheduleSave();
   renderAll();
-  toast(`📤 "${cat.name}" hidden from this pack — still on Gear Wall`);
+  toast(`📤 "${cat.name}" hidden from this pack — items moved to Uncategorised`);
 }
 
 // Delete category from gear wall only (items get gwCatId=uncategorised, cat stays for packs)
