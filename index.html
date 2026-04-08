@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.2 — Gear Organizer</title>
+<title>BaseCamp v4.21 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2038,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.2</div>
+      <div class="logo-sub">Gear Organizer · v4.21</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -12016,48 +12016,50 @@ function renderTripsPage(){
       </div>
       <div class="trip-col-body" id="col-body-${m.id}"></div>`;
     cols.appendChild(col);
-    // ── Mini donut click = breakdown tooltip ──
-    const _donutEl = col.querySelector('.trip-col-mini-donut canvas');
-    if(_donutEl){
-      _donutEl.parentElement.addEventListener('click', e=>{
+    // ── Mini donut click = breakdown popup ──
+    const _donutWrap = col.querySelector('.trip-col-mini-donut');
+    if(_donutWrap){
+      _donutWrap.style.cursor = 'pointer';
+      _donutWrap.addEventListener('click', e=>{
         e.stopPropagation();
         document.querySelectorAll('.donut-breakdown-pop').forEach(p=>p.remove());
         const pop = document.createElement('div');
         pop.className = 'donut-breakdown-pop';
-        pop.style.cssText = 'position:fixed;z-index:9999;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;padding:0.6rem 0.8rem;font-family:Space Mono,monospace;font-size:0.48rem;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:140px;';
+        pop.style.cssText = 'position:fixed;z-index:9999;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;padding:0.7rem 0.9rem;font-family:Space Mono,monospace;font-size:0.5rem;box-shadow:0 4px 16px rgba(0,0,0,0.14);min-width:150px;';
         if(tripMode==='gear'){
           const segs = m.cats ? m.cats.map(cat=>({
             name:cat.name, color:cat.color||'#999',
-            value:cat.items ? cat.items.filter(i=>i.s&&i.s.includes(trip.packId||'default')).reduce((s,i)=>s+(i.w||0),0) : 0
+            value:cat.items ? cat.items.filter(i=>m.isMe?(i.s&&i.s.includes(trip.packId||'default')):(i.s&&i.s.length>0)).reduce((s,i)=>s+(i.w||0),0) : 0
           })).filter(s=>s.value>0) : [];
-          pop.innerHTML = '<div style="font-weight:700;margin-bottom:0.3rem;color:var(--forest);">Gear Breakdown</div>'
-            + segs.map(s=>'<div style="display:flex;align-items:center;gap:0.4rem;padding:0.1rem 0;">'
+          pop.innerHTML = '<div style="font-weight:700;margin-bottom:0.4rem;color:var(--forest);font-size:0.55rem;">Gear Breakdown</div>'
+            + segs.map(s=>'<div style="display:flex;align-items:center;gap:0.5rem;padding:0.15rem 0;">'
               +'<span style="width:8px;height:8px;border-radius:50%;background:'+s.color+';flex-shrink:0;display:inline-block;"></span>'
               +'<span style="flex:1;color:var(--bark);">'+s.name+'</span>'
-              +'<span style="color:var(--stone);">'+dwTrip(s.value)+'</span></div>').join('');
+              +'<span style="color:var(--stone);font-weight:700;">'+dwTrip(s.value)+'</span></div>').join('');
         } else {
           const fColors={breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
-          const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(trip.packId));
-          const catMap={};
-          mFood.forEach(i=>{ catMap[i.catId]=(catMap[i.catId]||0)+(i.w_total||0); });
-          pop.innerHTML = '<div style="font-weight:700;margin-bottom:0.3rem;color:var(--forest);">Food Breakdown</div>'
-            + Object.entries(catMap).map(([cat,w])=>'<div style="display:flex;align-items:center;gap:0.4rem;padding:0.1rem 0;">'
+          const mFood2 = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]);
+          const catMap2={};
+          mFood2.forEach(i=>{ catMap2[i.catId]=(catMap2[i.catId]||0)+(i.w_total||0); });
+          pop.innerHTML = '<div style="font-weight:700;margin-bottom:0.4rem;color:var(--forest);font-size:0.55rem;">Food Breakdown</div>'
+            + Object.entries(catMap2).map(([cat,w])=>'<div style="display:flex;align-items:center;gap:0.5rem;padding:0.15rem 0;">'
               +'<span style="width:8px;height:8px;border-radius:50%;background:'+(fColors[cat]||'#8b8b8b')+';flex-shrink:0;display:inline-block;"></span>'
               +'<span style="flex:1;color:var(--bark);text-transform:capitalize;">'+cat+'</span>'
-              +'<span style="color:var(--stone);">'+dwTrip(w)+'</span></div>').join('');
+              +'<span style="color:var(--stone);font-weight:700;">'+dwTrip(w)+'</span></div>').join('');
         }
         document.body.appendChild(pop);
-        const r = e.currentTarget.getBoundingClientRect();
-        let t = r.bottom+4, l = r.left;
-        if(t+200>window.innerHeight) t = r.top-200;
+        const r = _donutWrap.getBoundingClientRect();
+        let t = r.bottom+6, l = r.left - 75;
+        if(t+220>window.innerHeight) t = r.top-220;
         if(l+160>window.innerWidth) l = window.innerWidth-165;
+        if(l<4) l=4;
         pop.style.top=t+'px'; pop.style.left=l+'px';
         const closePop = ev=>{ if(!pop.contains(ev.target)){ pop.remove(); document.removeEventListener('click',closePop,true); }};
         setTimeout(()=>document.addEventListener('click',closePop,true),10);
       });
     }
 
-    // ── Drag from calendar to profile col = return to pack ──
+    // ── Drag from calendar to profile col = return to pack ──    // ── Drag from calendar to profile col = return to pack ──
     col.addEventListener('dragover',e=>{
       if(!_draggedEntry) return;
       e.preventDefault(); e.dataTransfer.dropEffect='move';
@@ -12088,7 +12090,7 @@ function renderTripsPage(){
           color: cat.color||'#999',
           value: cat.items ? cat.items.filter(i=> m.isMe ? (i.s&&i.s.includes(trip.packId||'default')) : (i.s&&i.s.length>0)).reduce((s,i)=>s+(i.w||0),0) : 0
         })).filter(s=>s.value>0) : [];
-        _miniDonutWrap.appendChild(_buildMiniDonut(_gSegs, gearW||1, 64));
+        _miniDonutWrap.appendChild(_buildMiniDonut(_gSegs, gearW||1, 90));
       } else {
         const _fColors={breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
         const _mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]);
@@ -12096,7 +12098,7 @@ function renderTripsPage(){
         _mFood.forEach(i=>{ _fCatMap[i.catId]=(_fCatMap[i.catId]||0)+(i.w_total||0); });
         const _fSegs=Object.entries(_fCatMap).map(([cat,w])=>({color:_fColors[cat]||'#8b8b8b',value:w}));
         const _fTotal=_mFood.reduce((s,i)=>s+(i.w_total||0),0);
-        _miniDonutWrap.appendChild(_buildMiniDonut(_fSegs, _fTotal||1, 64));
+        _miniDonutWrap.appendChild(_buildMiniDonut(_fSegs, _fTotal||1, 90));
       }
     }
   });
