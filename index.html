@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.99 — Gear Organizer</title>
+<title>BaseCamp v4.0 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1139,7 +1139,7 @@ html.dark .trip-col{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.
   border-bottom:2px solid rgba(184,201,163,0.35);
   background:rgba(74,103,65,0.06);
   display:flex;align-items:stretch;overflow:hidden;
-  height:110px;
+  height:110px;position:relative;
 }
 html.dark .trip-col-header{background:rgba(20,38,15,0.6);border-bottom-color:rgba(60,95,45,0.4);}
 .trip-col-header-right{display:flex;flex-direction:column;justify-content:center;gap:0.25rem;flex:1;min-width:0;padding:0.6rem 0.8rem;}
@@ -1896,7 +1896,7 @@ html.dark .followers-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,9
 html.dark .followers-name{color:#c0d8a8;}
 
 /* ── Mini donut in trip profile header ── */
-.trip-col-mini-donut{flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.trip-col-mini-donut{position:absolute;top:0.5rem;right:0.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
 
 /* ── Food item popup ── */
 .food-item-popup{position:fixed;z-index:9999;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,0.13);padding:0.65rem 0.85rem;min-width:170px;font-family:'Space Mono',monospace;}
@@ -2038,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.99</div>
+      <div class="logo-sub">Gear Organizer · v4.0</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -12003,8 +12003,8 @@ function renderTripsPage(){
                 })()
             }
           </div>
-          <div class="trip-col-mini-donut" style="margin-top:0.2rem;cursor:pointer;" title="Click for breakdown"></div>
         </div>
+        <div class="trip-col-mini-donut" title="Click for breakdown"></div>
       </div>
       <div class="trip-col-body" id="col-body-${m.id}"></div>`;
     cols.appendChild(col);
