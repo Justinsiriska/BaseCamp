@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.55 — Gear Organizer</title>
+<title>BaseCamp v4.56 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -391,10 +391,7 @@ html.dark .gw-item.in-season .gw-toggle-btn{color:#e07858;}
 .p1-left > *{position:relative;z-index:1;}
 
 /* My Packs title */
-/* Combined title + config header — Option B */
-.pack-header{
-  margin-bottom:1rem;
-}
+.pack-header{margin-bottom:1rem;}
 .pack-header-top{
   display:flex;align-items:baseline;gap:0.55rem;
   padding:0.65rem 0.25rem 0.45rem;
@@ -410,23 +407,23 @@ html.dark .pack-header-title{color:#a8d89a;}
   font-family:'Space Mono',monospace;font-size:0.52rem;
   letter-spacing:0.5px;color:var(--stone);font-weight:400;
 }
-/* Compact pill strip */
 .season-bar{
-  background:transparent;border-radius:0;
-  margin-bottom:1rem;border:none;overflow:visible;
+  background:transparent;border:none;border-radius:0;
+  margin-bottom:1rem;overflow:visible;
 }
+.season-bar-top{display:none;}
 /* collapsed trigger row */
 
 .season-bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem;}
 .season-lbl{font-family:'Space Mono',monospace;font-size:0.5rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);flex-shrink:0;}
-.season-pills{display:flex;gap:0.3rem;flex-wrap:wrap;align-items:center;}
+.season-pills{display:flex;gap:0.25rem;flex-wrap:wrap;align-items:center;}
 .s-pill{
-  display:flex;align-items:center;gap:0.22rem;
-  background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:9px;
-  padding:0.26rem 0.55rem;
-  font-family:'Nunito',sans-serif;font-weight:800;font-size:0.65rem;
-  cursor:pointer;transition:all 0.22s;color:var(--stone);
-  position:relative;letter-spacing:0.01em;
+  display:flex;align-items:center;gap:0.18rem;
+  background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;
+  padding:0.18rem 0.45rem;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:0.6rem;
+  cursor:pointer;transition:all 0.18s;color:var(--stone);
+  position:relative;letter-spacing:0.01em;white-space:nowrap;
 }
 .s-pill.active{
   background:#7ba7bc;border-color:#7ba7bc;color:white;
@@ -2107,7 +2104,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.55</div>
+      <div class="logo-sub">Gear Organizer · v4.56</div>
     </div>
   </div>
   <div class="nav-tabs">
