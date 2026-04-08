@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.34 — Gear Organizer</title>
+<title>BaseCamp v4.35 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -89,7 +89,13 @@ html.dark .pack-name-inp,html.dark .pack-meta-inp{background:#0f1a0f;border-colo
 html.dark .stat-block{background:rgba(15,30,12,0.7);}
 html.dark .stat-val{color:#8adf78;}
 html.dark .stat-lbl{color:#5a8f4a;}
-html.dark .pack-item-row{border-bottom-color:rgba(55,85,40,0.3);}
+html.dark .pack-item-drag-handle{
+  cursor:grab;color:var(--stone);opacity:0.35;font-size:0.75rem;
+  padding:0 4px 0 0;flex-shrink:0;user-select:none;line-height:1;
+}
+.pack-item-drag-handle:hover{opacity:0.7;}
+.pack-item-drag-handle:active{cursor:grabbing;}
+.pack-item-row{border-bottom-color:rgba(55,85,40,0.3);}
 html.dark .pack-item-name{color:#b8dea8;}
 html.dark .pack-item-extra{background:rgba(15,25,12,0.8);color:#7a9f6a;border:1px solid rgba(55,85,40,0.4);}
 html.dark .item-weight-display{color:#8ac878;}
@@ -544,6 +550,12 @@ html.dark .gw-item.in-season .gw-toggle-btn{color:#e07858;}
 
 /* Pack item rows — flex layout, no wrapping */
 .pack-items-list{margin-bottom:0.3rem;}
+.pack-item-drag-handle{
+  cursor:grab;color:var(--stone);opacity:0.35;font-size:0.75rem;
+  padding:0 4px 0 0;flex-shrink:0;user-select:none;line-height:1;
+}
+.pack-item-drag-handle:hover{opacity:0.7;}
+.pack-item-drag-handle:active{cursor:grabbing;}
 .pack-item-row{
   display:flex;align-items:center;justify-content:space-between;
   padding:0.28rem 0.2rem;
@@ -2064,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.34</div>
+      <div class="logo-sub">Gear Organizer · v4.35</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5226,10 +5238,12 @@ function renderCats(){
 
     const rows=items.map(item=>{
       const extraTag = item.extra ? `<span class="pack-item-extra">${escH(item.extra)}</span>` : '';
-      return `<div class="pack-item-row" draggable="true"
-        ondragstart="packItemDragStart(event,'${cat.id}','${item.id}')"
-        ondragend="packItemDragEnd(event)">
+      return `<div class="pack-item-row">
         <div class="pack-item-left">
+          <span class="pack-item-drag-handle" draggable="true"
+            ondragstart="packItemDragStart(event,'${cat.id}','${item.id}')"
+            ondragend="packItemDragEnd(event)"
+            title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
           <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('${cat.id}','${item.id}','name',this.value)"/>
           ${extraTag}
@@ -5379,10 +5393,12 @@ function renderCats(){
     ucHdr.innerHTML = '<span>Uncategorised</span><button onclick="addItemFromPack(&apos;uncategorised&apos;)" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:Nunito,sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity=&apos;1&apos;" onmouseout="this.style.opacity=&apos;0.7&apos;">＋ Add</button>';
     ucCard.appendChild(ucHdr);
     if(ucItems.length > 0){
-      const rows = ucItems.map(item=>`<div class="pack-item-row" draggable="true"
-        ondragstart="packItemDragStart(event,'uncategorised','${item.id}')"
-        ondragend="packItemDragEnd(event)">
+      const rows = ucItems.map(item=>`<div class="pack-item-row">
         <div class="pack-item-left">
+          <span class="pack-item-drag-handle" draggable="true"
+            ondragstart="packItemDragStart(event,'uncategorised','${item.id}')"
+            ondragend="packItemDragEnd(event)"
+            title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
           <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('uncategorised','${item.id}','name',this.value)"/>
         </div>
@@ -7401,16 +7417,16 @@ function _pdMoveGhost(x, y){
 
 function _pdApplyDimming(catId){
   document.querySelectorAll('.cat-card').forEach(c=>c.classList.add('pd-target'));
-  // Also highlight GW uncategorised section
-  const gwUc = document.querySelector('.gw-cat[data-cid="uncategorised"]');
-  if(gwUc) gwUc.style.outline='2px dashed rgba(122,158,110,0.5)';
+  // Also highlight all GW cat sections
+  document.querySelectorAll('.gw-cat[data-cid]').forEach(el=>{
+    el.style.outline='2px dashed rgba(122,158,110,0.4)';
+  });
   document.querySelectorAll('.s-pill').forEach(p=>p.classList.add('pd-season-highlight'));
 }
 
 function _pdClearDimming(){
   document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('pd-target','pd-dim','pd-over'));
-  const gwUc = document.querySelector('.gw-cat[data-cid="uncategorised"]');
-  if(gwUc){ gwUc.style.outline=''; gwUc.style.background=''; }
+  document.querySelectorAll('.gw-cat[data-cid]').forEach(el=>{ el.style.outline=''; el.style.background=''; });
   document.querySelectorAll('.s-pill').forEach(p=>p.classList.remove('pd-season-highlight','pd-season-over'));
 }
 
@@ -7427,14 +7443,16 @@ function _pdHitTest(x, y){
     if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom)
       return 'season-'+pill.dataset.s;
   }
-  // Check ALL cat cards — any can be a drop target (includes ucCard in pack col)
+  // Check pack col cat cards
   for(const card of document.querySelectorAll('.cat-card[data-cid]')){
     const r = card.getBoundingClientRect();
-    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'cat-'+card.dataset.cid;
+    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'pack-cat-'+card.dataset.cid;
   }
-  // Also check gear wall uncategorised section
-  const gwUc = document.querySelector('.gw-cat[data-cid="uncategorised"]');
-  if(gwUc){ const r=gwUc.getBoundingClientRect(); if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'cat-uncategorised'; }
+  // Check gear wall cat sections (separate zone prefix so we know it's GW→GW)
+  for(const gwCat of document.querySelectorAll('.gw-cat[data-cid]')){
+    const r = gwCat.getBoundingClientRect();
+    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'gw-cat-'+gwCat.dataset.cid;
+  }
   return null;
 }
 
@@ -7457,16 +7475,13 @@ function _pdOnMove(e){
 
   PD.overZone = zone;
 
-  // Reset all zone highlights — all cards are always valid targets
-  document.querySelectorAll('.cat-card').forEach(c=>{
-    c.classList.remove('pd-over');
-    c.classList.add('pd-target');
-  });
-  const gwUcEl = document.querySelector('.gw-cat[data-cid="uncategorised"]');
-  if(gwUcEl) gwUcEl.style.outline='2px dashed rgba(122,158,110,0.5)';
+  // Reset all zone highlights
+  document.querySelectorAll('.cat-card').forEach(c=>{ c.classList.remove('pd-over'); c.classList.add('pd-target'); });
+  document.querySelectorAll('.gw-cat[data-cid]').forEach(el=>{ el.style.outline='2px dashed rgba(122,158,110,0.4)'; el.style.background=''; });
   document.querySelectorAll('.s-pill').forEach(p=>p.classList.remove('pd-season-over'));
   PD.trash.style.background='rgba(200,90,42,0.92)';
   PD.trash.style.transform='translateX(-50%) scale(1)';
+  const gwUcEl = document.querySelector('.gw-cat[data-cid="uncategorised"]');
 
   if(!zone) return;
 
@@ -7491,17 +7506,16 @@ function _pdOnMove(e){
         }, 1000);
       }
     }
-  } else if(zone.startsWith('cat-')){
-    const cid = zone.slice(4);
+  } else if(zone.startsWith('pack-cat-')){
+    const cid = zone.slice(9);
     const card = document.querySelector(`.cat-card[data-cid="${cid}"]`);
     if(card){ card.classList.add('pd-over'); card.classList.remove('pd-target'); }
-    // Highlight GW ucDiv if hovering uncategorised
-    if(cid==='uncategorised' && gwUcEl){
-      gwUcEl.style.outline='2.5px solid var(--sage)';
-      gwUcEl.style.background='rgba(122,158,110,0.07)';
-    } else if(gwUcEl){
-      gwUcEl.style.background='';
-    }
+    if(gwUcEl) gwUcEl.style.background='';
+  } else if(zone.startsWith('gw-cat-')){
+    const cid = zone.slice(7);
+    const gwEl = document.querySelector(`.gw-cat[data-cid="${cid}"]`);
+    if(gwEl){ gwEl.style.outline='2.5px solid var(--sage)'; gwEl.style.background='rgba(122,158,110,0.07)'; }
+    if(gwUcEl && cid!=='uncategorised') gwUcEl.style.background='';
   }
 }
 
@@ -7543,25 +7557,37 @@ function _pdCommit(zone){
       toast(`📅 Switched to ${s} — now drag item to its category`);
     }
 
-  } else if(zone && zone.startsWith('cat-')){
-    const toCatId = zone.slice(4);
-    if(toCatId !== catId){
-      const fromCat = CATS.find(c=>c.id===catId);
-      const toCat = CATS.find(c=>c.id===toCatId);
-      if(fromCat && toCat){
-        fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
-        item.gwCatId = toCat.onGearWall!==false ? toCatId : 'uncategorised';
-        toCat.items.push(item);
-        toast(`✅ ${item.name} moved to ${toCat.name}`);
-        renderAll();
+  } else if(zone && zone.startsWith('pack-cat-')){
+    // Dropped on a PACK COLUMN category — add to active season pack
+    const toCatId = zone.slice(9);
+    const toCat = CATS.find(c=>c.id===toCatId);
+    if(toCat){
+      // If dropped on a different pack cat, also move the item there
+      if(toCatId !== catId){
+        const fromCat = CATS.find(c=>c.id===catId);
+        if(fromCat){
+          fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
+          // Update gwCatId to linked gear wall category if it exists
+          item.gwCatId = toCat.onGearWall!==false ? toCatId : item.gwCatId;
+          toCat.items.push(item);
+        }
       }
-    } else {
+      // Always add to season
       if(!item.s.includes(season)){
         item.s = [...item.s, season];
-        toast(`✅ ${item.name} added to ${season} pack`);
+        toast(`✅ ${item.name} added to ${season} pack${toCatId !== catId ? ' · moved to '+toCat.name : ''}`);
       } else {
-        toast(`ℹ️ Already in your ${season} pack`);
+        toast(`ℹ️ ${item.name} is already in your ${season} pack`);
       }
+      renderAll();
+    }
+  } else if(zone && zone.startsWith('gw-cat-')){
+    // Dropped on a GEAR WALL category — update gwCatId only, no season change
+    const toGwCatId = zone.slice(7);
+    if(toGwCatId !== item.gwCatId){
+      item.gwCatId = toGwCatId;
+      const toCat = CATS.find(c=>c.id===toGwCatId);
+      toast(`✅ ${item.name} moved to ${toCat ? toCat.name : toGwCatId} on Gear Wall`);
       renderAll();
     }
   }
