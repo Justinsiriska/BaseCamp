@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.40 — Gear Organizer</title>
+<title>BaseCamp v4.41 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.40</div>
+      <div class="logo-sub">Gear Organizer · v4.41</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7092,6 +7092,7 @@ function renderGearWall(){
         chip.addEventListener('pointerdown', e=>{
           if(e.button!==0) return;
           if(e.target.closest('button')) return;
+          console.log('[PD] chip pointerdown item='+item?.name+' srcCatId='+srcCatId);
           _pdDidDrag = true;
           pdStart(e, item, srcCatId, chip);
         });
@@ -7350,6 +7351,7 @@ function gwBodyDrop(){}
 
 function pdStart(e, item, catId, chip){
   if(PD.active) return;
+  console.log('[PD] pdStart item='+item?.name+' catId='+catId);
   PD.active = true;
   PD.item   = item;
   PD.catId  = catId;
@@ -7451,6 +7453,7 @@ function _pdHitTest(x, y){
 
 function _pdOnMove(e){
   if(!PD.active) return;
+  if(!PD.moved) console.log('[PD] first move at '+Math.round(e.clientX)+','+Math.round(e.clientY));
   PD.moved = true;
   _pdMoveGhost(e.clientX, e.clientY);
 
@@ -7515,13 +7518,12 @@ function _pdOnMove(e){
 
 function _pdOnUp(e){
   if(!PD.active) return;
-  // If pointer never moved, treat as click — cancel drag, don't commit
+  const zone = _pdHitTest(e.clientX, e.clientY) || PD.overZone;
+  console.log('[PD] _pdOnUp moved='+PD.moved+' zone='+zone+' pos='+Math.round(e.clientX)+','+Math.round(e.clientY)+' catId='+PD.catId+' item='+PD.item?.name);
   if(!PD.moved){
     _pdCleanup();
     return;
   }
-  // Always re-test at the exact release position
-  const zone = _pdHitTest(e.clientX, e.clientY) || PD.overZone;
   _pdCommit(zone);
 }
 
@@ -7531,6 +7533,7 @@ function _pdCancel(){
 
 function _pdCommit(zone){
   const {item, catId} = PD;
+  console.log('[PD] _pdCommit zone='+zone+' catId='+catId+' item='+item?.name);
   _pdCleanup(); // always clean up first before any renderAll
 
   if(zone==='trash'){
