@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v3.98 — Gear Organizer</title>
+<title>BaseCamp v3.99 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1196,7 +1196,7 @@ html.dark .trip-personal-section{background:rgba(15,25,12,0.5);border-color:rgba
 .trip-personal-item{
   display:flex;align-items:center;gap:0.4rem;padding:0.18rem 0.2rem;
   border-radius:5px;font-family:'Nunito',sans-serif;font-size:0.68rem;
-  color:var(--stone);opacity:1;margin-bottom:0.08rem;
+  color:var(--bark);opacity:1;margin-bottom:0.08rem;
 }
 .trip-personal-item:last-child{margin-bottom:0;}
 .trip-personal-w{font-family:'Nunito',sans-serif;font-size:0.62rem;margin-left:auto;flex-shrink:0;}
@@ -2038,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v3.98</div>
+      <div class="logo-sub">Gear Organizer · v3.99</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5132,7 +5132,7 @@ function renderCats(){
       <div class="cat-head-wrap">
         <div class="cat-head" onclick="toggleCat('${cat.id}')">
           <div class="cat-head-l">
-            <span class="cat-icon">${cat.icon}</span>
+            ${_catIcon(cat)}
             <span class="cat-name cat-name-clickable" title="Click to rename or delete"
               onclick="event.stopPropagation();startCatInlineEdit('${cat.id}',this)">${cat.name}</span>
             <span class="cat-meta">(${items.length})</span>
@@ -9154,7 +9154,7 @@ function profilePhotoSelected(input){
       _cropState.y = (vp - img.naturalHeight*initScale)/2;
       _cropApplyTransform();
       document.getElementById('profile-crop-modal').classList.add('open');
-      const sl=document.getElementById('crop-zoom-slider'); if(sl) sl.value=_cropState.scale;
+      const sl=document.getElementById('crop-zoom-slider'); if(sl){ sl.min=_cropState.scale; sl.value=_cropState.scale; }
     };
     img.src = e.target.result;
   };
@@ -9217,7 +9217,9 @@ function _cropClamp(){
 
 
 function _cropZoomFromSlider(val){
-  const newScale = parseFloat(val);
+  const sl=document.getElementById('crop-zoom-slider');
+  const minScale = sl ? parseFloat(sl.min) : 0.1;
+  const newScale = Math.max(minScale, parseFloat(val));
   const cx=120, cy=120;
   _cropState.x = cx - (cx - _cropState.x) * (newScale/_cropState.scale);
   _cropState.y = cy - (cy - _cropState.y) * (newScale/_cropState.scale);
@@ -9645,7 +9647,7 @@ function buildCalEntry(entry, trip, members, refresh){
 
     const editItem=document.createElement('div');
     editItem.className='meal-entry-popover-item';
-    editItem.innerHTML="✏️ &nbsp;Edit who's eating"; editItem.style.cssText='font-weight:600;';
+    editItem.innerHTML="✏️ &nbsp;<strong>Edit who's eating</strong>"; editItem.style.cssText='font-size:0.68rem;padding:0.3rem 0.65rem;';
     editItem.addEventListener('mousedown',ev2=>{
       ev2.preventDefault(); ev2.stopPropagation();
       pop.remove(); el.classList.remove('active');
@@ -9678,11 +9680,12 @@ function buildCalEntry(entry, trip, members, refresh){
     });
     pop.appendChild(removeItem);
 
-    // Append to body so it's not clipped by overflow:hidden parents
+    // Append to body first so offsetHeight is accurate
     document.body.appendChild(pop);
     // Position below the chip using getBoundingClientRect
     const rect=el.getBoundingClientRect();
-    const popH=pop.offsetHeight||120;
+    const popH=pop.offsetHeight;
+    const popW=pop.offsetWidth||180;
     const spaceBelow=window.innerHeight-rect.bottom;
     if(spaceBelow>=popH+8 || spaceBelow>=100){
       pop.style.top=(rect.bottom+4+window.scrollY)+'px';
@@ -9691,7 +9694,6 @@ function buildCalEntry(entry, trip, members, refresh){
     }
     // Keep horizontally within viewport
     let leftPos=rect.left+window.scrollX;
-    const popW=pop.offsetWidth||180;
     if(leftPos+popW>window.innerWidth-8) leftPos=window.innerWidth-popW-8;
     if(leftPos<8) leftPos=8;
     pop.style.left=leftPos+'px';
@@ -11942,30 +11944,8 @@ function renderTripsPage(){
       : m.isLeader ? '⛰️ leader'
       : (trip.leaderId && m.id===trip.leaderId) ? '⛰️ leader'
       : 'crew member';
-    // Drag from calendar onto profile col returns food to pack
-    col.addEventListener('dragover',e=>{
-      if(!_draggedEntry) return;
-      e.preventDefault(); e.dataTransfer.dropEffect='move';
-      col.style.outline='2px dashed rgba(74,143,168,0.5)';
-    });
-    col.addEventListener('dragleave',e=>{
-      if(!col.contains(e.relatedTarget)) col.style.outline='';
-    });
-    col.addEventListener('drop',e=>{
-      col.style.outline='';
-      if(!_draggedEntry) return;
-      e.preventDefault(); e.stopPropagation();
-      const entry=_draggedEntry; _draggedEntry=null;
-      const idx=trip.mealPlan.indexOf(entry);
-      if(idx>-1){ trip.mealPlan.splice(idx,1); scheduleSave(); sbPushTrip(trip); }
-      document.body.classList.remove('cal-dragging');
-      const grid=document.querySelector('[data-meal-cal-grid]');
-      if(grid) renderMealCalendar(grid,trip,members);
-      members.forEach(mem=>{const b=document.getElementById('col-body-'+mem.id);if(b){b.innerHTML='';renderMemberFood(b,mem,trip,members);}});
-    });
     col.innerHTML=`
       <div class="trip-col-header">
-        <div class="trip-col-mini-donut"></div>
         <div class="trip-col-avatar" style="${m.avatar&&m.avatar.startsWith('<img')?'':'background:'+(m.color||'var(--sage)')}">${m.avatar||m.name[0]}</div>
         <div class="trip-col-header-right">
           <div class="trip-col-name">${escH(m.name)}</div>
@@ -12023,10 +12003,75 @@ function renderTripsPage(){
                 })()
             }
           </div>
+          <div class="trip-col-mini-donut" style="margin-top:0.2rem;cursor:pointer;" title="Click for breakdown"></div>
         </div>
       </div>
       <div class="trip-col-body" id="col-body-${m.id}"></div>`;
     cols.appendChild(col);
+    // ── Mini donut click = breakdown tooltip ──
+    const _donutEl = col.querySelector('.trip-col-mini-donut canvas');
+    if(_donutEl){
+      _donutEl.parentElement.addEventListener('click', e=>{
+        e.stopPropagation();
+        document.querySelectorAll('.donut-breakdown-pop').forEach(p=>p.remove());
+        const pop = document.createElement('div');
+        pop.className = 'donut-breakdown-pop';
+        pop.style.cssText = 'position:fixed;z-index:9999;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;padding:0.6rem 0.8rem;font-family:Space Mono,monospace;font-size:0.48rem;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:140px;';
+        if(tripMode==='gear'){
+          const segs = m.cats ? m.cats.map(cat=>({
+            name:cat.name, color:cat.color||'#999',
+            value:cat.items ? cat.items.filter(i=>i.s&&i.s.includes(trip.packId||'default')).reduce((s,i)=>s+(i.w||0),0) : 0
+          })).filter(s=>s.value>0) : [];
+          pop.innerHTML = '<div style="font-weight:700;margin-bottom:0.3rem;color:var(--forest);">Gear Breakdown</div>'
+            + segs.map(s=>'<div style="display:flex;align-items:center;gap:0.4rem;padding:0.1rem 0;">'
+              +'<span style="width:8px;height:8px;border-radius:50%;background:'+s.color+';flex-shrink:0;display:inline-block;"></span>'
+              +'<span style="flex:1;color:var(--bark);">'+s.name+'</span>'
+              +'<span style="color:var(--stone);">'+dwTrip(s.value)+'</span></div>').join('');
+        } else {
+          const fColors={breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
+          const mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(trip.packId));
+          const catMap={};
+          mFood.forEach(i=>{ catMap[i.catId]=(catMap[i.catId]||0)+(i.w_total||0); });
+          pop.innerHTML = '<div style="font-weight:700;margin-bottom:0.3rem;color:var(--forest);">Food Breakdown</div>'
+            + Object.entries(catMap).map(([cat,w])=>'<div style="display:flex;align-items:center;gap:0.4rem;padding:0.1rem 0;">'
+              +'<span style="width:8px;height:8px;border-radius:50%;background:'+(fColors[cat]||'#8b8b8b')+';flex-shrink:0;display:inline-block;"></span>'
+              +'<span style="flex:1;color:var(--bark);text-transform:capitalize;">'+cat+'</span>'
+              +'<span style="color:var(--stone);">'+dwTrip(w)+'</span></div>').join('');
+        }
+        document.body.appendChild(pop);
+        const r = e.currentTarget.getBoundingClientRect();
+        let t = r.bottom+4, l = r.left;
+        if(t+200>window.innerHeight) t = r.top-200;
+        if(l+160>window.innerWidth) l = window.innerWidth-165;
+        pop.style.top=t+'px'; pop.style.left=l+'px';
+        const closePop = ev=>{ if(!pop.contains(ev.target)){ pop.remove(); document.removeEventListener('click',closePop,true); }};
+        setTimeout(()=>document.addEventListener('click',closePop,true),10);
+      });
+    }
+
+    // ── Drag from calendar to profile col = return to pack ──
+    col.addEventListener('dragover',e=>{
+      if(!_draggedEntry) return;
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
+      col.style.outline='2px dashed rgba(74,143,168,0.5)';
+      col.style.outlineOffset='-2px';
+    });
+    col.addEventListener('dragleave',e=>{
+      if(!col.contains(e.relatedTarget)){ col.style.outline=''; col.style.outlineOffset=''; }
+    });
+    col.addEventListener('drop',e=>{
+      col.style.outline=''; col.style.outlineOffset='';
+      if(!_draggedEntry) return;
+      e.preventDefault(); e.stopPropagation();
+      const entry=_draggedEntry; _draggedEntry=null;
+      const idx=trip.mealPlan.indexOf(entry);
+      if(idx>-1){ trip.mealPlan.splice(idx,1); scheduleSave(); sbPushTrip(trip); }
+      document.body.classList.remove('cal-dragging');
+      const grid=document.querySelector('[data-meal-cal-grid]');
+      if(grid) renderMealCalendar(grid,trip,members);
+      members.forEach(mem=>{const b=document.getElementById('col-body-'+mem.id);if(b){b.innerHTML='';renderMemberFood(b,mem,trip,members);}});
+    });
+
     // ── Mini donut injection (runs after innerHTML is set) ──
     const _miniDonutWrap = col.querySelector('.trip-col-mini-donut');
     if(_miniDonutWrap){
@@ -12058,7 +12103,6 @@ function renderTripsPage(){
     col.innerHTML = `
       <div class="trip-mini-bar" style="visibility:hidden;"><div class="trip-mini-bar-label">0g</div><div class="trip-mini-bar-track"></div></div>
       <div class="trip-col-header">
-        <div class="trip-col-mini-donut"></div>
         <div class="trip-col-avatar" style="background:#aaa;border:2px dashed rgba(0,0,0,0.2);">
           ${m.avatar||`<span style="font-size:1rem;font-weight:800;color:white;">${m.name[0]}</span>`}
         </div>
@@ -12162,7 +12206,7 @@ function renderMemberGear(body, member, trip){
     personal.forEach(item=>{
       const row=document.createElement('div');
       row.className='trip-personal-item';
-      row.innerHTML=`<div class="trip-shared-dot" style="background:${item.catColor||'#999'};opacity:0.5"></div>
+      row.innerHTML=`<div class="trip-shared-dot" style="background:${item.catColor||'#999'}"></div>
         <span>${escH(item.name)}</span>
         <span class="trip-personal-w">${dwTrip(item.w||0)}</span>`;
       sec.appendChild(row);
@@ -12221,10 +12265,12 @@ function showFoodItemPopup(el, item, myKcal, myProt, myCarbs, myFat, myW){
     +'<div class="food-item-popup-row"><span>Fat</span><span class="food-item-popup-val">'+(Math.round(myFat)||0)+'g</span></div>';
   document.body.appendChild(pop);
   const rect = el.getBoundingClientRect();
-  let top = rect.bottom + 6 + window.scrollY;
-  let left = rect.left + window.scrollX;
-  if(top + 160 > window.innerHeight + window.scrollY) top = rect.top - 160 + window.scrollY;
-  if(left + 180 > window.innerWidth) left = window.innerWidth - 185;
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  if(top + 160 > window.innerHeight) top = rect.top - 160;
+  if(top < 4) top = 4;
+  if(left + 185 > window.innerWidth) left = window.innerWidth - 190;
+  if(left < 4) left = 4;
   pop.style.top = top+'px'; pop.style.left = left+'px';
   const close = e=>{ if(!pop.contains(e.target)){ pop.remove(); document.removeEventListener('click',close,true); }};
   setTimeout(()=>document.addEventListener('click',close,true), 10);
