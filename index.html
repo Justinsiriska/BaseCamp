@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.31 — Gear Organizer</title>
+<title>BaseCamp v4.32 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2064,7 +2064,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.31</div>
+      <div class="logo-sub">Gear Organizer · v4.32</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5895,6 +5895,11 @@ function addItemFromPack(cid, targetPackId){
   // Find the cat-body for this category in the pack panel
   const catCard = document.querySelector(`.cat-card[data-cid="${cid}"]`);
   if(!catCard) return;
+  // Auto-expand if collapsed
+  if(catCard.classList.contains('collapsed')){
+    collapsed[cid] = false;
+    catCard.classList.remove('collapsed');
+  }
   const catBody = catCard.querySelector('.cat-body');
   if(!catBody) return;
 
@@ -6991,11 +6996,12 @@ function renderGearWall(){
           style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
         <button class="gw-cat-add-btn" title="Add item"
           onclick="event.stopPropagation();gwInlineAdd('${cat.id}')"
-          style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;padding:1px 7px;color:var(--stone);opacity:0;transition:opacity 0.15s;line-height:1.6;">＋ Add</button>
+          style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;padding:1px 7px;color:var(--stone);opacity:0.55;transition:opacity 0.15s;line-height:1.6;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.55'">＋ Add</button>
         <span class="gw-cat-caret">▾</span>
       </div>`;
-    hd.addEventListener('mouseenter',()=>{ hd.querySelector('.gw-cat-add-btn').style.opacity='0.7'; hd.querySelector('.gw-cat-del-btn').style.opacity='0.5'; });
-    hd.addEventListener('mouseleave',()=>{ hd.querySelector('.gw-cat-add-btn').style.opacity='0'; hd.querySelector('.gw-cat-del-btn').style.opacity='0'; });
+    hd.addEventListener('mouseenter',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0.5'; });
+    hd.addEventListener('mouseleave',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0'; });
 
     hd.addEventListener('click',()=>{gwCollapsed[cat.id]=!gwCollapsed[cat.id];renderGearWall();});
     group.appendChild(hd);
@@ -7057,15 +7063,10 @@ function renderGearWall(){
           </div>`;
 
         // Click-and-hold anywhere on chip → drag; quick click → expand drawer
-        // Drag between GW categories
-        chip.draggable = true;
-        chip.addEventListener('dragstart', e=>{
-          e.stopPropagation();
-          e.dataTransfer.setData('gw-move', JSON.stringify({iid:item.id, fromCatId:srcCatId}));
-          e.dataTransfer.effectAllowed='move';
-          setTimeout(()=>chip.style.opacity='0.35',0);
-        });
-        chip.addEventListener('dragend', ()=>chip.style.opacity='');
+        // Drag between GW categories (HTML5 drag for cat-to-cat)
+        // Note: draggable=true is NOT set here — we use pointer drag (pdStart) for
+        // dragging to the pack, and _gwCatDrop for moving between GW categories.
+        // The gw-move dataTransfer is set in the pointerdown/pdStart flow via pdStart.
 
         let _pdHoldTimer = null;
         let _pdDidDrag = false;
@@ -7173,7 +7174,6 @@ function renderGearWall(){
       wrap.className='gw-item-wrap'; wrap.dataset.iid=item.id; wrap.dataset.cid=srcCatId;
       const chip = document.createElement('div');
       chip.className=`gw-item${inSeason?' in-season':''}`;
-      chip.draggable = true;
       chip.innerHTML=`<div class="gw-drag-handle">⠿</div>
         <div class="gw-item-left">
           <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
@@ -7189,6 +7189,15 @@ function renderGearWall(){
         setTimeout(()=>chip.style.opacity='0.35',0);
       });
       chip.addEventListener('dragend', ()=>chip.style.opacity='');
+      // Also support pointer-drag to add to pack (same as main GW items)
+      let _ucHoldTimer = null;
+      chip.addEventListener('pointerdown', e=>{
+        if(e.button!==0) return;
+        if(e.target.closest('button')) return;
+        _ucHoldTimer = setTimeout(()=>{ pdStart(e, item, srcCatId, chip); }, 180);
+      });
+      chip.addEventListener('pointerup', ()=>clearTimeout(_ucHoldTimer));
+      chip.addEventListener('pointercancel', ()=>clearTimeout(_ucHoldTimer));
       wrap.appendChild(chip); ucItems.appendChild(wrap);
     });
     ucDiv.appendChild(ucItems);
