@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.0 — Gear Organizer</title>
+<title>BaseCamp v4.2 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1896,7 +1896,7 @@ html.dark .followers-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,9
 html.dark .followers-name{color:#c0d8a8;}
 
 /* ── Mini donut in trip profile header ── */
-.trip-col-mini-donut{position:absolute;top:0.5rem;right:0.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
+.trip-col-mini-donut{position:absolute;top:50%;right:0.6rem;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
 
 /* ── Food item popup ── */
 .food-item-popup{position:fixed;z-index:9999;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,0.13);padding:0.65rem 0.85rem;min-width:170px;font-family:'Space Mono',monospace;}
@@ -2038,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.0</div>
+      <div class="logo-sub">Gear Organizer · v4.2</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7751,16 +7751,24 @@ function _foodChartLabelPlugin(data, total, centreStr, centreSubStr){
         c.fillText(Math.round(val/total*100)+'%', x, y+5);
         c.restore();
       });
-      // Centre
+      // Centre — auto-scale to fit inner circle
       if(!meta.data[0]) return;
       const ir = meta.data[0].innerRadius;
       c.save();c.textAlign='center';c.textBaseline='middle';
-      const fs = Math.min(Math.floor(ir*0.62), 28);
+      const maxW = ir * 1.7; // usable width inside ring
+      let fs = Math.floor(ir * 0.62);
+      c.font=`900 ${fs}px Nunito,sans-serif`;
+      while(c.measureText(centreStr).width > maxW && fs > 9){ fs--; c.font=`900 ${fs}px Nunito,sans-serif`; }
+      const subFs = Math.max(8, Math.floor(fs * 0.45));
+      const gap = Math.floor(fs * 0.15);
+      const totalH = fs + gap + subFs;
+      const mainY = cy - totalH/2 + fs/2;
+      const subY = mainY + fs/2 + gap + subFs/2;
       c.font=`900 ${fs}px Nunito,sans-serif`;c.fillStyle='rgba(61,43,26,0.92)';
-      c.fillText(centreStr, cx, cy-fs*0.3);
-      c.font=`700 ${Math.max(9,Math.floor(fs*0.48))}px Space Mono,monospace`;
+      c.fillText(centreStr, cx, mainY);
+      c.font=`700 ${subFs}px Space Mono,monospace`;
       c.fillStyle='rgba(139,115,85,0.85)';
-      c.fillText(centreSubStr, cx, cy+fs*0.7);
+      c.fillText(centreSubStr, cx, subY);
       c.restore();
     }
   };
@@ -12078,17 +12086,17 @@ function renderTripsPage(){
       if(tripMode==='gear'){
         const _gSegs = m.cats ? m.cats.map(cat=>({
           color: cat.color||'#999',
-          value: cat.items ? cat.items.filter(i=>i.s&&i.s.includes(trip.packId||'default')).reduce((s,i)=>s+(i.w||0),0) : 0
+          value: cat.items ? cat.items.filter(i=> m.isMe ? (i.s&&i.s.includes(trip.packId||'default')) : (i.s&&i.s.length>0)).reduce((s,i)=>s+(i.w||0),0) : 0
         })).filter(s=>s.value>0) : [];
-        _miniDonutWrap.appendChild(_buildMiniDonut(_gSegs, gearW, 44));
+        _miniDonutWrap.appendChild(_buildMiniDonut(_gSegs, gearW||1, 64));
       } else {
         const _fColors={breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
-        const _mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]).filter(i=>!i.s||i.s.length===0||i.s.includes(trip.packId));
+        const _mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]);
         const _fCatMap={};
         _mFood.forEach(i=>{ _fCatMap[i.catId]=(_fCatMap[i.catId]||0)+(i.w_total||0); });
         const _fSegs=Object.entries(_fCatMap).map(([cat,w])=>({color:_fColors[cat]||'#8b8b8b',value:w}));
         const _fTotal=_mFood.reduce((s,i)=>s+(i.w_total||0),0);
-        _miniDonutWrap.appendChild(_buildMiniDonut(_fSegs, _fTotal, 44));
+        _miniDonutWrap.appendChild(_buildMiniDonut(_fSegs, _fTotal||1, 64));
       }
     }
   });
