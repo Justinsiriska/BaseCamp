@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.60 — Gear Organizer</title>
+<title>BaseCamp v4.61 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2121,7 +2121,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.60</div>
+      <div class="logo-sub">Gear Organizer · v4.61</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6351,6 +6351,19 @@ function catEditClose(){
 // ── Inline cat name edit (click on title) ──
 let _catInlinePopover = null;
 
+function toggleCatIconPicker(catId){
+  const p = document.getElementById('cat-icon-picker-'+catId);
+  if(p) p.style.display = p.style.display==='none' ? 'block' : 'none';
+}
+function setCatIcon(catId, icon){
+  const cat = CATS.find(c=>c.id===catId);
+  if(cat) cat.icon = icon;
+  const btn = document.getElementById('cat-icon-btn-'+catId);
+  if(btn) btn.textContent = icon||'🏕️';
+  const p = document.getElementById('cat-icon-picker-'+catId);
+  if(p) p.style.display='none';
+}
+
 function startCatInlineEdit(catId, nameEl){
   // Close any existing popover
   _catInlinePopover?.remove();
@@ -6365,11 +6378,19 @@ function startCatInlineEdit(catId, nameEl){
   pop.innerHTML = `
     <div style="display:flex;gap:0.3rem;align-items:center;">
       <input class="cat-inline-inp" id="cat-inline-inp-${catId}" type="text" value="${escH(cat.name)}" placeholder="Category name" style="flex:1;"/>
-      <button title="Strip emoji from name" onclick="(()=>{const i=document.getElementById('cat-inline-inp-${catId}');i.value=i.value.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FAFF}][\uFE0F\u20E3]?|[\u{1F300}-\u{1F6FF}][\uFE0F]?|\u00a9|\u00ae|[\u2000-\u3300]/gsu,'').replace(/\s+/g,' ').trim();})()" style="background:none;border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;padding:0.2rem 0.4rem;cursor:pointer;font-size:0.62rem;color:var(--stone);flex-shrink:0;white-space:nowrap;" onmouseover="this.style.borderColor='var(--stone)'" onmouseout="this.style.borderColor='rgba(184,201,163,0.5)'">strip emoji</button>
+      <div style="position:relative;flex-shrink:0;">
+        <button id="cat-icon-btn-${catId}" title="Change icon" onclick="toggleCatIconPicker('${catId}')" style="background:none;border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;padding:0.18rem 0.45rem;cursor:pointer;font-size:1rem;line-height:1.3;min-width:36px;text-align:center;" onmouseover="this.style.borderColor='var(--stone)'" onmouseout="this.style.borderColor='rgba(184,201,163,0.5)'">${cat.icon||'🏕️'}</button>
+        <div id="cat-icon-picker-${catId}" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--paper);border:1.5px solid var(--lichen);border-radius:10px;padding:0.4rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.12);width:180px;">
+          <div style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.3rem;">
+            ${CAT_ICONS.map(ic=>`<button onclick="setCatIcon('${catId}','${ic}')" style="background:none;border:1px solid rgba(184,201,163,0.3);border-radius:5px;padding:2px 4px;cursor:pointer;font-size:0.9rem;line-height:1.3;" onmouseover="this.style.background='rgba(122,158,110,0.1)'" onmouseout="this.style.background='none'">${ic}</button>`).join('')}
+          </div>
+          <button onclick="setCatIcon('${catId}','')" style="width:100%;background:none;border:1px solid rgba(200,90,42,0.3);border-radius:5px;padding:2px 6px;cursor:pointer;font-size:0.6rem;color:var(--ember);font-family:'Nunito',sans-serif;font-weight:700;">✕ Remove icon</button>
+        </div>
+      </div>
     </div>
     <div class="cat-inline-btns">
       <button class="cat-inline-save" onclick="saveCatInline('${catId}')">✓ Save</button>
-      <button class="cat-inline-del" onclick="closeCatInline();removeCatFromPack('${catId}')" title="Hide from this pack config (stays on Gear Wall)">📤 Hide from pack</button>
+      <button class="cat-inline-del" onclick="closeCatInline();removeCatFromPack('${catId}')" title="Remove from this pack config">🗑 Delete from pack</button>
       <button class="cat-inline-cancel" onclick="closeCatInline()">✕</button>
     </div>`;
 
