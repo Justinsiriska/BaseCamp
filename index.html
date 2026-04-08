@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.66 — Gear Organizer</title>
+<title>BaseCamp v4.67 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2127,7 +2127,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.66</div>
+      <div class="logo-sub">Gear Organizer · v4.67</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4205,6 +4205,10 @@ let _sb = null;
 
 const _DEFAULT_CAT_ICONS = new Set(['🌙','🎒','🔥','🧥','📦']);
 function _catIcon(cat){ return (cat.icon && !_DEFAULT_CAT_ICONS.has(cat.icon)) ? '<span class="gw-cat-icon">'+cat.icon+'</span>' : ''; }
+function _hexToRgba(hex, alpha){
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 const CATS=[
   {id:'sleep',         name:'Sleep System',    icon:'🌙',color:'#4a6741',pc:'pill-sleep',    cc:'cc-sleep',    hasExtra:true, extraLabel:'Temp / R-Value', items:[],packs:null},
   {id:'pack',          name:'Pack',            icon:'🎒',color:'#8b7355',pc:'pill-pack',     cc:'cc-pack',     hasExtra:true, extraLabel:'Volume (L)',     items:[],packs:null},
@@ -4755,6 +4759,7 @@ function renderDemoGearWall(){
     const hd = document.createElement('div');
     hd.className='gw-cat-hd';
     hd.style.borderLeftColor=cat.color;
+    if(cat.color) hd.style.backgroundColor = cat.color.startsWith('#') ? _hexToRgba(cat.color,0.12) : cat.color.replace('rgb(','rgba(').replace(')',',0.12)');
     hd.innerHTML=`<div class="gw-cat-label"><span class="gw-cat-icon">${cat.icon}</span>${cat.name}</div><span class="gw-cat-count">${cat.items.length} items</span>`;
     body.appendChild(hd);
     cat.items.forEach(item=>{
@@ -7696,6 +7701,7 @@ function renderGearWall(){
     const hd=document.createElement('div');
     hd.className='gw-cat-hd';
     hd.style.borderLeftColor=cat.color;
+    if(cat.color) hd.style.backgroundColor = cat.color.startsWith('#') ? _hexToRgba(cat.color,0.12) : cat.color.replace('rgb(','rgba(').replace(')',',0.12)');
     hd.innerHTML=`
       <div class="gw-cat-label">
         ${_catIcon(cat)}
@@ -7968,8 +7974,25 @@ function renderGearWall(){
 
 // Handle dropping an item into a gear wall category (changes gwCatId)
 function gwInlineAdd(catId){
-  // Use the gear wall's native addItem which opens the drawer inline
-  addItem(catId);
+  const cat=CATS.find(c=>c.id===catId);
+  if(!cat) return;
+  const activePill = document.querySelector('.s-pill.active');
+  const activePack = activePill?.dataset?.s || season;
+  const newItem={id:uid(),name:'',w:0,extra:'',link:'',s:[activePack],gwCatId:catId};
+  cat.items.push(newItem);
+  gwCollapsed[catId]=false;
+  renderGearWall();
+  // Open the drawer immediately so user can fill in data
+  setTimeout(()=>{
+    const wrap=document.querySelector(`.gw-item-wrap[data-iid="${newItem.id}"]`);
+    if(wrap){
+      wrap.classList.add('open');
+      requestAnimationFrame(()=>{
+        const nameInput = wrap.querySelector('.gw-edit-name');
+        if(nameInput) nameInput.focus();
+      });
+    }
+  }, 60);
 }
 
 function _gwCatDrop(e, toCatId){
