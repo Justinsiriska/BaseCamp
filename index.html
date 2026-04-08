@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.29 — Gear Organizer</title>
+<title>BaseCamp v4.31 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2064,7 +2064,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.29</div>
+      <div class="logo-sub">Gear Organizer · v4.31</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5276,16 +5276,17 @@ function renderCats(){
               <span class="cat-meta">(${items.length})</span>
             </div>
             <div style="display:flex;align-items:center;gap:0.3rem">
+              <button onclick="event.stopPropagation();addItemFromPack('${cat.id}')"
+                style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;transition:opacity 0.15s;"
+                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>
               <div class="cat-pill ${cat.pc}" data-cid="${cat.id}">${dw(w)}</div>
               <button class="caret">▼</button>
             </div>
           </div>
           <div class="cat-body">
             ${items.length===0
-              ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or:</p>
-              <button class="add-btn-ghost" onclick="addItemFromPack('${cat.id}')">＋ Add item</button>`
-              :`<div class="pack-items-list">${rows}</div>
-              <button class="add-btn-ghost" onclick="addItemFromPack('${cat.id}')">＋ Add item</button>`
+              ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or click ＋ Add</p>`
+              :`<div class="pack-items-list">${rows}</div>`
             }
           </div>
         </div>`;
@@ -6988,9 +6989,9 @@ function renderGearWall(){
         <button class="gw-cat-del-btn" title="Delete category from Gear Wall"
           onclick="event.stopPropagation();confirmDeleteCat('${cat.id}')"
           style="background:none;border:none;cursor:pointer;font-size:0.65rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 4px;border-radius:4px;">🗑</button>
-        <button class="gw-cat-add-btn" title="Add item to ${cat.name}"
+        <button class="gw-cat-add-btn" title="Add item"
           onclick="event.stopPropagation();gwInlineAdd('${cat.id}')"
-          style="background:none;border:1.5px solid rgba(184,201,163,0.5);border-radius:50%;cursor:pointer;font-size:0.75rem;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--forest);padding:0;opacity:0;transition:opacity 0.15s;">＋</button>
+          style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;padding:1px 7px;color:var(--stone);opacity:0;transition:opacity 0.15s;line-height:1.6;">＋ Add</button>
         <span class="gw-cat-caret">▾</span>
       </div>`;
     hd.addEventListener('mouseenter',()=>{ hd.querySelector('.gw-cat-add-btn').style.opacity='0.7'; hd.querySelector('.gw-cat-del-btn').style.opacity='0.5'; });
@@ -7194,42 +7195,6 @@ function renderGearWall(){
     body.appendChild(ucDiv);
   }
 
-  // ── Gear wall top Add Item bar ──
-  const gwAddBar = document.createElement('div');
-  gwAddBar.style.cssText = 'display:flex;align-items:center;gap:0.4rem;padding:0.45rem 0.6rem;margin-bottom:0.5rem;background:rgba(184,201,163,0.07);border:1.5px dashed rgba(184,201,163,0.4);border-radius:10px;';
-  const gwAddName = document.createElement('input');
-  gwAddName.className = 'gw-field-inp'; gwAddName.type='text'; gwAddName.placeholder='Item name…';
-  gwAddName.style.cssText = 'flex:1;min-width:0;font-size:0.68rem;';
-  const gwAddW = document.createElement('input');
-  gwAddW.className = 'gw-field-inp mono'; gwAddW.type='number'; gwAddW.min='0'; gwAddW.placeholder='0';
-  gwAddW.style.cssText = 'width:50px;font-size:0.68rem;';
-  const gwAddUnit = document.createElement('span');
-  gwAddUnit.style.cssText = "font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);flex-shrink:0;";
-  gwAddUnit.textContent = U.v==='oz'?'oz':'g';
-  const gwAddCat = document.createElement('select');
-  gwAddCat.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--bark);background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:7px;padding:0.2rem 0.35rem;cursor:pointer;max-width:100px;flex-shrink:0;";
-  const addGwOpt=(val,lbl,sel)=>{ const o=document.createElement('option'); o.value=val; o.textContent=lbl; if(sel) o.selected=true; gwAddCat.appendChild(o); };
-  addGwOpt('uncategorised','Uncategorised',true);
-  CATS.filter(c=>c.onGearWall!==false && c.id!=='uncategorised').forEach(c=>addGwOpt(c.id,c.name,false));
-  const gwAddBtn2 = document.createElement('button');
-  gwAddBtn2.className='gw-confirm-btn'; gwAddBtn2.style.cssText='font-size:0.58rem;padding:0.22rem 0.55rem;flex-shrink:0;'; gwAddBtn2.textContent='＋';
-  const doGwAdd = ()=>{
-    const name=gwAddName.value.trim(); if(!name){ gwAddName.style.borderColor='var(--ember)'; gwAddName.focus(); setTimeout(()=>gwAddName.style.borderColor='',1000); return; }
-    const rawW=parseFloat(gwAddW.value)||0; const w=U.v==='oz'?Math.round(rawW*28.3495):rawW;
-    const cid=gwAddCat.value||'uncategorised';
-    let cat=CATS.find(c=>c.id===cid);
-    if(!cat){ cat=CATS.find(c=>c.id==='uncategorised'); }
-    if(!cat) return;
-    const activePill=document.querySelector('.s-pill.active'); const targetPack=activePill?.dataset?.s||season;
-    cat.items.push({id:uid(),name,w,extra:'',link:'',s:[targetPack],gwCatId:cid});
-    gwAddName.value=''; gwAddW.value=''; gwAddCat.value='uncategorised';
-    scheduleSave(); renderAll(); toast(`✅ "${name}" added`);
-  };
-  gwAddBtn2.onclick=doGwAdd; gwAddName.addEventListener('keydown',e=>{ if(e.key==='Enter') doGwAdd(); });
-  gwAddBar.appendChild(gwAddName); gwAddBar.appendChild(gwAddW); gwAddBar.appendChild(gwAddUnit);
-  gwAddBar.appendChild(gwAddCat); gwAddBar.appendChild(gwAddBtn2);
-  body.appendChild(gwAddBar);
-
   // ── Recently Deleted section ──
   const rdGroup = document.createElement('div');
   rdGroup.className = 'gw-cat gw-recently-deleted';
@@ -7282,31 +7247,8 @@ function renderGearWall(){
 
 // Handle dropping an item into a gear wall category (changes gwCatId)
 function gwInlineAdd(catId){
-  document.querySelectorAll('.gw-inline-add').forEach(f=>f.remove());
-  const cat = CATS.find(c=>c.id===catId); if(!cat) return;
-  const itemsDiv = document.querySelector(`.gw-cat[data-cid="${catId}"] .gw-items`);
-  if(!itemsDiv) return;
-  const form = document.createElement('div');
-  form.className = 'gw-inline-add';
-  form.style.cssText = 'display:flex;align-items:center;gap:0.35rem;padding:0.35rem 0.5rem;background:rgba(184,201,163,0.1);border:1.5px solid rgba(184,201,163,0.4);border-radius:8px;margin:0.3rem 0.4rem;';
-  const nameInp = document.createElement('input');
-  nameInp.className='gw-field-inp'; nameInp.type='text'; nameInp.placeholder='Item name…'; nameInp.style.cssText='flex:1;min-width:0;font-size:0.65rem;';
-  const wInp = document.createElement('input');
-  wInp.className='gw-field-inp mono'; wInp.type='number'; wInp.min='0'; wInp.placeholder='0'; wInp.style.cssText='width:44px;font-size:0.65rem;';
-  const unitLbl=document.createElement('span'); unitLbl.textContent=U.v==='oz'?'oz':'g'; unitLbl.style.cssText="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);";
-  const saveBtn=document.createElement('button'); saveBtn.className='gw-confirm-btn'; saveBtn.style.cssText='font-size:0.55rem;padding:0.18rem 0.45rem;'; saveBtn.textContent='✓';
-  const cancelBtn=document.createElement('button'); cancelBtn.className='gw-cancel-btn'; cancelBtn.style.cssText='font-size:0.55rem;padding:0.18rem 0.35rem;'; cancelBtn.textContent='✕';
-  form.appendChild(nameInp); form.appendChild(wInp); form.appendChild(unitLbl); form.appendChild(saveBtn); form.appendChild(cancelBtn);
-  itemsDiv.appendChild(form); nameInp.focus();
-  const doSave=()=>{
-    const name=nameInp.value.trim(); if(!name){ nameInp.style.borderColor='var(--ember)'; return; }
-    const rawW=parseFloat(wInp.value)||0; const w=U.v==='oz'?Math.round(rawW*28.3495):rawW;
-    const activePill=document.querySelector('.s-pill.active'); const targetPack=activePill?.dataset?.s||season;
-    cat.items.push({id:uid(),name,w,extra:'',link:'',s:[targetPack],gwCatId:catId});
-    scheduleSave(); renderAll(); toast(`✅ "${name}" added to ${cat.name}`);
-  };
-  saveBtn.onclick=doSave; cancelBtn.onclick=()=>form.remove();
-  nameInp.addEventListener('keydown',e=>{ if(e.key==='Enter') doSave(); if(e.key==='Escape') form.remove(); });
+  // Use the gear wall's native addItem which opens the drawer inline
+  addItem(catId);
 }
 
 function _gwCatDrop(e, toCatId){
@@ -7554,9 +7496,9 @@ function _pdCancel(){
 
 function _pdCommit(zone){
   const {item, catId} = PD;
+  _pdCleanup(); // always clean up first before any renderAll
 
   if(zone==='trash'){
-    // Save to recently deleted before removing
     const cat = CATS.find(c=>c.id===catId);
     DELETED.unshift({
       id: item.id, name: item.name, w: item.w,
@@ -7565,16 +7507,12 @@ function _pdCommit(zone){
       catId: catId, catName: cat.name, catIcon: cat.icon,
       deletedAt: Date.now()
     });
-    // Keep only last 30 deleted items
     if(DELETED.length > 30) DELETED.length = 30;
-    // Remove from gear wall
     cat.items = cat.items.filter(i=>i.id!==item.id);
     toast(`🗑 ${item.name} deleted — see Recently Deleted`);
     renderAll();
 
   } else if(zone && zone.startsWith('season-')){
-    // Season switch already happened via the 1-sec timer if they held
-    // If they released quickly (< 1s), switch season now
     clearTimeout(PD.seasonTimer);
     PD.seasonTimer = null;
     const s = zone.slice(7);
@@ -7587,19 +7525,16 @@ function _pdCommit(zone){
   } else if(zone && zone.startsWith('cat-')){
     const toCatId = zone.slice(4);
     if(toCatId !== catId){
-      // Move item to a different category
       const fromCat = CATS.find(c=>c.id===catId);
       const toCat = CATS.find(c=>c.id===toCatId);
       if(fromCat && toCat){
         fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
-        // Update catId and gwCatId
         item.gwCatId = toCat.onGearWall!==false ? toCatId : 'uncategorised';
         toCat.items.push(item);
         toast(`✅ ${item.name} moved to ${toCat.name}`);
         renderAll();
       }
     } else {
-      // Same category — add to current season pack
       if(!item.s.includes(season)){
         item.s = [...item.s, season];
         toast(`✅ ${item.name} added to ${season} pack`);
@@ -7609,9 +7544,7 @@ function _pdCommit(zone){
       renderAll();
     }
   }
-  // else dropped on nothing — no action
-
-  _pdCleanup();
+  // dropped on nothing — no action, cleanup already done
 }
 
 function _pdCleanup(){
