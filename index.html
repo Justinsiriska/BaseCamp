@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.28 — Gear Organizer</title>
+<title>BaseCamp v4.29 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2064,7 +2064,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.28</div>
+      <div class="logo-sub">Gear Organizer · v4.29</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5321,6 +5321,7 @@ function renderCats(){
     const catHead = card.querySelector('.cat-head');
     let _catHoldTimer = null;
     let _catDidDrag = false;
+    if(catHead){
     catHead.addEventListener('pointerdown', e=>{
       if(e.button!==0) return;
       if(e.target.closest('button,.cat-name-clickable,.cat-edit-btn')) return;
@@ -5332,6 +5333,7 @@ function renderCats(){
     });
     catHead.addEventListener('pointerup', ()=>clearTimeout(_catHoldTimer));
     catHead.addEventListener('pointercancel', ()=>clearTimeout(_catHoldTimer));
+    }
 
     cont.appendChild(card);
   });
