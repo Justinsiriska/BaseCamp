@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.63 — Gear Organizer</title>
+<title>BaseCamp v4.66 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -285,18 +285,18 @@ body.dragging-active, body.dragging-active *{
   -webkit-user-select:none !important;
 }
 .cat-card.pd-dim{
-  opacity:0.28;filter:grayscale(40%);
+  opacity:0.22;filter:grayscale(60%);
   transition:opacity 0.18s,filter 0.18s;
 }
 .cat-card.pd-target{
-  outline:2px dashed var(--sage);outline-offset:3px;
-  box-shadow:0 0 0 4px rgba(122,158,110,0.18);
-  transition:box-shadow 0.18s;
+  outline:none;
+  background:rgba(139,139,139,0.07);
+  transition:background 0.18s,opacity 0.18s;
 }
 .cat-card.pd-over{
-  outline:2.5px solid var(--sage);outline-offset:2px;
-  box-shadow:0 0 0 6px rgba(122,158,110,0.32);
-  background:rgba(122,158,110,0.07);
+  outline:none;
+  background:rgba(139,139,139,0.14);
+  opacity:1!important;filter:none!important;
 }
 .s-pill.pd-season-highlight{
   outline:2px dashed rgba(74,143,168,0.6);outline-offset:2px;
@@ -350,6 +350,7 @@ body.dragging-active, body.dragging-active *{
   padding:0.3rem 0.5rem;border-radius:8px;margin-bottom:0.22rem;
   border:1.5px solid transparent;cursor:pointer;
   transition:all 0.18s;
+  user-select:none;
   opacity:0.72; /* dimmer — stored, not active */
   background:rgba(245,240,232,0.7);
 }
@@ -376,9 +377,9 @@ body.dragging-active, body.dragging-active *{
 .gw-toggle-btn:hover{opacity:1;transform:scale(1.15);}
 html.dark .gw-toggle-btn{color:#8ac878;}
 html.dark .gw-item.in-season .gw-toggle-btn{color:#e07858;}
-.gw-drop-hint{display:none;border:2px dashed var(--lichen);border-radius:10px;padding:0.6rem;text-align:center;margin:0.4rem 0.5rem;font-size:0.68rem;color:var(--stone);transition:all 0.2s;}
+.gw-drop-hint{display:none;border:none;border-radius:8px;padding:0.5rem;text-align:center;margin:0.3rem 0.4rem;font-size:0.65rem;color:var(--stone);opacity:0.5;transition:all 0.2s;}
 .gw-drop-hint.visible{display:block;}
-.gw-drop-hint.over{border-color:var(--sage);color:var(--moss);background:rgba(122,158,110,0.06);}
+.gw-drop-hint.over{background:rgba(139,139,139,0.1);opacity:1;color:var(--stone);}
 .gw-empty{font-size:0.7rem;color:var(--stone);text-align:center;padding:0.5rem;font-style:italic;}
 
 /* PAGE 1 LAYOUT — left column is primary */
@@ -474,7 +475,7 @@ html.dark .cat-card.collapsed{}
 .cat-card.collapsed .cat-head{}
 .cat-card.collapsed .cat-name{}
 .cat-card.collapsed .cat-meta{}
-.cat-card.drag-over .cat-head{background:rgba(122,158,110,0.08);border-radius:6px;}
+.cat-card.drag-over .cat-head{background:rgba(139,139,139,0.08);border-radius:6px;}
 /* Cat reorder drag states */
 .cat-card.cat-dragging{opacity:0.35;}
 .cat-card.cat-drop-above{border-top:2px solid var(--water)!important;}
@@ -2126,7 +2127,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.63</div>
+      <div class="logo-sub">Gear Organizer · v4.66</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5968,11 +5969,11 @@ function renderCats(){
     ucCard.addEventListener('dragover', e=>{
       if(!e.dataTransfer.types.includes('pack-item-move')) return;
       e.preventDefault(); e.dataTransfer.dropEffect='move';
-      ucCard.style.outline='2px dashed var(--sage)'; ucCard.style.borderRadius='8px';
+      ucCard.style.outline=''; ucCard.style.background='rgba(139,139,139,0.08)'; ucCard.style.borderRadius='8px';
     });
-    ucCard.addEventListener('dragleave', e=>{ if(!ucCard.contains(e.relatedTarget)){ ucCard.style.outline=''; } });
+    ucCard.addEventListener('dragleave', e=>{ if(!ucCard.contains(e.relatedTarget)){ ucCard.style.outline=''; ucCard.style.background=''; } });
     ucCard.addEventListener('drop', e=>{
-      ucCard.style.outline='';
+      ucCard.style.outline=''; ucCard.style.background='';
       if(!e.dataTransfer.types.includes('pack-item-move')) return;
       e.preventDefault(); e.stopPropagation();
       let data; try{ data=JSON.parse(e.dataTransfer.getData('pack-item-move')); }catch(_){ return; }
@@ -6021,22 +6022,7 @@ function renderCats(){
   }
 
   const hiddenBar = document.getElementById('hidden-cats-bar');
-  if(hiddenBar){
-    const hidden = CATS.filter(c=>c.id!=='uncategorised' && !catInPack(c) && c.packs && c.packs.length>0);
-    if(hidden.length){
-      hiddenBar.innerHTML = `
-        <div style="margin:0.4rem 0 0.4rem;font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--stone);opacity:0.7;">Not in this pack config:</div>
-        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.6rem;">
-          ${hidden.map(c=>`<button onclick="addCatToPack('${c.id}')"
-            style="display:flex;align-items:center;gap:0.3rem;background:none;border:1.5px dashed rgba(184,201,163,0.45);border-radius:8px;padding:0.22rem 0.55rem;font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--stone);cursor:pointer;transition:all 0.18s;"
-            onmouseover="this.style.borderColor='var(--sage)';this.style.color='var(--forest)'"
-            onmouseout="this.style.borderColor='rgba(184,201,163,0.45)';this.style.color='var(--stone)'"
-          >${c.icon} ${escH(c.name)} <span style="opacity:0.5;font-size:0.6rem">＋</span></button>`).join('')}
-        </div>`;
-    } else {
-      hiddenBar.innerHTML = '';
-    }
-  }
+  if(hiddenBar) hiddenBar.innerHTML = '';
 }
 
 function addCatToPack(catId){
@@ -7801,14 +7787,14 @@ function renderGearWall(){
           _pdDidDrag = true;
           pdStart(e, item, srcCatId, chip);
         });
-        chip.addEventListener('click', e=>{
+        chip.addEventListener('click', e=>{ if(e.target.closest('button')) return; });
+        chip.addEventListener('dblclick', e=>{
           if(e.target.closest('button')) return;
-          if(_pdDidDrag) return;
           if(wrap.classList.contains('open')){
-            // Closing — auto-save whatever is in the drawer
             autoSaveDrawer(cat.id, item.id);
           } else {
             wrap.classList.add('open');
+            requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());
           }
         });
 
