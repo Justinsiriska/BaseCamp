@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.26 — Gear Organizer</title>
+<title>BaseCamp v4.28 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -273,8 +273,9 @@ body.dragging-active, body.dragging-active *{
   user-select:none !important;
   -webkit-user-select:none !important;
 }
+.cat-card.pd-dim{
   opacity:0.28;filter:grayscale(40%);
-  transition:opacity 0.18s,filter 0.18s;pointer-events:none;
+  transition:opacity 0.18s,filter 0.18s;
 }
 .cat-card.pd-target{
   outline:2px dashed var(--sage);outline-offset:3px;
@@ -1895,6 +1896,31 @@ html.dark .followers-panel{background:rgba(18,28,16,0.88);border-color:rgba(60,9
 .followers-name{font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:700;color:var(--bark);flex:1;}
 html.dark .followers-name{color:#c0d8a8;}
 
+/* ── Pack category banner ── */
+.pack-cat-banner{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.55rem 0.85rem 0.5rem;
+  background:rgba(139,115,85,0.1);
+  border-bottom:1px solid rgba(139,115,85,0.2);
+}
+html.dark .pack-cat-banner{background:rgba(80,60,30,0.25);border-bottom-color:rgba(139,115,85,0.25);}
+.pack-cat-banner-left{display:flex;align-items:center;gap:0.45rem;min-width:0;}
+.pack-cat-banner-icon{font-size:0.9rem;flex-shrink:0;}
+.pack-cat-banner-name{
+  font-family:'Playfair Display',serif;font-size:0.95rem;font-weight:700;
+  color:#6b5030;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+html.dark .pack-cat-banner-name{color:#c4a070;}
+.pack-cat-banner-meta{font-family:'Space Mono',monospace;font-size:0.48rem;color:#9a7a55;opacity:0.8;white-space:nowrap;}
+html.dark .pack-cat-banner-meta{color:#a08050;}
+.pack-cat-banner-right{display:flex;align-items:center;gap:0.4rem;flex-shrink:0;}
+.pack-cat-banner-w{
+  font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:800;
+  color:#8b7355;background:rgba(139,115,85,0.15);
+  padding:0.15rem 0.5rem;border-radius:8px;
+}
+html.dark .pack-cat-banner-w{background:rgba(139,115,85,0.2);color:#c4a070;}
+
 /* ── Mini donut in trip profile header ── */
 .trip-col-mini-donut{position:absolute;top:50%;right:0.6rem;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
 
@@ -2038,7 +2064,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.26</div>
+      <div class="logo-sub">Gear Organizer · v4.28</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5194,8 +5220,6 @@ function renderCats(){
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     const w=cw(cat);
-    const tot=total();
-    const pct=tot>0?Math.round(w/tot*100):0;
     const card=document.createElement('div');
     card.className=`cat-card ${cat.cc} ${collapsed[cat.id]?'collapsed':''}`;
     card.dataset.cid=cat.id;
@@ -5218,28 +5242,54 @@ function renderCats(){
       </div>`;
     }).join('');
 
-    card.innerHTML=`
-      <div class="cat-drag-handle" data-cid="${cat.id}">· · · · ·</div>
-      <div class="cat-head-wrap">
-        <div class="cat-head" onclick="toggleCat('${cat.id}')">
-          <div class="cat-head-l">
-            ${_catIcon(cat)}
-            <span class="cat-name cat-name-clickable" title="Click to rename or delete"
-              onclick="event.stopPropagation();startCatInlineEdit('${cat.id}',this)">${cat.name}</span>
-            <span class="cat-meta">(${items.length})</span>
+    // Pack category gets special banner treatment
+    if(cat.id==='pack'){
+      const packItem = items[0]; // there's only ever one pack
+      const packName = packItem ? packItem.name : 'My Pack';
+      const extraVol = packItem?.extra ? packItem.extra+'L' : '';
+      card.innerHTML=`
+        <div class="pack-cat-banner">
+          <div class="pack-cat-banner-left">
+            <span class="pack-cat-banner-icon">🎒</span>
+            <span class="pack-cat-banner-name" title="Click to edit" style="cursor:pointer"
+              onclick="packItem && startWeightEdit(document.querySelector('[data-iid=\\\"${packItem?.id}\\\"]'), 'pack', '${packItem?.id}')">${escH(packName)}</span>
+            ${extraVol ? `<span class="pack-cat-banner-meta">${extraVol}</span>` : ''}
           </div>
-          <div style="display:flex;align-items:center;gap:0.3rem">
-            <div class="cat-pill ${cat.pc}" data-cid="${cat.id}">${dw(w)}</div>
-            <button class="caret">▼</button>
+          <div class="pack-cat-banner-right">
+            <span class="pack-cat-banner-w" data-cid="pack">${dw(w)}</span>
           </div>
         </div>
-        <div class="cat-body">
-          ${items.length===0
-            ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or use ＋ Add Item above</p>`
-            :`<div class="pack-items-list">${rows}</div>`
-          }
-        </div>
-      </div>`;
+        ${items.length===0
+          ? `<div style="padding:0.5rem 0.85rem;font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);opacity:0.6;">No pack added — use ＋ Add Item above, select Pack</div>`
+          : ''
+        }`;
+      // No body/rows for pack — the item name IS the header
+    } else {
+      card.innerHTML=`
+        <div class="cat-drag-handle" data-cid="${cat.id}">· · · · ·</div>
+        <div class="cat-head-wrap">
+          <div class="cat-head" onclick="toggleCat('${cat.id}')">
+            <div class="cat-head-l">
+              ${_catIcon(cat)}
+              <span class="cat-name cat-name-clickable" title="Click to rename or delete"
+                onclick="event.stopPropagation();startCatInlineEdit('${cat.id}',this)">${cat.name}</span>
+              <span class="cat-meta">(${items.length})</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.3rem">
+              <div class="cat-pill ${cat.pc}" data-cid="${cat.id}">${dw(w)}</div>
+              <button class="caret">▼</button>
+            </div>
+          </div>
+          <div class="cat-body">
+            ${items.length===0
+              ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or:</p>
+              <button class="add-btn-ghost" onclick="addItemFromPack('${cat.id}')">＋ Add item</button>`
+              :`<div class="pack-items-list">${rows}</div>
+              <button class="add-btn-ghost" onclick="addItemFromPack('${cat.id}')">＋ Add item</button>`
+            }
+          </div>
+        </div>`;
+    }
 
     // Accept drops from pack item drag
     card.addEventListener('dragover', e=>{
@@ -5293,6 +5343,31 @@ function renderCats(){
     const ucItems = sItems(uncatCat);
     const ucCard = document.createElement('div');
     ucCard.style.cssText = 'margin-bottom:0.5rem;';
+    // Accept drops from pack item drag
+    ucCard.addEventListener('dragover', e=>{
+      if(!e.dataTransfer.types.includes('pack-item-move')) return;
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
+      ucCard.style.outline='2px dashed var(--sage)'; ucCard.style.borderRadius='8px';
+    });
+    ucCard.addEventListener('dragleave', e=>{ if(!ucCard.contains(e.relatedTarget)){ ucCard.style.outline=''; } });
+    ucCard.addEventListener('drop', e=>{
+      ucCard.style.outline='';
+      if(!e.dataTransfer.types.includes('pack-item-move')) return;
+      e.preventDefault(); e.stopPropagation();
+      let data; try{ data=JSON.parse(e.dataTransfer.getData('pack-item-move')); }catch(_){ return; }
+      const {iid, fromCatId} = data;
+      const fromCat = CATS.find(c=>c.id===fromCatId);
+      const toCat = CATS.find(c=>c.id==='uncategorised');
+      if(!fromCat || !toCat) return;
+      const item = fromCat.items.find(i=>i.id===iid);
+      if(!item) return;
+      fromCat.items = fromCat.items.filter(i=>i.id!==iid);
+      item.gwCatId = 'uncategorised';
+      toCat.items.push(item);
+      scheduleSave(); renderAll();
+      toast('✅ Moved to Uncategorised');
+    });
+
     if(ucItems.length > 0){
       const ucLbl = document.createElement('div');
       ucLbl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.55;padding:0.3rem 0 0.2rem;";
@@ -5313,12 +5388,14 @@ function renderCats(){
       rowsDiv.innerHTML = rows;
       ucCard.appendChild(rowsDiv);
     }
-    // add button removed — global add item bar handles this
+    const ucAddBtn = document.createElement('button');
+    ucAddBtn.className = 'add-btn-ghost';
+    ucAddBtn.style.cssText = 'opacity:0.7;font-size:0.62rem;';
+    ucAddBtn.textContent = '＋ Add item without category';
+    ucAddBtn.onclick = ()=>addItemFromPack('uncategorised');
+    ucCard.appendChild(ucAddBtn);
     cont.appendChild(ucCard);
   }
-
-  // ── Global Add Item button at bottom ──
-  _renderPackAddBar(cont);
 
   const hiddenBar = document.getElementById('hidden-cats-bar');
   if(hiddenBar){
