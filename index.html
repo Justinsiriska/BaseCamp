@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.61 — Gear Organizer</title>
+<title>BaseCamp v4.63 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -252,19 +252,24 @@ html.dark .p1-left{
 .gw-cat{margin-bottom:0;}
 .gw-cat-hd{
   display:flex;align-items:center;justify-content:space-between;
-  padding:0.28rem 0.9rem 0.22rem 0.7rem;cursor:pointer;user-select:none;
-  background:var(--cream);
-  border-top:2px solid var(--lichen);
-  border-left:4px solid transparent;
-  margin-top:2px;
+  padding:0.21rem 0.9rem 0.21rem 0.7rem;cursor:pointer;user-select:none;
+  background:transparent;
+  border-top:1px solid rgba(184,201,163,0.22);
+  border-left:2px solid transparent;
+  margin-top:0;
   transition:background 0.15s;
 }
-.gw-cat-hd:hover{background:rgba(184,201,163,0.12);}
+.gw-cat-hd:hover{background:rgba(184,201,163,0.06);}
+.gw-cat[data-cat-id="sleep"]    .gw-cat-hd{border-left:2px solid rgba(74,103,65,0.7);}
+.gw-cat[data-cat-id="pack"]     .gw-cat-hd{border-left:2px solid rgba(139,115,85,0.7);}
+.gw-cat[data-cat-id="cooking"]  .gw-cat-hd{border-left:2px solid rgba(200,90,42,0.7);}
+.gw-cat[data-cat-id="clothes"]  .gw-cat-hd{border-left:2px solid rgba(122,184,200,0.7);}
+.gw-cat[data-cat-id="electronics"] .gw-cat-hd{border-left:2px solid rgba(200,150,58,0.7);}
 .gw-cat:first-child .gw-cat-hd{border-top:none;margin-top:0;}
-.gw-cat-label{display:flex;align-items:center;gap:0.45rem;font-family:'Space Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--forest);font-weight:700;}
+.gw-cat-label{display:flex;align-items:center;gap:0.45rem;font-family:'Space Mono',monospace;font-size:0.55rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);font-weight:400;opacity:0.65;}
 .gw-cat-icon{font-size:1rem;}
-.gw-cat-count{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);font-weight:400;opacity:0.7;}
-.gw-cat-caret{font-size:0.65rem;color:var(--stone);transition:transform 0.25s;}
+.gw-cat-count{font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);font-weight:400;opacity:0.45;}
+.gw-cat-caret{font-size:0.60rem;color:var(--stone);opacity:0.45;transition:transform 0.25s;}
 .gw-cat.gw-collapsed .gw-cat-caret{transform:rotate(-90deg);}
 .gw-cat.gw-collapsed .gw-items{display:none;}
 .gw-items{padding:0.2rem 0.5rem 0.5rem;}
@@ -474,7 +479,7 @@ html.dark .cat-card.collapsed{}
 .cat-card.cat-dragging{opacity:0.35;}
 .cat-card.cat-drop-above{border-top:2px solid var(--water)!important;}
 .cat-card.cat-drop-below{border-bottom:2px solid var(--water)!important;}
-.cat-head{padding:0.18rem 0.4rem 0.18rem 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:0.4rem;border-bottom:1px solid rgba(184,201,163,0.22);}
+.cat-head{padding:0.21rem 0.4rem 0.21rem 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:0.4rem;border-bottom:1px solid rgba(184,201,163,0.22);}
 html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.28);}
 .cat-card.collapsed .cat-head{border-bottom-color:rgba(184,201,163,0.15);}
 .cat-head-l{display:flex;align-items:center;gap:0.35rem;min-width:0;padding-left:0.6rem;}
@@ -503,12 +508,12 @@ html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.28);}
 .cat-edit-btn:hover{background:var(--cream);border-color:var(--stone);color:var(--bark);}
 
 .cat-icon{font-size:0.85rem;flex-shrink:0;}
-.cat-name{font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:400;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--stone);opacity:0.65;}
+.cat-name{font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:400;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--stone);opacity:0.65;}
 .cat-name-clickable{cursor:pointer;border-radius:4px;padding:1px 3px;transition:background 0.15s;}
 .cat-name-clickable:hover{background:rgba(74,103,65,0.1);}
-.cat-meta{font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);flex-shrink:0;opacity:0.45;}
-.cat-pill{font-family:'Nunito',sans-serif;font-size:0.5rem;font-weight:800;padding:0.06rem 0.38rem;border-radius:100px;color:white;flex-shrink:0;}
-.caret{background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.52rem;opacity:0.45;transition:transform 0.3s;margin-left:0.1rem;}
+.cat-meta{font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);flex-shrink:0;opacity:0.45;}
+.cat-pill{font-family:'Nunito',sans-serif;font-size:0.58rem;font-weight:800;padding:0.07rem 0.44rem;border-radius:100px;color:white;flex-shrink:0;}
+.caret{background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.60rem;opacity:0.45;transition:transform 0.3s;margin-left:0.1rem;}
 .cat-card.collapsed .caret{transform:rotate(-90deg);}
 .cat-body{padding:0.15rem 0.5rem 0 0.5rem;}
 .cat-card.collapsed .cat-body{display:none;}
@@ -2121,7 +2126,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.61</div>
+      <div class="logo-sub">Gear Organizer · v4.63</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6359,7 +6364,7 @@ function setCatIcon(catId, icon){
   const cat = CATS.find(c=>c.id===catId);
   if(cat) cat.icon = icon;
   const btn = document.getElementById('cat-icon-btn-'+catId);
-  if(btn) btn.textContent = icon||'🏕️';
+  if(btn) { btn.textContent = icon||'—'; btn.style.fontSize = icon ? '1rem' : '0.7rem'; }
   const p = document.getElementById('cat-icon-picker-'+catId);
   if(p) p.style.display='none';
 }
@@ -6379,7 +6384,7 @@ function startCatInlineEdit(catId, nameEl){
     <div style="display:flex;gap:0.3rem;align-items:center;">
       <input class="cat-inline-inp" id="cat-inline-inp-${catId}" type="text" value="${escH(cat.name)}" placeholder="Category name" style="flex:1;"/>
       <div style="position:relative;flex-shrink:0;">
-        <button id="cat-icon-btn-${catId}" title="Change icon" onclick="toggleCatIconPicker('${catId}')" style="background:none;border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;padding:0.18rem 0.45rem;cursor:pointer;font-size:1rem;line-height:1.3;min-width:36px;text-align:center;" onmouseover="this.style.borderColor='var(--stone)'" onmouseout="this.style.borderColor='rgba(184,201,163,0.5)'">${cat.icon||'🏕️'}</button>
+        <button id="cat-icon-btn-${catId}" title="Change icon" onclick="toggleCatIconPicker('${catId}')" style="background:none;border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;padding:0.18rem 0.45rem;cursor:pointer;font-size:${cat.icon?'1rem':'0.7rem'};line-height:1.3;min-width:36px;text-align:center;" onmouseover="this.style.borderColor='var(--stone)'" onmouseout="this.style.borderColor='rgba(184,201,163,0.5)'">${cat.icon||'—'}</button>
         <div id="cat-icon-picker-${catId}" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--paper);border:1.5px solid var(--lichen);border-radius:10px;padding:0.4rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.12);width:180px;">
           <div style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.3rem;">
             ${CAT_ICONS.map(ic=>`<button onclick="setCatIcon('${catId}','${ic}')" style="background:none;border:1px solid rgba(184,201,163,0.3);border-radius:5px;padding:2px 4px;cursor:pointer;font-size:0.9rem;line-height:1.3;" onmouseover="this.style.background='rgba(122,158,110,0.1)'" onmouseout="this.style.background='none'">${ic}</button>`).join('')}
