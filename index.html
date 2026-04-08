@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.33 — Gear Organizer</title>
+<title>BaseCamp v4.34 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2064,7 +2064,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.33</div>
+      <div class="logo-sub">Gear Organizer · v4.34</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5376,7 +5376,7 @@ function renderCats(){
     // Always show label if cat is visible, items list if any in season
     const ucHdr = document.createElement('div');
     ucHdr.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.55;padding:0.4rem 0.6rem 0.2rem;display:flex;align-items:center;justify-content:space-between;";
-    ucHdr.innerHTML = '<span>Uncategorised</span><button onclick="addItemFromPack('uncategorised')" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>';
+    ucHdr.innerHTML = '<span>Uncategorised</span><button onclick="addItemFromPack(&apos;uncategorised&apos;)" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:Nunito,sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity=&apos;1&apos;" onmouseout="this.style.opacity=&apos;0.7&apos;">＋ Add</button>';
     ucCard.appendChild(ucHdr);
     if(ucItems.length > 0){
       const rows = ucItems.map(item=>`<div class="pack-item-row" draggable="true"
