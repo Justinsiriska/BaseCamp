@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.44 — Gear Organizer</title>
+<title>BaseCamp v4.46 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.44</div>
+      <div class="logo-sub">Gear Organizer · v4.46</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3493,6 +3493,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       </label>
     </div>
     <div id="ce-gearwall-import" style="display:none;"></div>
+    <div id="ce-gw-link-section" style="display:none;margin-bottom:0.5rem;"></div>
     <div style="display:flex;gap:0.5rem;margin-top:0.3rem;">
       <button class="btn btn-add" onclick="catEditSave()" style="flex:1">✅ Save</button>
       <button class="btn btn-dis" onclick="catEditClose()">Cancel</button>
@@ -5581,6 +5582,7 @@ let _ceEditId=null;
 let _ceIcon=null;
 let _ceColor=null;
 let _ceFromGearWall=false; // true when opened from gear wall
+let _ceLinkGwCatId=null; // GW cat to link this pack cat to
 
 function _buildGearWallImport(container){
   container.innerHTML = '';
@@ -5653,8 +5655,54 @@ function catEditOpenNew(fromGearWall){
   const gwImport = document.getElementById('ce-gearwall-import');
   if(gwRow) gwRow.style.display = fromGearWall ? 'none' : 'flex';
   if(gwImport){ _buildGearWallImport(gwImport); gwImport.style.display = fromGearWall ? 'block' : 'none'; }
+  // Build "link to existing GW cat" section for pack-side modal
+  _ceLinkGwCatId = null;
+  const linkSection = document.getElementById('ce-gw-link-section');
+  if(linkSection) _buildGwLinkSection(linkSection, fromGearWall);
   document.getElementById('cat-edit-modal').classList.add('open');
   setTimeout(()=>document.getElementById('ce-name').focus(),80);
+}
+
+function _buildGwLinkSection(container, fromGearWall){
+  container.innerHTML = '';
+  if(fromGearWall) { container.style.display='none'; return; }
+  // GW-only cats: onGearWall=true but not currently in any pack (or not in this pack)
+  const gwOnlyCats = CATS.filter(c=>
+    c.onGearWall !== false &&
+    c.id !== 'uncategorised' &&
+    (!c.packs || !c.packs.includes(season))
+  );
+  if(!gwOnlyCats.length) { container.style.display='none'; return; }
+  container.style.display = 'block';
+  const lbl = document.createElement('div');
+  lbl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.4rem;opacity:0.8;";
+  lbl.textContent = 'Or link to existing Gear Wall category:';
+  container.appendChild(lbl);
+  const pills = document.createElement('div');
+  pills.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.35rem;';
+  gwOnlyCats.forEach(cat=>{
+    const btn = document.createElement('button');
+    const isSelected = _ceLinkGwCatId === cat.id;
+    btn.dataset.gwCatId = cat.id;
+    btn.style.cssText = `display:flex;align-items:center;gap:0.3rem;background:${isSelected?'rgba(74,103,65,0.15)':'rgba(184,201,163,0.08)'};border:1.5px solid ${isSelected?'var(--sage)':'rgba(184,201,163,0.45)'};border-radius:8px;padding:0.22rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:${isSelected?'var(--forest)':'var(--stone)'};cursor:pointer;transition:all 0.15s;`;
+    btn.innerHTML = (cat.icon&&!_DEFAULT_CAT_ICONS.has(cat.icon)?'<span style="font-size:0.85rem">'+cat.icon+'</span> ':'')+cat.name;
+    btn.onclick = ()=>{
+      if(_ceLinkGwCatId === cat.id){
+        // Deselect
+        _ceLinkGwCatId = null;
+        document.getElementById('ce-name').value = '';
+      } else {
+        _ceLinkGwCatId = cat.id;
+        // Auto-fill name, icon, color from GW cat
+        document.getElementById('ce-name').value = cat.name;
+        _ceIcon = cat.icon; _ceColor = cat.color;
+        _buildCatEditPickers(cat.icon, cat.color);
+      }
+      _buildGwLinkSection(container, false);
+    };
+    pills.appendChild(btn);
+  });
+  container.appendChild(pills);
 }
 
 function _buildCatEditPickers(selIcon, selColor){
@@ -5693,6 +5741,23 @@ function catEditSave(){
     // Create new
     const gwChk = document.getElementById('ce-gearwall-chk');
     const addToGearWall = _ceFromGearWall || (gwChk && gwChk.checked);
+
+    if(_ceLinkGwCatId){
+      // Link to existing GW category — add this season to that cat's packs
+      const existingCat = CATS.find(c=>c.id===_ceLinkGwCatId);
+      if(existingCat){
+        existingCat.name = name; // sync name
+        existingCat.icon = _ceIcon||existingCat.icon;
+        existingCat.color = _ceColor||existingCat.color;
+        if(!existingCat.packs) existingCat.packs = PACKS.map(p=>p.id);
+        if(!existingCat.packs.includes(season)) existingCat.packs.push(season);
+        existingCat.onGearWall = true;
+        toast(`✅ "${name}" linked to Gear Wall & added to this pack`);
+        _ceLinkGwCatId = null;
+        catEditClose(); scheduleSave(); renderAll(); return;
+      }
+    }
+
     const id='cat_'+Date.now();
     CATS.push({
       id, name, icon:_ceIcon||'🏕️', color:_ceColor||'#4a8fa8',
@@ -5711,7 +5776,7 @@ function catEditSave(){
 
 function catEditClose(){
   document.getElementById('cat-edit-modal').classList.remove('open');
-  _ceEditId=null;
+  _ceEditId=null; _ceLinkGwCatId=null;
 }
 
 // ── Inline cat name edit (click on title) ──
@@ -7605,21 +7670,15 @@ function _pdCommit(zone){
     }
 
   } else if(zone && zone.startsWith('pack-cat-')){
-    // Dropped on a PACK COLUMN category — add to active season pack
+    // Dropped on PACK COLUMN — only affects pack organisation, never gwCatId
     const toCatId = zone.slice(9);
     const toCat = CATS.find(c=>c.id===toCatId);
     if(toCat){
-      // If dropped on a different pack cat, also move the item there
       if(toCatId !== catId){
+        // Move item to different pack category (catId only, gwCatId unchanged)
         const fromCat = CATS.find(c=>c.id===catId);
-        if(fromCat){
-          fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
-          // Update gwCatId to linked gear wall category if it exists
-          item.gwCatId = toCat.onGearWall!==false ? toCatId : item.gwCatId;
-          toCat.items.push(item);
-        }
+        if(fromCat){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); }
       }
-      // Always add to season
       if(!item.s.includes(season)){
         item.s = [...item.s, season];
         toast(`✅ ${item.name} added to ${season} pack${toCatId !== catId ? ' · moved to '+toCat.name : ''}`);
@@ -7628,25 +7687,24 @@ function _pdCommit(zone){
       }
       renderAll();
     }
+
   } else if(zone && zone.startsWith('gw-cat-')){
-    // Dropped on a GEAR WALL category
+    // Dropped on GEAR WALL — only affects gwCatId, pack organisation unchanged
     const toGwCatId = zone.slice(7);
     if(toGwCatId === catId){
-      // Dropped back on own GW category = add to active season pack
+      // Own GW category = add to active season pack
       if(!item.s.includes(season)){
         item.s = [...item.s, season];
         toast(`✅ ${item.name} added to ${season} pack`);
       } else {
         toast(`ℹ️ ${item.name} is already in your ${season} pack`);
       }
-      renderAll();
     } else {
-      // Different GW category = update gwCatId only, no season change
       item.gwCatId = toGwCatId;
       const toCat = CATS.find(c=>c.id===toGwCatId);
       toast(`✅ ${item.name} moved to ${toCat ? toCat.name : toGwCatId} on Gear Wall`);
-      renderAll();
     }
+    renderAll();
   }
   // dropped on nothing — no action, cleanup already done
 }
