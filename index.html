@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.35 — Gear Organizer</title>
+<title>BaseCamp v4.36 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.35</div>
+      <div class="logo-sub">Gear Organizer · v4.36</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7087,21 +7087,32 @@ function renderGearWall(){
         // Drag between GW categories (HTML5 drag for cat-to-cat)
         // Note: draggable=true is NOT set here — we use pointer drag (pdStart) for
         // dragging to the pack, and _gwCatDrop for moving between GW categories.
-        // The gw-move dataTransfer is set in the pointerdown/pdStart flow via pdStart.
-
+        // Drag: start pdStart when pointer moves 4px after pointerdown
         let _pdHoldTimer = null;
         let _pdDidDrag = false;
+        let _pdStartX = 0, _pdStartY = 0;
         chip.addEventListener('pointerdown', e=>{
           if(e.button!==0) return;
           if(e.target.closest('button')) return;
           _pdDidDrag = false;
+          _pdStartX = e.clientX; _pdStartY = e.clientY;
+          // Short timer as fallback for slow drags
           _pdHoldTimer = setTimeout(()=>{
             _pdDidDrag = true;
             pdStart(e, item, srcCatId, chip);
-          }, 180);
+          }, 300);
         });
-        chip.addEventListener('pointerup', ()=>{ clearTimeout(_pdHoldTimer); });
-        chip.addEventListener('pointercancel', ()=>{ clearTimeout(_pdHoldTimer); });
+        chip.addEventListener('pointermove', e=>{
+          if(_pdDidDrag || !_pdHoldTimer) return;
+          const dx = e.clientX - _pdStartX, dy = e.clientY - _pdStartY;
+          if(Math.sqrt(dx*dx+dy*dy) > 4){
+            clearTimeout(_pdHoldTimer); _pdHoldTimer = null;
+            _pdDidDrag = true;
+            pdStart(e, item, srcCatId, chip);
+          }
+        });
+        chip.addEventListener('pointerup', ()=>{ clearTimeout(_pdHoldTimer); _pdHoldTimer = null; });
+        chip.addEventListener('pointercancel', ()=>{ clearTimeout(_pdHoldTimer); _pdHoldTimer = null; });
         chip.addEventListener('click', e=>{
           if(e.target.closest('button')) return;
           if(_pdDidDrag) return;
@@ -7211,15 +7222,22 @@ function renderGearWall(){
         setTimeout(()=>chip.style.opacity='0.35',0);
       });
       chip.addEventListener('dragend', ()=>chip.style.opacity='');
-      // Also support pointer-drag to add to pack (same as main GW items)
+      // Pointer drag to pack — starts on movement not timer
       let _ucHoldTimer = null;
+      let _ucDidDrag = false, _ucStartX = 0, _ucStartY = 0;
       chip.addEventListener('pointerdown', e=>{
         if(e.button!==0) return;
         if(e.target.closest('button')) return;
-        _ucHoldTimer = setTimeout(()=>{ pdStart(e, item, srcCatId, chip); }, 180);
+        _ucDidDrag = false; _ucStartX = e.clientX; _ucStartY = e.clientY;
+        _ucHoldTimer = setTimeout(()=>{ _ucDidDrag=true; pdStart(e, item, srcCatId, chip); }, 300);
       });
-      chip.addEventListener('pointerup', ()=>clearTimeout(_ucHoldTimer));
-      chip.addEventListener('pointercancel', ()=>clearTimeout(_ucHoldTimer));
+      chip.addEventListener('pointermove', e=>{
+        if(_ucDidDrag || !_ucHoldTimer) return;
+        const dx=e.clientX-_ucStartX, dy=e.clientY-_ucStartY;
+        if(Math.sqrt(dx*dx+dy*dy)>4){ clearTimeout(_ucHoldTimer); _ucHoldTimer=null; _ucDidDrag=true; pdStart(e,item,srcCatId,chip); }
+      });
+      chip.addEventListener('pointerup', ()=>{ clearTimeout(_ucHoldTimer); _ucHoldTimer=null; });
+      chip.addEventListener('pointercancel', ()=>{ clearTimeout(_ucHoldTimer); _ucHoldTimer=null; });
       wrap.appendChild(chip); ucItems.appendChild(wrap);
     });
     ucDiv.appendChild(ucItems);
