@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.47 — Gear Organizer</title>
+<title>BaseCamp v4.48 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.47</div>
+      <div class="logo-sub">Gear Organizer · v4.48</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7657,7 +7657,7 @@ function _pdCommit(zone){
     if(DELETED.length > 30) DELETED.length = 30;
     cat.items = cat.items.filter(i=>i.id!==item.id);
     toast(`🗑 ${item.name} deleted — see Recently Deleted`);
-    renderAll();
+    scheduleSave(); renderAll();
 
   } else if(zone && zone.startsWith('season-')){
     clearTimeout(PD.seasonTimer);
@@ -7685,7 +7685,7 @@ function _pdCommit(zone){
       } else {
         toast(`ℹ️ ${item.name} is already in your ${season} pack`);
       }
-      renderAll();
+      scheduleSave(); renderAll();
     }
 
   } else if(zone && zone.startsWith('gw-cat-')){
@@ -7704,7 +7704,7 @@ function _pdCommit(zone){
       const toCat = CATS.find(c=>c.id===toGwCatId);
       toast(`✅ ${item.name} moved to ${toCat ? toCat.name : toGwCatId} on Gear Wall`);
     }
-    renderAll();
+    scheduleSave(); renderAll();
   }
   // dropped on nothing — no action, cleanup already done
 }
