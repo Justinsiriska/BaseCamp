@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.24 — Gear Organizer</title>
+<title>BaseCamp v4.25 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2038,7 +2038,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.24</div>
+      <div class="logo-sub">Gear Organizer · v4.25</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3820,6 +3820,8 @@ function toggleUnit(){
   });
   // Update trips page weights
   renderTripsPage();
+  // Re-render food breakdown charts if visible
+  if(document.getElementById('foodWeightChart')) renderFoodBreakdown();
 }
 
 // Inline weight edit — click the display to get an editable input
@@ -5086,68 +5088,75 @@ function showPage(pg, el){
 // RENDER ALL
 // ============================================================
 function _renderPackAddBar(container){
+  // Simple button at the bottom — opens the standard inline drawer in uncategorised
   container.querySelector('.pack-add-bar')?.remove();
-  const bar = document.createElement('div');
-  bar.className = 'pack-add-bar';
-  bar.style.cssText = 'display:flex;align-items:center;gap:0.5rem;margin-bottom:0.9rem;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:13px;padding:0.5rem 0.75rem;box-shadow:0 2px 8px rgba(45,74,45,0.06);';
+  const btn = document.createElement('button');
+  btn.className = 'add-cat-btn pack-add-bar';
+  btn.style.cssText = 'width:100%;margin-top:0.5rem;';
+  btn.textContent = '＋ Add Item';
+  btn.onclick = ()=> _openPackAddDrawer(container);
+  container.appendChild(btn);
+}
 
-  const nameInp = document.createElement('input');
-  nameInp.className = 'gw-field-inp';
-  nameInp.type = 'text';
-  nameInp.placeholder = 'Item name…';
-  nameInp.style.cssText = 'flex:1;min-width:0;font-size:0.72rem;';
-  bar.appendChild(nameInp);
+function _openPackAddDrawer(container){
+  if(container.querySelector('.pack-add-bar-form')) return;
 
-  const wInp = document.createElement('input');
-  wInp.className = 'gw-field-inp mono';
-  wInp.type = 'number';
-  wInp.min = '0';
-  wInp.placeholder = '0';
-  wInp.style.cssText = 'width:56px;font-size:0.72rem;flex-shrink:0;';
-  bar.appendChild(wInp);
+  const iid = uid();
+  const form = document.createElement('div');
+  form.className = 'pack-inline-add pack-add-bar-form';
+  form.style.cssText = 'margin-top:0.5rem;background:rgba(184,201,163,0.1);border:1.5px solid rgba(184,201,163,0.4);border-radius:10px;padding:0.6rem 0.7rem;display:flex;flex-direction:column;gap:0.4rem;';
 
-  const unitLbl = document.createElement('span');
-  unitLbl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);flex-shrink:0;";
-  unitLbl.textContent = U.v==='oz' ? 'oz' : 'g';
-  bar.appendChild(unitLbl);
-
+  // Category selector row
+  const catRow = document.createElement('div');
+  catRow.style.cssText = 'display:flex;align-items:center;gap:0.4rem;';
+  catRow.innerHTML = `<span style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);width:56px;text-align:right;flex-shrink:0;">Category</span>`;
   const catSel = document.createElement('select');
-  catSel.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--bark);background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;padding:0.25rem 0.4rem;cursor:pointer;max-width:120px;flex-shrink:0;";
+  catSel.id = `pia-cat-${iid}`;
+  catSel.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--bark);background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;padding:0.22rem 0.4rem;cursor:pointer;flex:1;";
   const addOpt = (val, label, sel) => { const o=document.createElement('option'); o.value=val; o.textContent=label; if(sel) o.selected=true; catSel.appendChild(o); };
   addOpt('uncategorised','Uncategorised',true);
   CATS.filter(c=>c.id!=='uncategorised' && catInPack(c)).forEach(c=>addOpt(c.id, c.name, false));
-  bar.appendChild(catSel);
+  catRow.appendChild(catSel);
+  form.appendChild(catRow);
 
-  const addBtn = document.createElement('button');
-  addBtn.className = 'gw-confirm-btn';
-  addBtn.style.cssText = 'font-size:0.62rem;padding:0.28rem 0.65rem;flex-shrink:0;';
-  addBtn.textContent = '＋ Add';
-  bar.appendChild(addBtn);
+  form.insertAdjacentHTML('beforeend', `
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <span style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);width:56px;text-align:right;flex-shrink:0;">Name</span>
+      <input class="gw-field-inp" id="pia-name-${iid}" type="text" placeholder="Item name" style="flex:1;">
+    </div>
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <span style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);width:56px;text-align:right;flex-shrink:0;">Weight</span>
+      <input class="gw-field-inp mono" id="pia-weight-${iid}" type="number" min="0" step="${U.v==='oz'?'0.1':'1'}" placeholder="0" style="flex:1;">
+      <button id="pia-unit-${iid}" onclick="event.stopPropagation();(function(){const b=document.getElementById('pia-unit-${iid}');b._u=b._u||'${U.v}';b._u=b._u==='oz'?'g':'oz';b.textContent=b._u;})()" style="font-family:'Space Mono',monospace;font-size:0.55rem;padding:2px 7px;border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;background:rgba(184,201,163,0.15);color:var(--forest);cursor:pointer;">${U.v==='oz'?'oz':'g'}</button>
+    </div>
+    <div style="display:flex;gap:0.4rem;margin-top:0.1rem;">
+      <button class="gw-confirm-btn" style="font-size:0.62rem;padding:0.28rem 0.75rem;" onclick="_packAddBarSave('${iid}')">✓ Add</button>
+      <button class="gw-cancel-btn" style="font-size:0.62rem;padding:0.28rem 0.55rem;" onclick="this.closest('.pack-add-bar-form').remove()">✕</button>
+    </div>`);
 
-  const doAdd = ()=>{
-    const name = nameInp.value.trim();
-    if(!name){ nameInp.style.borderColor='var(--ember)'; nameInp.focus(); setTimeout(()=>nameInp.style.borderColor='',1000); return; }
-    const rawW = parseFloat(wInp.value)||0;
-    const w = U.v==='oz' ? Math.round(rawW*28.3495) : rawW;
-    const cid = catSel.value||'uncategorised';
-    const cat = CATS.find(c=>c.id===cid);
-    if(!cat) return;
-    const activePill = document.querySelector('.s-pill.active');
-    const targetPack = activePill?.dataset?.s || season;
-    const gwCatId = cat.onGearWall!==false ? cid : 'uncategorised';
-    const newItem = {id:uid(), name, w, extra:'', link:'', s:[targetPack], gwCatId};
-    cat.items.push(newItem);
-    if(cat.packs && !cat.packs.includes(targetPack)) cat.packs.push(targetPack);
-    nameInp.value=''; wInp.value=''; catSel.value='uncategorised';
-    scheduleSave(); renderAll();
-    toast(`✅ "${name}" added to ${cat.name}`);
-  };
+  container.appendChild(form);
+  setTimeout(()=>{ document.getElementById(`pia-name-${iid}`)?.focus(); }, 40);
+}
 
-  addBtn.onclick = doAdd;
-  nameInp.addEventListener('keydown', e=>{ if(e.key==='Enter') doAdd(); });
-  wInp.addEventListener('keydown', e=>{ if(e.key==='Enter') doAdd(); });
-
-  container.insertBefore(bar, container.firstChild);
+function _packAddBarSave(iid){
+  const nameInp = document.getElementById(`pia-name-${iid}`);
+  const name = (nameInp?.value||'').trim();
+  if(!name){ if(nameInp){nameInp.style.borderColor='var(--ember)';nameInp.focus();setTimeout(()=>nameInp.style.borderColor='',1000);} return; }
+  const cid = document.getElementById(`pia-cat-${iid}`)?.value||'uncategorised';
+  const unitBtn = document.getElementById(`pia-unit-${iid}`);
+  const unit = unitBtn?._u || U.v;
+  const rawW = parseFloat(document.getElementById(`pia-weight-${iid}`)?.value||0)||0;
+  const w = unit==='oz' ? Math.round(rawW*28.3495) : rawW;
+  const cat = CATS.find(c=>c.id===cid);
+  if(!cat) return;
+  const activePill = document.querySelector('.s-pill.active');
+  const targetPack = activePill?.dataset?.s || season;
+  const gwCatId = cat.onGearWall!==false ? cid : 'uncategorised';
+  const newItem = {id:uid(), name, w, extra:'', link:'', s:[targetPack], gwCatId};
+  cat.items.push(newItem);
+  if(cat.packs && !cat.packs.includes(targetPack)) cat.packs.push(targetPack);
+  scheduleSave(); renderAll();
+  toast(`✅ "${name}" added to ${cat.name}`);
 }
 
 function renderAll(){
@@ -5174,9 +5183,6 @@ function renderAll(){
 function renderCats(){
   const cont=document.getElementById('cats');
   cont.innerHTML='';
-  // ── Global Add Item bar ──
-  _renderPackAddBar(cont);
-
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     const w=cw(cat);
@@ -5274,6 +5280,9 @@ function renderCats(){
     // add button removed — global add item bar handles this
     cont.appendChild(ucCard);
   }
+
+  // ── Global Add Item button at bottom ──
+  _renderPackAddBar(cont);
 
   const hiddenBar = document.getElementById('hidden-cats-bar');
   if(hiddenBar){
@@ -7020,7 +7029,7 @@ function renderGearWall(){
   });
 
   // ── Uncategorised gear wall section (no header) ──
-  if(uncatGroup && uncatGroup.items.length > 0){
+  if(uncatGroup){ // always render uncategorised as a drop target
     const ucDiv = document.createElement('div');
     ucDiv.className = 'gw-cat';
     ucDiv.dataset.gwCat = 'uncategorised';
@@ -7028,7 +7037,9 @@ function renderGearWall(){
 
     const ucHd = document.createElement('div');
     ucHd.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.6;padding:0.5rem 0.7rem 0.2rem;";
-    ucHd.textContent = 'Uncategorised (' + uncatGroup.items.length + ')';
+    ucHd.textContent = uncatGroup.items.length > 0
+      ? 'Uncategorised (' + uncatGroup.items.length + ')'
+      : 'Uncategorised — drag items here';
     ucDiv.appendChild(ucHd);
 
     const ucItems = document.createElement('div');
