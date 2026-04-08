@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.38 — Gear Organizer</title>
+<title>BaseCamp v4.39 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2076,7 +2076,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.38</div>
+      <div class="logo-sub">Gear Organizer · v4.39</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7539,7 +7539,8 @@ function _pdOnMove(e){
 
 function _pdOnUp(e){
   if(!PD.active) return;
-  const zone = PD.overZone || _pdHitTest(e.clientX, e.clientY);
+  // Always re-test at the exact release position — don't trust stale overZone
+  const zone = _pdHitTest(e.clientX, e.clientY) || PD.overZone;
   _pdCommit(zone);
 }
 
