@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.32 — Gear Organizer</title>
+<title>BaseCamp v4.33 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2064,7 +2064,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.32</div>
+      <div class="logo-sub">Gear Organizer · v4.33</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5345,7 +5345,9 @@ function renderCats(){
   if(uncatCat && catInPack(uncatCat)){
     const ucItems = sItems(uncatCat);
     const ucCard = document.createElement('div');
-    ucCard.style.cssText = 'margin-bottom:0.5rem;';
+    ucCard.className = 'cat-card cc-uncategorised';
+    ucCard.dataset.cid = 'uncategorised';
+    ucCard.style.cssText = 'margin-bottom:0.5rem;border:1.5px dashed rgba(184,201,163,0.4);background:rgba(184,201,163,0.04);';
     // Accept drops from pack item drag
     ucCard.addEventListener('dragover', e=>{
       if(!e.dataTransfer.types.includes('pack-item-move')) return;
@@ -5371,12 +5373,15 @@ function renderCats(){
       toast('✅ Moved to Uncategorised');
     });
 
+    // Always show label if cat is visible, items list if any in season
+    const ucHdr = document.createElement('div');
+    ucHdr.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.55;padding:0.4rem 0.6rem 0.2rem;display:flex;align-items:center;justify-content:space-between;";
+    ucHdr.innerHTML = '<span>Uncategorised</span><button onclick="addItemFromPack('uncategorised')" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>';
+    ucCard.appendChild(ucHdr);
     if(ucItems.length > 0){
-      const ucLbl = document.createElement('div');
-      ucLbl.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.55;padding:0.3rem 0 0.2rem;";
-      ucLbl.textContent = 'Uncategorised';
-      ucCard.appendChild(ucLbl);
-      const rows = ucItems.map(item=>`<div class="pack-item-row">
+      const rows = ucItems.map(item=>`<div class="pack-item-row" draggable="true"
+        ondragstart="packItemDragStart(event,'uncategorised','${item.id}')"
+        ondragend="packItemDragEnd(event)">
         <div class="pack-item-left">
           <div class="g-dot" style="background:#8b8b8b"></div>
           <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('uncategorised','${item.id}','name',this.value)"/>
@@ -5390,13 +5395,13 @@ function renderCats(){
       rowsDiv.className = 'pack-items-list';
       rowsDiv.innerHTML = rows;
       ucCard.appendChild(rowsDiv);
+    } else {
+      const ucEmpty = document.createElement('p');
+      ucEmpty.style.cssText = "color:var(--stone);font-size:0.65rem;padding:0.2rem 0.6rem 0.4rem;opacity:0.5;";
+      ucEmpty.textContent = 'No uncategorised items in this pack';
+      ucCard.appendChild(ucEmpty);
     }
-    const ucAddBtn = document.createElement('button');
-    ucAddBtn.className = 'add-btn-ghost';
-    ucAddBtn.style.cssText = 'opacity:0.7;font-size:0.62rem;';
-    ucAddBtn.textContent = '＋ Add item without category';
-    ucAddBtn.onclick = ()=>addItemFromPack('uncategorised');
-    ucCard.appendChild(ucAddBtn);
+    // add button now in ucHdr above
     cont.appendChild(ucCard);
   }
 
@@ -7150,6 +7155,7 @@ function renderGearWall(){
     const ucDiv = document.createElement('div');
     ucDiv.className = 'gw-cat';
     ucDiv.dataset.gwCat = 'uncategorised';
+    ucDiv.dataset.cid = 'uncategorised';
     ucDiv.style.cssText = 'border-top:1px dashed rgba(184,201,163,0.3);margin-top:0.3rem;';
 
     const ucHd = document.createElement('div');
@@ -7394,21 +7400,18 @@ function _pdMoveGhost(x, y){
 }
 
 function _pdApplyDimming(catId){
-  // Highlight ALL cat cards as drop targets (any can receive the item)
-  document.querySelectorAll('.cat-card').forEach(c=>{
-    c.classList.add('pd-target');
-  });
-  // Highlight season pills
+  document.querySelectorAll('.cat-card').forEach(c=>c.classList.add('pd-target'));
+  // Also highlight GW uncategorised section
+  const gwUc = document.querySelector('.gw-cat[data-cid="uncategorised"]');
+  if(gwUc) gwUc.style.outline='2px dashed rgba(122,158,110,0.5)';
   document.querySelectorAll('.s-pill').forEach(p=>p.classList.add('pd-season-highlight'));
 }
 
 function _pdClearDimming(){
-  document.querySelectorAll('.cat-card').forEach(c=>{
-    c.classList.remove('pd-target','pd-dim','pd-over');
-  });
-  document.querySelectorAll('.s-pill').forEach(p=>{
-    p.classList.remove('pd-season-highlight','pd-season-over');
-  });
+  document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('pd-target','pd-dim','pd-over'));
+  const gwUc = document.querySelector('.gw-cat[data-cid="uncategorised"]');
+  if(gwUc){ gwUc.style.outline=''; gwUc.style.background=''; }
+  document.querySelectorAll('.s-pill').forEach(p=>p.classList.remove('pd-season-highlight','pd-season-over'));
 }
 
 function _pdHitTest(x, y){
@@ -7424,11 +7427,14 @@ function _pdHitTest(x, y){
     if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom)
       return 'season-'+pill.dataset.s;
   }
-  // Check ALL cat cards — any can be a drop target
+  // Check ALL cat cards — any can be a drop target (includes ucCard in pack col)
   for(const card of document.querySelectorAll('.cat-card[data-cid]')){
     const r = card.getBoundingClientRect();
     if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'cat-'+card.dataset.cid;
   }
+  // Also check gear wall uncategorised section
+  const gwUc = document.querySelector('.gw-cat[data-cid="uncategorised"]');
+  if(gwUc){ const r=gwUc.getBoundingClientRect(); if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'cat-uncategorised'; }
   return null;
 }
 
@@ -7451,11 +7457,13 @@ function _pdOnMove(e){
 
   PD.overZone = zone;
 
-  // Reset all zone highlights
+  // Reset all zone highlights — all cards are always valid targets
   document.querySelectorAll('.cat-card').forEach(c=>{
     c.classList.remove('pd-over');
-    c.classList.toggle('pd-target', c.dataset.cid===PD.catId && zone!=='cat-'+PD.catId);
+    c.classList.add('pd-target');
   });
+  const gwUcEl = document.querySelector('.gw-cat[data-cid="uncategorised"]');
+  if(gwUcEl) gwUcEl.style.outline='2px dashed rgba(122,158,110,0.5)';
   document.querySelectorAll('.s-pill').forEach(p=>p.classList.remove('pd-season-over'));
   PD.trash.style.background='rgba(200,90,42,0.92)';
   PD.trash.style.transform='translateX(-50%) scale(1)';
@@ -7470,17 +7478,14 @@ function _pdOnMove(e){
     const pill = document.querySelector(`.s-pill[data-s="${s}"]`);
     if(pill){
       pill.classList.add('pd-season-over');
-      // Only start timer if it's a different season
       if(s !== season){
         PD.seasonTimer = setTimeout(()=>{
           if(PD.active && PD.overZone === zone){
             const activePill = document.querySelector(`.s-pill[data-s="${s}"]`);
             if(activePill){ setSeason(s, activePill); }
-            // Flash the pill to confirm switch
             pill.style.outline='3px solid var(--water)';
             setTimeout(()=>pill.style.removeProperty('outline'), 400);
             toast(`📅 Switched to ${s}`);
-            // Now re-highlight the cat card in the new season context
             _pdApplyDimming(PD.catId);
           }
         }, 1000);
@@ -7490,6 +7495,13 @@ function _pdOnMove(e){
     const cid = zone.slice(4);
     const card = document.querySelector(`.cat-card[data-cid="${cid}"]`);
     if(card){ card.classList.add('pd-over'); card.classList.remove('pd-target'); }
+    // Highlight GW ucDiv if hovering uncategorised
+    if(cid==='uncategorised' && gwUcEl){
+      gwUcEl.style.outline='2.5px solid var(--sage)';
+      gwUcEl.style.background='rgba(122,158,110,0.07)';
+    } else if(gwUcEl){
+      gwUcEl.style.background='';
+    }
   }
 }
 
