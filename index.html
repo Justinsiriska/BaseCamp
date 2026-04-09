@@ -5905,7 +5905,7 @@ function renderCats(){
         </div>`;
     }
 
-    // Whole row draggable — exclude buttons, set fromPack before pdStart
+    // Whole row draggable — set fromPack before pdStart so _pdCommit knows source
     card.addEventListener('pointerdown', e=>{
       if(e.target.closest('button')) return;
       const row = e.target.closest('.pack-item-row');
@@ -5976,7 +5976,7 @@ function renderCats(){
     ucCard.className = 'cat-card cc-uncategorised';
     ucCard.dataset.cid = 'uncategorised';
     ucCard.style.cssText = 'margin-bottom:0.5rem;border:1.5px dashed rgba(184,201,163,0.4);background:rgba(184,201,163,0.04);';
-    // Whole row draggable for uncategorised, set fromPack before pdStart
+    // Whole row draggable for uncategorised — set fromPack before pdStart
     ucCard.addEventListener('pointerdown', e=>{
       if(e.target.closest('button')) return;
       const row = e.target.closest('.pack-item-row');
@@ -8104,6 +8104,8 @@ function pdStart(e, item, catId, chip){
   PD.startX = e.clientX;
   PD.startY = e.clientY;
   PD.moved  = false;
+  // PD.fromPack is set by pack col handlers BEFORE calling pdStart; default false for GW drags
+  if(!PD.fromPack) PD.fromPack = false;
   document.body.classList.add('dragging-active');
 
   // ── Ghost label ──
@@ -8176,6 +8178,7 @@ function _pdHitTest(x, y){
     const r=pill.getBoundingClientRect();
     if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'season-'+pill.dataset.s;
   }
+  // Use gear-wall-body left edge to decide which column pointer is in
   const gwRoot=document.getElementById('gear-wall-body');
   const gwLeft=gwRoot?gwRoot.getBoundingClientRect().left:Infinity;
   if(x < gwLeft){
@@ -8273,85 +8276,104 @@ function _pdCancel(){
 }
 
 function _pdCommit(zone){
-  const {item: _pdItem, catId, fromPack} = PD;
-  // CRITICAL: PD.item may be a spread copy from gwGroups — resolve the live original from CATS
+  // Capture everything from PD before cleanup resets it
+  const fromPack = PD.fromPack;
+  const catId = PD.catId;
+  const _pdItem = PD.item;
+  // Always resolve live item from CATS — gwGroups uses spread copies
   const item = CATS.flatMap(c=>c.items).find(i=>i.id===_pdItem?.id) || _pdItem;
   console.log('[PD] _pdCommit zone='+zone+' catId='+catId+' fromPack='+fromPack+' item='+item?.name);
-  _pdCleanup(); // always clean up first before any renderAll
+  _pdCleanup();
+  if(!item) return;
 
+  // ── TRASH ──
   if(zone==='trash'){
     if(fromPack){
-      // Dragged from pack col — remove from current season only, keep on GW
+      // Remove from current pack only — item stays on GW
       item.s = item.s.filter(ss=>ss!==season);
-      toast(`⊖ ${item.name} removed from pack — still on Gear Wall`);
-      scheduleSave(); renderAll();
+      toast(`⊖ ${item.name} removed from pack`);
     } else {
+      // Full delete from GW
       const cat = CATS.find(c=>c.id===catId);
-      DELETED.unshift({
-        id: item.id, name: item.name, w: item.w,
-        extra: item.extra||'', link: item.link||'',
-        s: [...item.s],
-        catId: catId, catName: cat.name, catIcon: cat.icon,
-        deletedAt: Date.now()
-      });
-      if(DELETED.length > 30) DELETED.length = 30;
+      if(!cat) return;
+      DELETED.unshift({id:item.id,name:item.name,w:item.w,extra:item.extra||'',link:item.link||'',s:[...item.s],catId,catName:cat.name,catIcon:cat.icon,deletedAt:Date.now()});
+      if(DELETED.length>30) DELETED.length=30;
       cat.items = cat.items.filter(i=>i.id!==item.id);
       toast(`🗑 ${item.name} deleted — see Recently Deleted`);
-      scheduleSave(); renderAll();
     }
+    scheduleSave(); renderAll();
+    return;
+  }
 
-  } else if(zone && zone.startsWith('season-')){
-    clearTimeout(PD.seasonTimer);
-    PD.seasonTimer = null;
+  // ── SEASON PILL ──
+  if(zone && zone.startsWith('season-')){
     const s = zone.slice(7);
     if(s !== season){
       const pill = document.querySelector(`.s-pill[data-s="${s}"]`);
-      if(pill){ setSeason(s, pill); }
-      toast(`📅 Switched to ${s} — now drag item to its category`);
+      if(pill) setSeason(s, pill);
+      toast(`📅 Switched to ${s}`);
     }
+    return;
+  }
 
-  } else if(zone && zone.startsWith('pack-cat-')){
-    // Dropped on PACK COLUMN — only affects pack organisation, never gwCatId
+  // ── DROPPED ON PACK COLUMN ──
+  if(zone && zone.startsWith('pack-cat-')){
     const toCatId = zone.slice(9);
     const toCat = CATS.find(c=>c.id===toCatId);
-    if(toCat){
+    if(!toCat) return;
+    if(fromPack){
+      // Moving between pack categories — update which cat the item lives in
       if(toCatId !== catId){
         const fromCat = CATS.find(c=>c.id===catId);
-        if(fromCat){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); }
-      }
-      if(!item.s.includes(season)){
-        item.s = [...item.s, season];
-        toast(`✅ ${item.name} added to ${season} pack${toCatId !== catId ? ' · moved to '+toCat.name : ''}`);
+        if(fromCat){
+          fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
+          toCat.items.push(item);
+          item.gwCatId = toCatId; // keep GW in sync
+        }
+        toast(`✅ ${item.name} moved to ${toCat.name}`);
       } else {
-        toast(`ℹ️ ${item.name} is already in your ${season} pack`);
+        toast(`ℹ️ ${item.name} is already in ${toCat.name}`);
       }
-      scheduleSave(); renderAll();
+    } else {
+      // Dragging from GW to pack column — add to pack
+      if(!item.s.includes(season)){
+        // Move to the target pack cat
+        const fromCat = CATS.find(c=>c.id===catId);
+        if(fromCat && catId !== toCatId){
+          fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
+          toCat.items.push(item);
+        }
+        item.s = [...item.s, season];
+        toast(`✅ ${item.name} added to pack`);
+      } else {
+        toast(`ℹ️ ${item.name} is already in your pack`);
+      }
     }
+    scheduleSave(); renderAll();
+    return;
+  }
 
-  } else if(zone && zone.startsWith('gw-cat-')){
+  // ── DROPPED ON GEAR WALL ──
+  if(zone && zone.startsWith('gw-cat-')){
+    const toGwCatId = zone.slice(7);
     if(fromPack){
-      // Dragged from pack col to GW — remove from current season pack
+      // Dragged from pack column to GW — remove from current pack
       item.s = item.s.filter(ss=>ss!==season);
-      toast(`⊖ ${item.name} removed from pack — still on Gear Wall`);
+      toast(`⊖ ${item.name} removed from pack`);
       scheduleSave(); renderAll();
     } else {
-      // Dragged within GW — move to different GW category or add to pack
-      const toGwCatId = zone.slice(7);
-      if(toGwCatId === catId){
-        if(!item.s.includes(season)){
-          item.s = [...item.s, season];
-          toast(`✅ ${item.name} added to ${season} pack`);
-        } else {
-          toast(`ℹ️ ${item.name} is already in your ${season} pack`);
-        }
-      } else {
+      // GW-to-GW move — only update gwCatId, NEVER touch item.s
+      if(toGwCatId !== item.gwCatId){
         item.gwCatId = toGwCatId;
         const toCat = CATS.find(c=>c.id===toGwCatId);
-        toast(`✅ ${item.name} moved to ${toCat ? toCat.name : toGwCatId} on Gear Wall`);
+        toast(`✅ ${item.name} moved to ${toCat ? toCat.name : toGwCatId}`);
+        scheduleSave(); renderAll();
       }
-      scheduleSave(); renderAll();
+      // Same category — do nothing
     }
+    return;
   }
+  // Dropped on nothing — no action
 }
 
 function _pdCleanup(){
