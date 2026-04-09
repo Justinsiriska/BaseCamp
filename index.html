@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.68 — Gear Organizer</title>
+<title>BaseCamp v4.69 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2133,7 +2133,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.68</div>
+      <div class="logo-sub">Gear Organizer · v4.69</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5916,6 +5916,7 @@ function renderCats(){
       const cat2 = CATS.find(c=>c.id===cid);
       const item2 = cat2?.items.find(i=>i.id===iid);
       if(!item2) return;
+      PD.fromPack = true;
       pdStart(e, item2, cid, row.querySelector('.pack-item-drag-handle')||row);
     });
 
@@ -5985,6 +5986,7 @@ function renderCats(){
       const cat2 = CATS.find(c=>c.id===cid);
       const item2 = cat2?.items.find(i=>i.id===iid);
       if(!item2) return;
+      PD.fromPack = true;
       pdStart(e, item2, cid, row.querySelector('.pack-item-drag-handle')||row);
     });
 
@@ -8102,6 +8104,8 @@ function pdStart(e, item, catId, chip){
   PD.startX = e.clientX;
   PD.startY = e.clientY;
   PD.moved  = false;
+  // PD.fromPack is set explicitly by pack col pointerdown handlers before calling pdStart
+  if(PD.fromPack === undefined) PD.fromPack = false;
   document.body.classList.add('dragging-active');
 
   // ── Ghost label ──
@@ -8125,7 +8129,7 @@ function pdStart(e, item, catId, chip){
   // ── Trash can ──
   const trash = document.createElement('div');
   trash.id = 'pd-trash';
-  trash.innerHTML = '🗑️<span>Delete from Gear Wall</span>';
+  trash.innerHTML = PD.fromPack ? '⊖<span>Remove from Pack</span>' : '🗑️<span>Delete from Gear Wall</span>';
   trash.style.cssText = `
     position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
     z-index:9998;pointer-events:none;
@@ -8168,34 +8172,24 @@ function _pdClearDimming(){
 }
 
 function _pdHitTest(x, y){
-  // Check trash first
   const trash = PD.trash;
-  if(trash){
-    const r = trash.getBoundingClientRect();
-    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'trash';
-  }
-  // Check season pills
+  if(trash){ const r=trash.getBoundingClientRect(); if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'trash'; }
   for(const pill of document.querySelectorAll('.s-pill')){
-    const r = pill.getBoundingClientRect();
-    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom)
-      return 'season-'+pill.dataset.s;
+    const r=pill.getBoundingClientRect();
+    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'season-'+pill.dataset.s;
   }
-  // Determine if pointer is in GW column by checking GW container bounds
-  const gwRoot = document.getElementById('gear-wall-body');
-  const gwLeft = gwRoot ? gwRoot.getBoundingClientRect().left : Infinity;
-  const inGW = x >= gwLeft;
-
+  const gwRoot=document.getElementById('gear-wall-body');
+  const gwLeft=gwRoot?gwRoot.getBoundingClientRect().left:Infinity;
+  const inGW=x>=gwLeft;
   if(!inGW){
-    // Pointer is in pack column — check pack cat cards
     for(const card of document.querySelectorAll('.cat-card[data-cid]')){
-      const r = card.getBoundingClientRect();
-      if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'pack-cat-'+card.dataset.cid;
+      const r=card.getBoundingClientRect();
+      if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'pack-cat-'+card.dataset.cid;
     }
   } else {
-    // Pointer is in GW column — check GW cats only
     for(const gwCat of document.querySelectorAll('.gw-cat[data-cid]')){
-      const r = gwCat.getBoundingClientRect();
-      if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'gw-cat-'+gwCat.dataset.cid;
+      const r=gwCat.getBoundingClientRect();
+      if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'gw-cat-'+gwCat.dataset.cid;
     }
   }
   return null;
@@ -8289,17 +8283,31 @@ function _pdCommit(zone){
   _pdCleanup(); // always clean up first before any renderAll
 
   if(zone==='trash'){
-    const cat = CATS.find(c=>c.id===catId);
-    DELETED.unshift({
-      id: item.id, name: item.name, w: item.w,
-      extra: item.extra||'', link: item.link||'',
-      s: [...item.s],
-      catId: catId, catName: cat.name, catIcon: cat.icon,
-      deletedAt: Date.now()
-    });
-    if(DELETED.length > 30) DELETED.length = 30;
-    cat.items = cat.items.filter(i=>i.id!==item.id);
-    toast(`🗑 ${item.name} deleted — see Recently Deleted`);
+    if(PD.fromPack){
+      // From pack col — just remove from current season, keep on GW
+      item.s = item.s.filter(ss=>ss!==season);
+      toast(`⊖ ${item.name} removed from pack — still on Gear Wall`);
+      scheduleSave(); renderAll();
+    } else {
+      // From GW — full delete
+      const cat = CATS.find(c=>c.id===catId);
+      DELETED.unshift({
+        id: item.id, name: item.name, w: item.w,
+        extra: item.extra||'', link: item.link||'',
+        s: [...item.s],
+        catId: catId, catName: cat.name, catIcon: cat.icon,
+        deletedAt: Date.now()
+      });
+      if(DELETED.length > 30) DELETED.length = 30;
+      cat.items = cat.items.filter(i=>i.id!==item.id);
+      toast(`🗑 ${item.name} deleted — see Recently Deleted`);
+      scheduleSave(); renderAll();
+    }
+
+  } else if(zone && zone.startsWith('gw-cat-') && PD.fromPack){
+    // Dragged from pack col to GW — remove from current season pack
+    item.s = item.s.filter(ss=>ss!==season);
+    toast(`⊖ ${item.name} removed from pack — still on Gear Wall`);
     scheduleSave(); renderAll();
 
   } else if(zone && zone.startsWith('season-')){
@@ -8354,7 +8362,7 @@ function _pdCommit(zone){
 
 function _pdCleanup(){
   clearTimeout(PD.seasonTimer);
-  PD.active=false; PD.item=null; PD.catId=null; PD.chip=null; PD.overZone=null; PD.seasonTimer=null;
+  PD.active=false; PD.item=null; PD.catId=null; PD.chip=null; PD.overZone=null; PD.seasonTimer=null; PD.fromPack=false;
   if(PD.ghost){ PD.ghost.remove(); PD.ghost=null; }
   if(PD.trash){ PD.trash.remove(); PD.trash=null; }
   _pdClearDimming();
