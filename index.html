@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.93 — Gear Organizer</title>
+<title>BaseCamp v4.94 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2320,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.93</div>
+      <div class="logo-sub">Gear Organizer · v4.94</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14479,9 +14479,10 @@ function extractMetricsFromName(name){
   const mlMatch = n.match(/(\d+\.?\d*)\s*ml\b/);
   const lMatch  = n.match(/(\d+\.?\d*)\s*(?:liter|litre|(?<![a-z])l(?![a-z]))/);
   const flMatch = n.match(/(\d+\.?\d*)\s*fl\.?\s*oz/);
-  if(mlMatch)       result.volume = mlMatch[1]+'ml';
-  else if(lMatch)   result.volume = lMatch[1]+'L';
-  else if(flMatch)  result.volume = flMatch[1]+' fl oz';
+  // Store only the numeric value — unit stored separately as volume_unit
+  if(mlMatch)       { result.volume = mlMatch[1]; result.volume_unit = 'ml'; }
+  else if(lMatch)   { result.volume = lMatch[1];  result.volume_unit = 'L'; }
+  else if(flMatch)  { result.volume = flMatch[1]; result.volume_unit = 'fl oz'; }
   // Temp rating: -9C, -7°C, 20°F, 32f
   const tempMatch = n.match(/([+-]?\d+)\s*°?\s*([cf])\b/);
   if(tempMatch) result.temp_rating = tempMatch[1]+'°'+tempMatch[2].toUpperCase();
@@ -14497,7 +14498,10 @@ function applySizeFieldsToProduct(product){
   const extracted = extractMetricsFromName(product.name);
   if(!Object.keys(extracted).length) return product;
   const cf = product.custom_fields || {};
-  if(extracted.volume      && !cf.volume      && !cf.volume_liters) cf.volume      = extracted.volume;
+  if(extracted.volume      && !cf.volume      && !cf.volume_liters){
+    cf.volume = extracted.volume;
+    if(extracted.volume_unit && !cf.volume_unit) cf.volume_unit = extracted.volume_unit;
+  }
   if(extracted.temp_rating && !cf.temp_rating)                      cf.temp_rating = extracted.temp_rating;
   if(extracted.r_value     && !cf.r_value)                          cf.r_value     = extracted.r_value;
   product.custom_fields = cf;
@@ -14632,7 +14636,7 @@ const PRESET_FIELDS=[
   {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'text',   unit:'°C/°F', preset:true},
   {key:'rvalue',  label:'R-Value',     icon:'🔲', type:'number', unit:'',      preset:true},
   {key:'length',  label:'Length',      icon:'📏', type:'text',   unit:'cm/in', preset:true},
-  {key:'volume',  label:'Volume',      icon:'📦', type:'text',   unit:'L/ml',  preset:true},
+  {key:'volume',  label:'Volume',      icon:'📦', type:'number', unit:'ml/L',  preset:true},
   {key:'battery', label:'Battery Life',icon:'🔋', type:'text',   unit:'hrs',   preset:true},
 ];
 window.CUSTOM_FIELD_DEFS=[...PRESET_FIELDS];
