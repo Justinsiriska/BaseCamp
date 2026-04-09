@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.87 — Gear Organizer</title>
+<title>BaseCamp v4.88 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2308,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.87</div>
+      <div class="logo-sub">Gear Organizer · v4.88</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14880,13 +14880,17 @@ async function sbBackfillLinkedWeights(){
 
     let changed = false;
     for(const p of products){
-      if(!p.weight_g) continue;
       const items = needsFill.filter(i=>i.productId===p.id);
       for(const item of items){
-        item.w = p.weight_g;
-        // Also fill price if missing
-        if(!item.price && p.price) item.priceOverride = null;
-        changed = true;
+        if(p.weight_g){ item.w = p.weight_g; changed = true; }
+        // Backfill custom fields that item doesn't already have
+        if(p.custom_fields){
+          item.fields = item.fields||{};
+          for(const [key,val] of Object.entries(p.custom_fields)){
+            if(!item.fields[key]) item.fields[key] = val;
+          }
+          changed = true;
+        }
         console.log('[BaseCamp] backfilled weight for', item.name, '→', p.weight_g+'g');
       }
     }
@@ -14980,6 +14984,7 @@ async function renderAdminPage(){
               <input class="gw-field-inp full" id="adm-ep-url-${p.id}" type="text" value="${escH(p.url||'')}" placeholder="Product URL" autocomplete="off">
               <input class="gw-field-inp full" id="adm-ep-img-${p.id}" type="text" value="${escH(p.image_url||'')}" placeholder="Image URL (optional)" autocomplete="off">
             </div>
+            ${buildAdminFieldsSection(p.id, p.custom_fields||{})}
             <div style="display:flex;gap:0.4rem;justify-content:flex-end;">
               <button class="gw-cancel-btn" style="font-size:0.6rem;padding:3px 10px;" onclick="document.getElementById('adm-edit-form-${p.id}').style.display='none'">Cancel</button>
               <button class="admin-approve-btn" onclick="adminApproveProduct('${p.id}')">✓ Approve</button>
@@ -15063,6 +15068,56 @@ async function adminAddProduct(){
   ['adm-name','adm-brand','adm-category','adm-weight','adm-price','adm-url'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
 
+
+function buildAdminFieldsSection(pid, existingFields){
+  const defs = getFieldDefs();
+  const activeRows = defs.filter(def=>existingFields[def.key]!==undefined&&existingFields[def.key]!=='').map(def=>`
+    <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
+      <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
+      <input class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${def.key}" type="${def.type==='number'?'number':'text'}" value="${escH(String(existingFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      <button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${def.key}\']')?.classList.remove('active')">✕</button>
+    </div>`).join('');
+  const chips = defs.map(def=>{
+    const hasValue = existingFields[def.key]!==undefined&&existingFields[def.key]!=='';
+    return`<button type="button" class="gw-field-chip${hasValue?' active':''}" onclick="adminToggleField('${pid}','${def.key}',this)">${def.icon} ${escH(def.label)}</button>`;
+  }).join('');
+  return`<div class="gw-fields-section adm-fields-${pid}" style="margin:0.4rem 0;">
+    <div class="gw-active-fields">${activeRows}</div>
+    <button type="button" class="gw-add-field-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Add data field</button>
+    <div class="gw-field-chips-panel">
+      <div class="gw-field-chips">${chips}</div>
+    </div>
+  </div>`;
+}
+
+function adminToggleField(pid, fieldKey, chipBtn){
+  const isActive = chipBtn.classList.contains('active');
+  const section = chipBtn.closest('.gw-fields-section');
+  const activeFields = section.querySelector('.gw-active-fields');
+  const def = getFieldDefs().find(d=>d.key===fieldKey);
+  if(!def) return;
+  if(isActive){
+    activeFields.querySelector(`[data-field-key="${fieldKey}"]`)?.remove();
+    chipBtn.classList.remove('active');
+  } else {
+    chipBtn.classList.add('active');
+    const row = document.createElement('div');
+    row.className = 'gw-field gw-active-field-row'; row.dataset.fieldKey = fieldKey;
+    row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${fieldKey}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${fieldKey}\']')?.classList.remove('active')">✕</button>`;
+    activeFields.appendChild(row);
+    row.querySelector('input')?.focus();
+  }
+}
+
+function readAdminFields(pid){
+  const fields = {};
+  document.querySelectorAll(`.adm-fields-${pid} .adm-field-val`).forEach(inp=>{
+    const key = inp.dataset.fieldKey; const val = inp.value.trim();
+    if(key && val!=='') fields[key] = val;
+  });
+  return fields;
+}
+
 function adminExpandEdit(id){
   const form = document.getElementById('adm-edit-form-'+id);
   if(form) form.style.display = form.style.display==='none' ? 'block' : 'none';
@@ -15078,6 +15133,7 @@ async function adminApproveProduct(id){
   const url   = document.getElementById('adm-ep-url-'+id)?.value.trim()||null;
   const image_url = document.getElementById('adm-ep-img-'+id)?.value.trim()||null;
 
+  const customFields = readAdminFields(id);
   const update = { verified: true };
   if(name)  update.name = name;
   if(brand) update.brand = brand;
@@ -15085,6 +15141,7 @@ async function adminApproveProduct(id){
   if(price) update.price = price;
   if(url)   update.url = url;
   if(image_url) update.image_url = image_url;
+  if(Object.keys(customFields).length) update.custom_fields = customFields;
 
   const {error} = await sb.from('gear_products').update(update).eq('id', id);
   if(error){ toast('❌ '+error.message); return; }
