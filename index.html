@@ -14631,51 +14631,83 @@ function getWeightInGrams(inp){
   return Math.round(val);
 }
 
-// ── Field unit selectors (volume, temp, length) ──
-function _fieldUnitSel(inputId, units, defaultUnit){
-  const btns = units.map(u=>`<button type="button" onclick="fieldUnitSwitch('${inputId}','${u}',this)" class="${u===defaultUnit?'active':''}">${u}</button>`).join('');
-  return `<div class="weight-unit-sel field-unit-sel" id="fus-${inputId}">${btns}</div>`;
+// ── Field unit selector (for volume, temp, length etc.) ──
+function _fieldUnitSel(inputId, def, currentUnit){
+  if(!def.unitOptions || !def.unitOptions.length) return '';
+  const active = currentUnit || def.unit || def.unitOptions[0];
+  const btns = def.unitOptions.map(u=>`<button type="button" onclick="fieldUnitSwitch('${inputId}','${def.key}',this)" class="${u===active?'active':''}">${escH(u)}</button>`).join('');
+  return `<div class="weight-unit-sel" id="fus-${inputId}" data-field-key="${def.key}">${btns}</div>`;
 }
-
-function fieldUnitSwitch(inputId, toUnit, btn){
-  const inp = document.getElementById(inputId) || document.querySelector(`[data-field-input-id="${inputId}"]`);
-  if(!inp) return;
-  const sel = btn.closest('.field-unit-sel');
-  const activeBtn = sel.querySelector('.active');
-  const fromUnit = activeBtn?.textContent.trim() || toUnit;
-  if(fromUnit === toUnit){ btn.classList.add('active'); return; }
-  // Convert value
-  const val = parseFloat(inp.value);
-  if(!isNaN(val) && val > 0){
-    // Volume conversions (base: ml)
-    const toMl = {'ml':1,'L':1000,'fl oz':29.5735};
-    if(toMl[fromUnit] && toMl[toUnit]){
-      const ml = val * toMl[fromUnit];
-      const conv = ml / toMl[toUnit];
-      inp.value = Math.round(conv * 100) / 100;
-    }
-    // Temp conversions
-    else if(fromUnit==='°C' && toUnit==='°F') inp.value = Math.round(val * 9/5 + 32);
-    else if(fromUnit==='°F' && toUnit==='°C') inp.value = Math.round((val - 32) * 5/9);
-    // Length conversions (base: mm)
-    const toMm = {'mm':1,'cm':10,'in':25.4};
-    if(toMm[fromUnit] && toMm[toUnit]){
-      const mm = val * toMm[fromUnit];
-      inp.value = Math.round(mm / toMm[toUnit] * 100) / 100;
-    }
+// Convert field value between units; returns new display value
+function _fieldConvert(val, fromUnit, toUnit, fieldKey){
+  const v = parseFloat(val);
+  if(isNaN(v)) return val;
+  if(fieldKey === 'volume'){
+    // base unit: ml
+    let ml;
+    if(fromUnit==='ml')    ml = v;
+    else if(fromUnit==='L') ml = v * 1000;
+    else if(fromUnit==='fl oz') ml = v * 29.5735;
+    if(toUnit==='ml')    return String(Math.round(ml));
+    if(toUnit==='L')     return String(Math.round(ml/10)/100);
+    if(toUnit==='fl oz') return String(Math.round(ml/29.5735*10)/10);
   }
+  if(fieldKey === 'temp'){
+    // base unit: °C
+    let c;
+    if(fromUnit==='°C') c = v;
+    else if(fromUnit==='°F') c = (v-32)*5/9;
+    if(toUnit==='°C') return String(Math.round(c*10)/10);
+    if(toUnit==='°F') return String(Math.round((c*9/5+32)*10)/10);
+  }
+  if(fieldKey === 'length'){
+    // base unit: cm
+    let cm;
+    if(fromUnit==='cm') cm = v;
+    else if(fromUnit==='in') cm = v * 2.54;
+    else if(fromUnit==='ft') cm = v * 30.48;
+    if(toUnit==='cm') return String(Math.round(cm*10)/10);
+    if(toUnit==='in') return String(Math.round(cm/2.54*10)/10);
+    if(toUnit==='ft') return String(Math.round(cm/30.48*100)/100);
+  }
+  return String(v);
+}
+function fieldUnitSwitch(inputId, fieldKey, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  const sel = btn.closest('.weight-unit-sel');
+  const fromUnit = sel.querySelector('.active')?.textContent.trim() || '';
+  const toUnit = btn.textContent.trim();
+  if(fromUnit === toUnit) return;
+  const newVal = _fieldConvert(inp.value, fromUnit, toUnit, fieldKey);
+  inp.value = newVal;
   sel.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   inp.dataset.fieldUnit = toUnit;
 }
+// Get field value in base unit (ml, °C, cm) for storage
+function getFieldValueInBaseUnit(inp, fieldKey){
+  if(!inp) return null;
+  const val = parseFloat(inp.value);
+  if(isNaN(val)) return inp.value.trim() || null;
+  const unit = inp.dataset.fieldUnit || inp.dataset.defaultUnit || '';
+  const base = _fieldConvert(String(val), unit, _fieldBaseUnit(fieldKey), fieldKey);
+  return parseFloat(base) || base;
+}
+function _fieldBaseUnit(fieldKey){
+  if(fieldKey==='volume') return 'ml';
+  if(fieldKey==='temp')   return '°C';
+  if(fieldKey==='length') return 'cm';
+  return '';
+}
 
 // ── Custom item data fields ──
 const PRESET_FIELDS=[
-  {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'number', unit:'°C',   unitKey:'temp_unit',   units:['°C','°F'],           preset:true},
-  {key:'rvalue',  label:'R-Value',     icon:'🔲', type:'number', unit:'',      preset:true},
-  {key:'length',  label:'Length',      icon:'📏', type:'number', unit:'cm',    unitKey:'length_unit', units:['cm','in','mm'],       preset:true},
-  {key:'volume',  label:'Volume',      icon:'📦', type:'number', unit:'ml',    unitKey:'volume_unit', units:['ml','L','fl oz'],     preset:true},
-  {key:'battery', label:'Battery Life',icon:'🔋', type:'number', unit:'hrs',   preset:true},
+  {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'number', unit:'°C',  unitOptions:['°C','°F'],       preset:true},
+  {key:'rvalue',  label:'R-Value',     icon:'🔲', type:'number', unit:'',    unitOptions:null,               preset:true},
+  {key:'length',  label:'Length',      icon:'📏', type:'number', unit:'cm',  unitOptions:['cm','in','ft'],   preset:true},
+  {key:'volume',  label:'Volume',      icon:'📦', type:'number', unit:'ml',  unitOptions:['ml','L','fl oz'], preset:true},
+  {key:'battery', label:'Battery Life',icon:'🔋', type:'number', unit:'hrs', unitOptions:null,               preset:true},
 ];
 window.CUSTOM_FIELD_DEFS=[...PRESET_FIELDS];
 function getFieldDefs(){const defs=window.CUSTOM_FIELD_DEFS||[...PRESET_FIELDS];PRESET_FIELDS.forEach(p=>{if(!defs.find(d=>d.key===p.key))defs.unshift(p);});return defs;}
@@ -14693,12 +14725,18 @@ function renderItemFieldPills(item){
 function buildDrawerFieldsSection(item){
   const defs=getFieldDefs();const itemFields=item.fields||{};
   // Active field rows — shown inline like Name/Weight
-  const activeRows=defs.filter(def=>itemFields[def.key]!==undefined&&itemFields[def.key]!=='').map(def=>`
+  const activeRows=defs.filter(def=>itemFields[def.key]!==undefined&&itemFields[def.key]!=='').map(def=>{
+    const storedUnit = itemFields[def.key+'_unit'] || def.unit || (def.unitOptions&&def.unitOptions[0]) || '';
+    const inpId = `fld-${item.id}-${def.key}`;
+    const unitSel = def.unitOptions ? _fieldUnitSel(inpId, def, storedUnit) : '';
+    return `
     <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
       <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
-      <input class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" type="${def.type==='number'?'number':'text'}" value="${escH(String(itemFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      <input id="${inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" data-field-unit="${escH(storedUnit)}" data-default-unit="${escH(def.unit||'')}" type="${def.type==='number'?'number':'text'}" value="${escH(String(itemFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      ${unitSel}
       <button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${item.id}','${def.key}',this)" title="Remove">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   // Chips — all field options
   const chips=defs.map(def=>{
     const hasValue=itemFields[def.key]!==undefined&&itemFields[def.key]!=='';
@@ -14724,14 +14762,33 @@ function buildDrawerFieldsSection(item){
     </div>
   </div>`;
 }
-function readDrawerFields(drawer){const fields={};drawer.querySelectorAll('.gw-field-val-inp').forEach(inp=>{const key=inp.dataset.fieldKey;const val=inp.value.trim();if(key&&val!=='')fields[key]=val;});return fields;}
+function readDrawerFields(drawer){
+  const fields={};
+  drawer.querySelectorAll('.gw-field-val-inp').forEach(inp=>{
+    const key=inp.dataset.fieldKey;
+    const val=inp.value.trim();
+    if(key&&val!==''){
+      // Try to store in base unit for preset fields
+      const def=getFieldDefs().find(d=>d.key===key);
+      if(def&&def.unitOptions){
+        fields[key]=getFieldValueInBaseUnit(inp,key);
+        const unit=inp.dataset.fieldUnit||def.unit||def.unitOptions[0]||'';
+        // store display unit so we can convert back when reopening
+        fields[key+'_unit']=unit;
+      } else {
+        fields[key]=isNaN(parseFloat(val))?val:parseFloat(val)||val;
+      }
+    }
+  });
+  return fields;
+}
 function drawerToggleField(iid,fieldKey,chipBtn){
   const isActive=chipBtn.classList.contains('active');
   const section=chipBtn.closest('.gw-fields-section');
   const activeFields=section.querySelector('.gw-active-fields');
   const def=getFieldDefs().find(d=>d.key===fieldKey);if(!def)return;
   if(isActive){activeFields.querySelector(`[data-field-key="${fieldKey}"]`)?.remove();chipBtn.classList.remove('active');}
-  else{chipBtn.classList.add('active');const row=document.createElement('div');row.className='gw-field gw-active-field-row';row.dataset.fieldKey=fieldKey;row.innerHTML=`<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp" data-field-key="${fieldKey}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${fieldKey}',this)">✕</button>`;activeFields.appendChild(row);row.querySelector('input')?.focus();}
+  else{chipBtn.classList.add('active');const row=document.createElement('div');row.className='gw-field gw-active-field-row';row.dataset.fieldKey=fieldKey;const _inpId=`fld-${iid}-${fieldKey}`;const _unitSel=def.unitOptions?_fieldUnitSel(_inpId,def,def.unit||def.unitOptions[0]):'';const _defUnit=def.unit||(def.unitOptions&&def.unitOptions[0])||'';row.innerHTML=`<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${_inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${fieldKey}" data-field-unit="${escH(_defUnit)}" data-default-unit="${escH(_defUnit)}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/>${_unitSel}<button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${fieldKey}',this)">✕</button>`;activeFields.appendChild(row);row.querySelector('input')?.focus();}
 }
 function drawerRemoveField(iid,fieldKey,btn){btn.closest('.gw-active-field-row')?.remove();btn.closest('.gw-fields-section')?.querySelector(`.gw-field-chip[onclick*="'${fieldKey}'"]`)?.classList.remove('active');}
 function drawerShowNewFieldForm(btn){const form=btn.closest('.gw-fields-section').querySelector('.gw-new-field-form');if(form){form.classList.add('open');form.querySelector('input')?.focus();}}
@@ -14865,6 +14922,31 @@ async function gearDrawerSelect(iid, productId){
       // Hide search results, show linked banner
       drawer.querySelector('.gw-product-results').style.display='none';
       _gearDrawerRenderLinked(drawer, iid, p);
+      // Inject product custom_fields into drawer fields section
+      const productFields = p.custom_fields || {};
+      if(Object.keys(productFields).length){
+        const defs = getFieldDefs();
+        const activeFieldsEl = drawer.querySelector('.gw-active-fields');
+        const chipsPanel = drawer.querySelector('.gw-field-chips');
+        Object.entries(productFields).forEach(([key, val])=>{
+          if(val===''||val===null||val===undefined) return;
+          if(drawer.querySelector(`.gw-field-val-inp[data-field-key="${key}"]`)) return;
+          const def = defs.find(d=>d.key===key);
+          if(!def) return;
+          const row = document.createElement('div');
+          row.className = 'gw-field gw-active-field-row';
+          row.dataset.fieldKey = key;
+          const inpId = `fld-${iid}-${key}`;
+          const defUnit = def.unit||(def.unitOptions&&def.unitOptions[0])||'';
+          const unitSel = def.unitOptions ? _fieldUnitSel(inpId, def, defUnit) : '';
+          row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${key}" data-field-unit="${escH(defUnit)}" data-default-unit="${escH(defUnit)}" type="${def.type==='number'?'number':'text'}" value="${escH(String(val))}" placeholder="${escH(def.unit||'')}"/>${unitSel}<button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${key}',this)" title="Remove">✕</button>`;
+          if(activeFieldsEl) activeFieldsEl.appendChild(row);
+          if(chipsPanel){
+            const chip = chipsPanel.querySelector(`.gw-field-chip[onclick*="${key}"]`);
+            if(chip) chip.classList.add('active');
+          }
+        });
+      }
     }
     scheduleSave();
   } catch(e){ console.warn('[GearDB] select failed:', e); }
@@ -14947,6 +15029,37 @@ async function gearDrawerLoadLinked(iid, productId){
     el.querySelector('.gw-product-linked-name').style.opacity='1';
     el.querySelector('.gw-product-linked-meta').textContent =
       p.brand + (p.price?' · '+p.price:'') + (p.verified?' · ✓ verified':'');
+    // Auto-populate data fields from product's custom_fields if item doesn't already have them
+    const productFields = p.custom_fields || {};
+    if(Object.keys(productFields).length){
+      const drawer = el.closest('.gw-drawer');
+      if(drawer){
+        const defs = getFieldDefs();
+        const activeFieldsEl = drawer.querySelector('.gw-active-fields');
+        const chipsPanel = drawer.querySelector('.gw-field-chips');
+        Object.entries(productFields).forEach(([key, val])=>{
+          if(val===''||val===null||val===undefined) return;
+          // Skip if already has a value in the drawer
+          if(drawer.querySelector(`.gw-field-val-inp[data-field-key="${key}"]`)) return;
+          const def = defs.find(d=>d.key===key);
+          if(!def) return;
+          // Add active row
+          const row = document.createElement('div');
+          row.className = 'gw-field gw-active-field-row';
+          row.dataset.fieldKey = key;
+          const inpId = `fld-${iid}-${key}`;
+          const defUnit = def.unit||(def.unitOptions&&def.unitOptions[0])||'';
+          const unitSel = def.unitOptions ? _fieldUnitSel(inpId, def, defUnit) : '';
+          row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${key}" data-field-unit="${escH(defUnit)}" data-default-unit="${escH(defUnit)}" type="${def.type==='number'?'number':'text'}" value="${escH(String(val))}" placeholder="${escH(def.unit||'')}"/>${unitSel}<button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${key}',this)" title="Remove">✕</button>`;
+          if(activeFieldsEl) activeFieldsEl.appendChild(row);
+          // Mark chip as active
+          if(chipsPanel){
+            const chip = chipsPanel.querySelector(`.gw-field-chip[onclick*="${key}"]`);
+            if(chip) chip.classList.add('active');
+          }
+        });
+      }
+    }
   } catch(e){ /* silent */ }
 }
 
@@ -15275,12 +15388,13 @@ async function adminAddProduct(){
 function buildAdminFieldsSection(pid, existingFields){
   const defs = getFieldDefs();
   const activeRows = defs.filter(def=>existingFields[def.key]!==undefined&&existingFields[def.key]!=='').map(def=>{
-    const fid = `adm-f-${pid}-${def.key}`;
-    const curUnit = def.unitKey ? (existingFields[def.unitKey]||def.units[0]) : null;
-    const unitSel = def.units ? _fieldUnitSel(fid, def.units, curUnit) : '';
-    return`<div class="gw-field gw-active-field-row" data-field-key="${def.key}">
+    const storedUnit = existingFields[def.key+'_unit'] || def.unit || (def.unitOptions&&def.unitOptions[0]) || '';
+    const inpId = `adm-fld-${pid}-${def.key}`;
+    const unitSel = def.unitOptions ? _fieldUnitSel(inpId, def, storedUnit) : '';
+    return `
+    <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
       <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
-      <input class="gw-field-inp gw-field-val-inp adm-field-val" id="${fid}" data-field-input-id="${fid}" data-field-key="${def.key}" data-field-unit="${curUnit||''}" data-unit-key="${def.unitKey||''}" type="number" value="${escH(String(existingFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      <input id="${inpId}" class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${def.key}" data-field-unit="${escH(storedUnit)}" data-default-unit="${escH(def.unit||'')}" type="${def.type==='number'?'number':'text'}" value="${escH(String(existingFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
       ${unitSel}
       <button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${def.key}\']')?.classList.remove('active')">✕</button>
     </div>`;
@@ -15311,10 +15425,10 @@ function adminToggleField(pid, fieldKey, chipBtn){
     chipBtn.classList.add('active');
     const row = document.createElement('div');
     row.className = 'gw-field gw-active-field-row'; row.dataset.fieldKey = fieldKey;
-    const fid = `adm-f-${pid}-${fieldKey}`;
-    const defaultUnit = def.units ? def.units[0] : '';
-    const unitSelHtml = def.units ? _fieldUnitSel(fid, def.units, defaultUnit) : '';
-    row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp adm-field-val" id="${fid}" data-field-input-id="${fid}" data-field-key="${fieldKey}" data-field-unit="${defaultUnit}" data-unit-key="${def.unitKey||''}" type="number" value="" placeholder="${escH(def.unit||'')}"/>${unitSelHtml}<button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${fieldKey}\']')?.classList.remove('active')">✕</button>`;
+    const _aInpId = `adm-fld-${pid}-${fieldKey}`;
+    const _aDefUnit = def.unit||(def.unitOptions&&def.unitOptions[0])||'';
+    const _aUnitSel = def.unitOptions ? _fieldUnitSel(_aInpId, def, _aDefUnit) : '';
+    row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${_aInpId}" class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${fieldKey}" data-field-unit="${escH(_aDefUnit)}" data-default-unit="${escH(_aDefUnit)}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/>${_aUnitSel}<button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${fieldKey}\']')?.classList.remove('active')">✕</button>`;
     activeFields.appendChild(row);
     row.querySelector('input')?.focus();
   }
@@ -15325,11 +15439,14 @@ function readAdminFields(pid){
   document.querySelectorAll(`.adm-fields-${pid} .adm-field-val`).forEach(inp=>{
     const key = inp.dataset.fieldKey; const val = inp.value.trim();
     if(key && val!==''){
-      fields[key] = val;
-      // Save companion unit key if present
-      const unitKey = inp.dataset.unitKey;
-      const unit = inp.dataset.fieldUnit;
-      if(unitKey && unit) fields[unitKey] = unit;
+      const def = getFieldDefs().find(d=>d.key===key);
+      if(def && def.unitOptions){
+        fields[key] = getFieldValueInBaseUnit(inp, key);
+        const unit = inp.dataset.fieldUnit || def.unit || def.unitOptions[0] || '';
+        fields[key+'_unit'] = unit;
+      } else {
+        fields[key] = isNaN(parseFloat(val)) ? val : parseFloat(val)||val;
+      }
     }
   });
   return fields;
