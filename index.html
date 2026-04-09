@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.71 — Gear Organizer</title>
+<title>BaseCamp v4.72 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2247,7 +2247,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.71</div>
+      <div class="logo-sub">Gear Organizer · v4.72</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5972,26 +5972,29 @@ function renderCats(){
 
     // Pack category gets special banner treatment
     if(cat.id==='pack'){
-      const packItem = items[0]; // there's only ever one pack
-      const packName = packItem ? packItem.name : 'My Pack';
+      const packItem = items[0]; // only one pack per config
+      const packName = packItem ? packItem.name : 'No pack added';
       const extraVol = packItem?.extra ? packItem.extra+'L' : '';
+      const packBuyBtn = packItem?.productId ? `<button class="pack-item-buy-btn" style="opacity:0.6;font-size:0.7rem;" title="View product" onclick="showProductCard('${packItem.productId}')">🛒</button>` : '';
       card.innerHTML=`
         <div class="pack-cat-banner">
           <div class="pack-cat-banner-left">
             <span class="pack-cat-banner-icon">🎒</span>
             <span class="pack-cat-banner-name" title="Click to edit" style="cursor:pointer"
-              onclick="packItem && startWeightEdit(document.querySelector('[data-iid=\\\"${packItem?.id}\\\"]'), 'pack', '${packItem?.id}')">${escH(packName)}</span>
+              onclick="${packItem ? `openItemDrawer('${packItem.id}')` : ''}">${escH(packName)}</span>
             ${extraVol ? `<span class="pack-cat-banner-meta">${extraVol}</span>` : ''}
+            ${packBuyBtn}
           </div>
           <div class="pack-cat-banner-right">
             <span class="pack-cat-banner-w" data-cid="pack">${dw(w)}</span>
+            ${packItem ? `<button class="del-btn" style="margin-left:0.3rem;" onclick="delItem('pack','${packItem.id}')" title="Remove pack">✕</button>` : ''}
           </div>
         </div>
         ${items.length===0
-          ? `<div style="padding:0.5rem 0.85rem;font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);opacity:0.6;">No pack added — use ＋ Add Item above, select Pack</div>`
+          ? `<div style="padding:0.5rem 0.85rem;font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);opacity:0.6;">No pack — drag one here from Gear Wall</div>`
           : ''
         }`;
-      // No body/rows for pack — the item name IS the header
+      // No item rows for pack cat — the banner IS the item display
     } else {
       card.innerHTML=`
         <div class="cat-drag-handle" data-cid="${cat.id}">· · · · ·</div>
@@ -7920,7 +7923,6 @@ function renderGearWall(){
             <span class="gw-item-weight">${dw(item.w)}</span>
             ${hasLink?`<span class="gw-link-indicator" title="Has product link">🔗</span>`:''}
             <button class="gw-item-edit-btn" title="Edit item"
-              onclick="event.stopPropagation();(()=>{if(wrap.classList.contains('open')){autoSaveDrawer('${srcCatId}','${item.id}');}else{wrap.classList.add('open');requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());}})();"
               style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
             <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
               onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">
@@ -7943,6 +7945,16 @@ function renderGearWall(){
         });
         chip.addEventListener('mouseenter',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0.45'; });
         chip.addEventListener('mouseleave',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0'; });
+        // Edit button uses closure-safe event listener (inline onclick can't access wrap/drawer)
+        chip.querySelector('.gw-item-edit-btn')?.addEventListener('click', e=>{
+          e.stopPropagation();
+          if(wrap.classList.contains('open')){
+            autoSaveDrawer(srcCatId, item.id);
+          } else {
+            wrap.classList.add('open');
+            requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());
+          }
+        });
         chip.addEventListener('click', e=>{ if(e.target.closest('button')) return; });
         chip.addEventListener('dblclick', e=>{
           if(e.target.closest('button')) return;
@@ -8444,12 +8456,21 @@ function _pdCommit(zone){
         toast(`✅ ${item.name} moved to ${toCat.name}`);
       } else { toast(`ℹ️ ${item.name} is already in ${toCat.name}`); }
     } else {
-      if(!item.s.includes(season)){
-        const fromCat = CATS.find(c=>c.id===catId);
-        if(fromCat && catId !== toCatId){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); }
-        item.s = [...item.s, season];
-        toast(`✅ ${item.name} added to pack`);
-      } else { toast(`ℹ️ ${item.name} is already in your pack`); }
+      // Dragging from GW onto pack column
+      if(toCatId === 'pack'){
+        // Pack cat: only one item per season — remove existing first
+        const packCat = CATS.find(c=>c.id==='pack');
+        if(packCat) packCat.items.forEach(p=>{ p.s = p.s.filter(ss=>ss!==season); });
+        if(!item.s.includes(season)) item.s = [...item.s, season];
+        toast(`✅ ${item.name} set as your pack`);
+      } else {
+        if(!item.s.includes(season)){
+          const fromCat = CATS.find(c=>c.id===catId);
+          if(fromCat && catId !== toCatId){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); }
+          item.s = [...item.s, season];
+          toast(`✅ ${item.name} added to pack`);
+        } else { toast(`ℹ️ ${item.name} is already in your pack`); }
+      }
     }
     scheduleSave(); renderAll();
     return;
@@ -14282,16 +14303,15 @@ let _gearSearchTimer = null;
 async function gearProductSearch(query) {
   if(!query || query.length < 2) return [];
   try {
-    await waitForSupabase();
-    const sb = sbClient();
+    await sbReady();
+    const sb = getSupabase();
     if(!sb) return [];
+    // Use prefix search for short queries, full-text for longer
     if(query.length < 3){
-      const { data, error } = await sb.rpc('search_gear_products_prefix', { query: query.toLowerCase() });
-      if(error) console.warn('[GearDB] prefix search error:', error);
+      const { data } = await sb.rpc('search_gear_products_prefix', { query: query.toLowerCase() });
       return data || [];
     } else {
-      const { data, error } = await sb.rpc('search_gear_products', { query });
-      if(error) console.warn('[GearDB] search error:', error);
+      const { data } = await sb.rpc('search_gear_products', { query });
       return data || [];
     }
   } catch(e){ console.warn('[GearDB] search failed:', e); return []; }
@@ -14300,8 +14320,8 @@ async function gearProductSearch(query) {
 async function gearProductSave(product){
   // Save a new product to the shared DB (from URL scrape)
   try {
-    await waitForSupabase();
-    const sb = sbClient();
+    await sbReady();
+    const sb = getSupabase();
     if(!sb || !_sbUser) return null;
     const { data, error } = await sb.from('gear_products').insert([{
       name: product.name,
@@ -14321,8 +14341,8 @@ async function gearProductSave(product){
 
 async function gearProductSubmitEdit(productId, field, oldVal, newVal){
   try {
-    await waitForSupabase();
-    const sb = sbClient();
+    await sbReady();
+    const sb = getSupabase();
     if(!sb || !_sbUser) return;
     await sb.from('gear_product_edits').insert([{
       product_id: productId,
@@ -14369,8 +14389,8 @@ async function gearDrawerSelect(iid, productId){
   if(!item) return;
   // Fetch full product
   try {
-    await waitForSupabase();
-    const sb = sbClient();
+    await sbReady();
+    const sb = getSupabase();
     const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
     if(!p) return;
     // Link product to item
@@ -14460,8 +14480,8 @@ async function gearDrawerLoadLinked(iid, productId){
   const el = document.getElementById(`gw-linked-${iid}`);
   if(!el) return;
   try {
-    await waitForSupabase();
-    const sb = sbClient();
+    await sbReady();
+    const sb = getSupabase();
     const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
     if(!p || !el) return;
     el.querySelector('.gw-product-linked-img').innerHTML = p.image_url
@@ -14478,8 +14498,8 @@ async function gearDrawerLoadLinked(iid, productId){
 async function showProductCard(productId, itemIid){
   if(!productId) return;
   try {
-    await waitForSupabase();
-    const sb = sbClient();
+    await sbReady();
+    const sb = getSupabase();
     const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
     if(!p) return;
     // Get approved custom fields
