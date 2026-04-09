@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.88 — Gear Organizer</title>
+<title>BaseCamp v4.89 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -238,6 +238,18 @@ html.dark .admin-card-name{color:#c8e8b0;}
 html.dark .admin-page-title{color:#a8d890;}
 .admin-page-sub{font-family:"Space Mono",monospace;font-size:0.48rem;color:var(--stone);margin-bottom:1.5rem;}
 .gw-drawer-divider{border:none;border-top:1.5px dashed var(--lichen);margin:0.5rem 0;}
+/* ── Weight unit selector ── */
+.weight-unit-sel{
+  display:flex;border:1.5px solid rgba(184,201,163,0.4);border-radius:20px;
+  overflow:hidden;flex-shrink:0;height:24px;
+}
+.weight-unit-sel button{
+  background:none;border:none;cursor:pointer;
+  font-family:'Space Mono',monospace;font-size:0.42rem;
+  padding:0 7px;color:var(--stone);transition:all 0.15s;white-space:nowrap;
+}
+.weight-unit-sel button.active{background:var(--moss);color:var(--cream);}
+.weight-unit-sel button:hover:not(.active){background:rgba(184,201,163,0.2);}
 /* ── Custom data fields in drawer ── */
 .gw-fields-section{margin:0.3rem 0 0.1rem;}
 .gw-active-fields{display:flex;flex-direction:column;gap:0;}
@@ -2308,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.88</div>
+      <div class="logo-sub">Gear Organizer · v4.89</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6934,7 +6946,7 @@ function autoSaveDrawer(cid, iid){
 
   // Apply all drawer values
   item.name = name;
-  item.w = toGrams(drawer?.querySelector('.gw-edit-w')?.value||0);
+  item.w = getWeightInGrams(drawer?.querySelector('.gw-edit-w')) ?? toGrams(drawer?.querySelector('.gw-edit-w')?.value||0);
   const extraInp = drawer?.querySelector('.gw-edit-extra');
   if(extraInp) item.extra = extraInp.value.trim();
   const linkInp = drawer?.querySelector('.gw-edit-link');
@@ -6965,7 +6977,7 @@ function saveDrawer(cid, iid, btn){
 
   // Apply values
   item.name = name;
-  const newW = toGrams(drawer.querySelector('.gw-edit-w')?.value);
+  const newW = getWeightInGrams(drawer.querySelector('.gw-edit-w')) ?? toGrams(drawer.querySelector('.gw-edit-w')?.value);
   // If linked to product and user changed weight, mark as override
   if(item.productId && newW !== item.w && item.w !== 0) item.wOverride = newW;
   item.w = newW;
@@ -8140,8 +8152,8 @@ function renderGearWall(){
           </div>
           <div class="gw-field">
             <span class="gw-field-lbl">Weight</span>
-            <input class="gw-field-inp mono gw-edit-w" type="number" min="0" value="${item.w ? displayWVal(item.w) : ''}" placeholder="0"/>
-            <span class="gw-field-unit">${U.v==='oz'?'oz':'g'}</span>
+            <input class="gw-field-inp mono gw-edit-w" id="wInp-${item.id}" type="number" min="0" value="${item.w ? displayWVal(item.w) : ''}" placeholder="0" data-weight-unit="${U.v==='oz'?'oz':'g'}"/>
+            ${_weightUnitSel('wInp-'+item.id, U.v==='oz'?'oz':'g')}
             ${item.wOverride!=null?'<span class="gw-override-badge">📐 your measurement</span>':''}
           </div>
           ${extraLabel ? `
@@ -14528,6 +14540,55 @@ async function gwFetchSaveToDb(cid, iid, scraped){
   }
 }
 
+
+// ── Weight unit selector helpers ──
+// Each weight input gets a unit selector: g / oz / lb
+// The input always stores the value in the SELECTED unit visually,
+// but toGrams() converts to grams when saving.
+function _weightUnitSel(inputId, defaultUnit){
+  const units = ['g','oz','lb'];
+  const btns = units.map(u=>`<button type="button" onclick="weightUnitSwitch('${inputId}','${u}',this)" class="${u===defaultUnit?'active':''}">${u}</button>`).join('');
+  return `<div class="weight-unit-sel" id="wus-${inputId}">${btns}</div>`;
+}
+
+function weightUnitSwitch(inputId, toUnit, btn){
+  const inp = document.getElementById(inputId) || document.querySelector(`[id*="${inputId}"], .${inputId}`);
+  if(!inp) return;
+  // Find current active unit
+  const sel = btn.closest('.weight-unit-sel');
+  const activeBtn = sel.querySelector('.active');
+  const fromUnit = activeBtn?.textContent.trim() || 'g';
+  if(fromUnit === toUnit) return;
+  // Convert displayed value
+  const val = parseFloat(inp.value);
+  if(!isNaN(val) && val > 0){
+    let grams;
+    if(fromUnit==='g')  grams = val;
+    else if(fromUnit==='oz') grams = val * 28.3495;
+    else if(fromUnit==='lb') grams = val * 453.592;
+    let newVal;
+    if(toUnit==='g')  newVal = Math.round(grams);
+    else if(toUnit==='oz') newVal = Math.round(grams / 28.3495 * 10) / 10;
+    else if(toUnit==='lb') newVal = Math.round(grams / 453.592 * 100) / 100;
+    inp.value = newVal;
+  }
+  // Update active state
+  sel.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Store current unit on input for reading
+  inp.dataset.weightUnit = toUnit;
+}
+
+function getWeightInGrams(inp){
+  if(!inp) return null;
+  const val = parseFloat(inp.value);
+  if(isNaN(val) || val <= 0) return null;
+  const unit = inp.dataset.weightUnit || 'g';
+  if(unit==='oz') return Math.round(val * 28.3495);
+  if(unit==='lb') return Math.round(val * 453.592);
+  return Math.round(val);
+}
+
 // ── Custom item data fields ──
 const PRESET_FIELDS=[
   {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'text',   unit:'°C/°F', preset:true},
@@ -14948,7 +15009,10 @@ async function renderAdminPage(){
         <input class="gw-field-inp" id="adm-brand" type="text" autocomplete="off" placeholder="Brand *">
         <input class="gw-field-inp" id="adm-category" list="adm-cat-list" placeholder="Category">
         <datalist id="adm-cat-list"><option value="sleep"><option value="shelter"><option value="pack"><option value="cook"><option value="water"><option value="navigation"><option value="electronics"><option value="footwear"><option value="clothes"><option value="other"></datalist>
-        <input class="gw-field-inp mono" id="adm-weight" type="number" placeholder="Weight (g)">
+        <div style="display:flex;gap:0.4rem;align-items:center;">
+          <input class="gw-field-inp mono" id="adm-weight" type="number" placeholder="Weight" data-weight-unit="g" style="flex:1;">
+          ${_weightUnitSel('adm-weight','g')}
+        </div>
         <input class="gw-field-inp" id="adm-price" type="text" placeholder="Price e.g. $149">
         <div class="full"><input class="gw-field-inp" id="adm-url" type="text" autocomplete="off" placeholder="Product URL (brand site)" style="width:100%;box-sizing:border-box;"></div>
         <div class="full"><input class="gw-field-inp" id="adm-amazon-url" type="text" placeholder="Amazon URL (optional)" autocomplete="off" style="width:100%;box-sizing:border-box;"></div>
@@ -14979,7 +15043,10 @@ async function renderAdminPage(){
             <div class="admin-add-form" style="margin-bottom:0.5rem;">
               <input class="gw-field-inp" id="adm-ep-name-${p.id}" type="text" value="${escH(p.name||'')}" placeholder="Name *" autocomplete="off">
               <input class="gw-field-inp" id="adm-ep-brand-${p.id}" type="text" value="${escH(p.brand||'')}" placeholder="Brand" autocomplete="off">
-              <input class="gw-field-inp mono" id="adm-ep-weight-${p.id}" type="number" value="${p.weight_g||''}" placeholder="Weight (g)">
+              <div style="display:flex;gap:0.4rem;align-items:center;">
+              <input class="gw-field-inp mono" id="adm-ep-weight-${p.id}" type="number" value="${p.weight_g||''}" placeholder="Weight" data-weight-unit="g" style="flex:1;">
+              ${_weightUnitSel('adm-ep-weight-'+p.id,'g')}
+            </div>
               <input class="gw-field-inp" id="adm-ep-price-${p.id}" type="text" value="${escH(p.price||'')}" placeholder="Price e.g. $149" autocomplete="off">
               <input class="gw-field-inp full" id="adm-ep-url-${p.id}" type="text" value="${escH(p.url||'')}" placeholder="Product URL" autocomplete="off">
               <input class="gw-field-inp full" id="adm-ep-img-${p.id}" type="text" value="${escH(p.image_url||'')}" placeholder="Image URL (optional)" autocomplete="off">
@@ -15057,7 +15124,7 @@ async function adminAddProduct(){
   const {error} = await sb.from('gear_products').insert([{
     name, brand,
     category: document.getElementById('adm-category')?.value.trim()||'other',
-    weight_g: parseFloat(document.getElementById('adm-weight')?.value)||null,
+    weight_g: getWeightInGrams(document.getElementById('adm-weight'))||null,
     price: document.getElementById('adm-price')?.value.trim()||null,
     url: document.getElementById('adm-url')?.value.trim()||null,
     affiliate_url: document.getElementById('adm-amazon-url')?.value.trim()||null,
@@ -15128,7 +15195,7 @@ async function adminApproveProduct(id){
   // Read edited values from form if expanded
   const name  = document.getElementById('adm-ep-name-'+id)?.value.trim();
   const brand = document.getElementById('adm-ep-brand-'+id)?.value.trim();
-  const weight_g = parseFloat(document.getElementById('adm-ep-weight-'+id)?.value)||null;
+  const weight_g = getWeightInGrams(document.getElementById('adm-ep-weight-'+id))||null;
   const price = document.getElementById('adm-ep-price-'+id)?.value.trim()||null;
   const url   = document.getElementById('adm-ep-url-'+id)?.value.trim()||null;
   const image_url = document.getElementById('adm-ep-img-'+id)?.value.trim()||null;
