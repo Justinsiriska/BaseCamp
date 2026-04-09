@@ -591,11 +591,15 @@ html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.28);}
 .pack-item-row:hover{background:rgba(184,201,163,0.07);border-radius:5px;}
 .pack-item-left{display:flex;align-items:center;gap:0.35rem;min-width:0;flex:1;}
 .pack-item-name{
-  background:transparent;border:none;font-family:'Nunito',sans-serif;
-  font-size:0.78rem;color:var(--bark);outline:none;padding:1px 3px;
-  border-radius:4px;transition:background 0.15s;min-width:0;flex:1;
+  font-family:'Nunito',sans-serif;font-size:0.78rem;color:var(--bark);
+  padding:1px 3px;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.pack-item-name:focus{background:rgba(184,201,163,0.2);}
+.pack-item-edit-btn{
+  background:none;border:none;cursor:pointer;font-size:0.68rem;
+  opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;flex-shrink:0;
+}
+.pack-item-row:hover .pack-item-edit-btn{opacity:0.5;}
+.pack-item-edit-btn:hover{opacity:1!important;}
 .pack-item-extra{
   font-family:'Nunito',sans-serif;font-size:0.72rem;color:var(--stone);
   opacity:0.65;flex-shrink:0;
@@ -4170,7 +4174,7 @@ function startRenamePack(packId, pillEl){
 }
 function setSeason(s,el){
   season=s;
-  foodSeason=s;
+  foodSeason=s; // keep food bag in sync
   collapsedManual.clear();
   renderPackPills();
   renderCats();
@@ -4184,6 +4188,26 @@ let gwCollapsed={};
 let collapsed={};
 const collapsedManual=new Set();
 const gwCollapsedManual=new Set();
+
+// Open the gear wall drawer for any item by its id
+function openItemDrawer(iid){
+  // Switch to gear wall tab first if needed, then open drawer
+  const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
+  if(wrap){
+    if(!wrap.classList.contains('open')){
+      wrap.classList.add('open');
+      requestAnimationFrame(()=>wrap.querySelector('.gw-edit-name')?.focus());
+    }
+    wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  } else {
+    // GW not rendered yet — switch to gear tab then open
+    document.querySelector('.nav-tab[data-page="gear"]')?.click();
+    setTimeout(()=>{
+      const w2 = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
+      if(w2){ w2.classList.add('open'); requestAnimationFrame(()=>w2.querySelector('.gw-edit-name')?.focus()); w2.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    }, 120);
+  }
+}
 // Pointer-drag state for gear wall items
 const PD={
   active:false, item:null, catId:null, ghost:null,
@@ -5816,9 +5840,7 @@ function renderCats(){
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     // Auto-collapse categories with no items in this pack (user can expand)
-    if(!collapsedManual.has(cat.id)){
-      collapsed[cat.id] = items.length === 0;
-    }
+    if(!collapsedManual.has(cat.id)) collapsed[cat.id] = items.length === 0;
     const w=cw(cat);
     const card=document.createElement('div');
     card.className=`cat-card ${cat.cc} ${collapsed[cat.id]?'collapsed':''}`;
@@ -5830,7 +5852,8 @@ function renderCats(){
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
-          <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('${cat.id}','${item.id}','name',this.value)"/>
+          <span class="pack-item-name">${escH(item.name)}</span>
+          <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${extraTag}
         </div>
         <div class="pack-item-right">
@@ -5891,9 +5914,9 @@ function renderCats(){
         </div>`;
     }
 
-    // Whole row is draggable (like gear wall) — exclude buttons and inputs
+    // Whole row is draggable — exclude buttons
     card.addEventListener('pointerdown', e=>{
-      if(e.target.closest('button')||e.target.closest('input')) return;
+      if(e.target.closest('button')) return;
       const row = e.target.closest('.pack-item-row');
       if(!row) return;
       const cid = row.dataset.packCid;
@@ -5963,7 +5986,7 @@ function renderCats(){
     ucCard.style.cssText = 'margin-bottom:0.5rem;border:1.5px dashed rgba(184,201,163,0.4);background:rgba(184,201,163,0.04);';
     // Whole row draggable for uncategorised too
     ucCard.addEventListener('pointerdown', e=>{
-      if(e.target.closest('button')||e.target.closest('input')) return;
+      if(e.target.closest('button')) return;
       const row = e.target.closest('.pack-item-row');
       if(!row) return;
       const cid = row.dataset.packCid || 'uncategorised';
@@ -6009,7 +6032,8 @@ function renderCats(){
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
-          <input class="gi pack-item-name" type="text" value="${escH(item.name)}" onchange="upd('uncategorised','${item.id}','name',this.value)"/>
+          <span class="pack-item-name">${escH(item.name)}</span>
+          <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}" onclick="startWeightEdit(this,'uncategorised','${item.id}')">${dw(item.w)}</span>
