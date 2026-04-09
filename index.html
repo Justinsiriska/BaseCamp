@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.84 — Gear Organizer</title>
+<title>BaseCamp v4.86 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2308,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.84</div>
+      <div class="logo-sub">Gear Organizer · v4.86</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14497,7 +14497,7 @@ async function gwFetchSaveToDb(cid, iid, scraped){
       price: scraped.price_usd ? '$'+scraped.price_usd : null,
       url: url,
       category,
-      source: 'scraped',
+      source: 'community',
       verified: false,
       custom_fields: {}
     };
@@ -14884,7 +14884,7 @@ async function renderAdminPage(){
 
   // Fetch pending data in parallel
   const [prodRes, editRes, fieldRes, dupRes] = await Promise.all([
-    sb.from('gear_products').select('*').eq('source','community').eq('verified',false).is('duplicate_of',null).order('created_at',{ascending:false}).limit(30),
+    sb.from('gear_products').select('*').in('source',['community','scraped']).eq('verified',false).is('duplicate_of',null).order('created_at',{ascending:false}).limit(30),
     sb.from('gear_product_edits').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(30),
     sb.from('gear_product_field_defs').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(20),
     sb.from('gear_products').select('*').not('duplicate_of','is',null).limit(20),
@@ -14903,14 +14903,14 @@ async function renderAdminPage(){
     <div class="admin-section">
       <div class="admin-section-title"><span>➕</span> Add New Product</div>
       <div class="admin-add-form">
-        <div class="full"><input class="gw-field-inp" id="adm-name" type="text" placeholder="Product name *" style="width:100%;box-sizing:border-box;"></div>
-        <input class="gw-field-inp" id="adm-brand" type="text" placeholder="Brand *">
+        <div class="full"><input class="gw-field-inp" id="adm-name" type="text" autocomplete="off" placeholder="Product name *" style="width:100%;box-sizing:border-box;"></div>
+        <input class="gw-field-inp" id="adm-brand" type="text" autocomplete="off" placeholder="Brand *">
         <input class="gw-field-inp" id="adm-category" list="adm-cat-list" placeholder="Category">
         <datalist id="adm-cat-list"><option value="sleep"><option value="shelter"><option value="pack"><option value="cook"><option value="water"><option value="navigation"><option value="electronics"><option value="footwear"><option value="clothes"><option value="other"></datalist>
         <input class="gw-field-inp mono" id="adm-weight" type="number" placeholder="Weight (g)">
         <input class="gw-field-inp" id="adm-price" type="text" placeholder="Price e.g. $149">
-        <div class="full"><input class="gw-field-inp" id="adm-url" type="text" placeholder="Product URL (brand site)" style="width:100%;box-sizing:border-box;"></div>
-        <div class="full"><input class="gw-field-inp" id="adm-amazon-url" type="text" placeholder="Amazon URL (optional)" style="width:100%;box-sizing:border-box;"></div>
+        <div class="full"><input class="gw-field-inp" id="adm-url" type="text" autocomplete="off" placeholder="Product URL (brand site)" style="width:100%;box-sizing:border-box;"></div>
+        <div class="full"><input class="gw-field-inp" id="adm-amazon-url" type="text" placeholder="Amazon URL (optional)" autocomplete="off" style="width:100%;box-sizing:border-box;"></div>
         <div class="full" style="display:flex;gap:0.5rem;justify-content:flex-end;">
           <button class="gw-confirm-btn" onclick="adminAddProduct()" style="font-size:0.7rem;">✓ Add to Database</button>
         </div>
