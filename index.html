@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.79 — Gear Organizer</title>
+<title>BaseCamp v4.80 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2308,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.79</div>
+      <div class="logo-sub">Gear Organizer · v4.80</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7197,17 +7197,32 @@ function _scrapeOgMeta(doc){
   };
 }
 function _scrapeSpecTable(doc){
-  // Look for weight in spec tables (common on gear sites)
   const result = {weight_g:null, price_usd:null, temp_rating:null, r_value:null, volume_l:null};
-  const rows = doc.querySelectorAll('tr,dl dt,li,.spec-row,.product-spec,.specification');
+  // 1. Try structured spec rows first
+  const rows = doc.querySelectorAll('tr,dl dt,li,.spec-row,.product-spec,.specification,[class*="spec"],[class*="detail"],[class*="feature"]');
   for(const row of rows){
     const text = row.textContent.toLowerCase();
     const val = row.nextElementSibling?.textContent||row.querySelector('td:last-child,dd,.value')?.textContent||'';
     if(!result.weight_g && text.includes('weight')) result.weight_g = _parseWeightToGrams(val||text);
     if(!result.price_usd && text.includes('price')) result.price_usd = _parsePriceUSD(val||text);
-    if(!result.temp_rating && (text.includes('temp')||text.includes('rating')||text.includes('°'))) result.temp_rating = (val||text).trim().slice(0,20)||null;
+    if(!result.temp_rating && (text.includes('temp rating')||text.includes('comfort rating')||text.includes('°f')||text.includes('°c'))) result.temp_rating = (val||text).trim().slice(0,20)||null;
     if(!result.r_value && text.includes('r-value')) result.r_value = (val||text).replace(/[^0-9.]/g,'').slice(0,6)||null;
-    if(!result.volume_l && (text.includes('volume')||text.includes('capacity'))) result.volume_l = (val||text).trim().slice(0,15)||null;
+    if(!result.volume_l && (text.includes('volume')||text.includes('capacity')||text.includes('liter'))) result.volume_l = (val||text).trim().slice(0,15)||null;
+  }
+  // 2. Fallback: scan body text for weight patterns (e.g. "weighs 4.9 oz" or "139 g")
+  if(!result.weight_g){
+    const bodyText = doc.body?.textContent||'';
+    // Look for explicit weight mentions
+    const patterns = [
+      /weight[:\s]+([0-9.]+\s*(?:oz|g|kg|lb))/i,
+      /weighs?\s+([0-9.]+\s*(?:oz|g|kg|lb))/i,
+      /([0-9.]+)\s*oz/i,
+      /([0-9]+)\s*g(?!\w)/,
+    ];
+    for(const pat of patterns){
+      const m = bodyText.match(pat);
+      if(m){ result.weight_g = _parseWeightToGrams(m[0]); if(result.weight_g) break; }
+    }
   }
   return result;
 }
@@ -7273,16 +7288,18 @@ async function gwFetch(cid,iid,btn){
 }
 
 function showModal(d,origName){
-  document.getElementById('m-sub').textContent=`Extracted: ${d.name||origName}`;
+  document.getElementById('m-sub').textContent=`Found: ${d.name||origName}`;
+  // Truncate description to 100 chars
+  const desc = d.description ? d.description.slice(0,100)+(d.description.length>100?'…':'') : null;
   const fields=[
     ['Name',d.name],['Brand',d.brand],
     ['Weight',d.weight_g!=null?d.weight_g+'g':null],
     ['Price',d.price_usd!=null?'$'+d.price_usd:null],
     ['Temp Rating',d.temp_rating],['R-Value',d.r_value],
-    ['Volume',d.volume_l],['Description',d.description]
+    ['Volume',d.volume_l],['Notes',desc]
   ].filter(([,v])=>v!=null);
   document.getElementById('m-res').innerHTML=fields.map(([k,v])=>`
-    <div class="mf"><span class="mf-lbl">${k}</span><span class="mf-val">${v}</span></div>`).join('');
+    <div class="mf"><span class="mf-lbl">${k}</span><span class="mf-val" style="white-space:normal;word-break:break-word;">${escH(String(v))}</span></div>`).join('');
   document.getElementById('modal-ov').classList.add('open');
   document.getElementById('m-apply').onclick=applyModal;
 }
