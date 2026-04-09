@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.94 — Gear Organizer</title>
+<title>BaseCamp v4.95 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2320,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.94</div>
+      <div class="logo-sub">Gear Organizer · v4.95</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14631,13 +14631,51 @@ function getWeightInGrams(inp){
   return Math.round(val);
 }
 
+// ── Field unit selectors (volume, temp, length) ──
+function _fieldUnitSel(inputId, units, defaultUnit){
+  const btns = units.map(u=>`<button type="button" onclick="fieldUnitSwitch('${inputId}','${u}',this)" class="${u===defaultUnit?'active':''}">${u}</button>`).join('');
+  return `<div class="weight-unit-sel field-unit-sel" id="fus-${inputId}">${btns}</div>`;
+}
+
+function fieldUnitSwitch(inputId, toUnit, btn){
+  const inp = document.getElementById(inputId) || document.querySelector(`[data-field-input-id="${inputId}"]`);
+  if(!inp) return;
+  const sel = btn.closest('.field-unit-sel');
+  const activeBtn = sel.querySelector('.active');
+  const fromUnit = activeBtn?.textContent.trim() || toUnit;
+  if(fromUnit === toUnit){ btn.classList.add('active'); return; }
+  // Convert value
+  const val = parseFloat(inp.value);
+  if(!isNaN(val) && val > 0){
+    // Volume conversions (base: ml)
+    const toMl = {'ml':1,'L':1000,'fl oz':29.5735};
+    if(toMl[fromUnit] && toMl[toUnit]){
+      const ml = val * toMl[fromUnit];
+      const conv = ml / toMl[toUnit];
+      inp.value = Math.round(conv * 100) / 100;
+    }
+    // Temp conversions
+    else if(fromUnit==='°C' && toUnit==='°F') inp.value = Math.round(val * 9/5 + 32);
+    else if(fromUnit==='°F' && toUnit==='°C') inp.value = Math.round((val - 32) * 5/9);
+    // Length conversions (base: mm)
+    const toMm = {'mm':1,'cm':10,'in':25.4};
+    if(toMm[fromUnit] && toMm[toUnit]){
+      const mm = val * toMm[fromUnit];
+      inp.value = Math.round(mm / toMm[toUnit] * 100) / 100;
+    }
+  }
+  sel.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  inp.dataset.fieldUnit = toUnit;
+}
+
 // ── Custom item data fields ──
 const PRESET_FIELDS=[
-  {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'text',   unit:'°C/°F', preset:true},
+  {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'number', unit:'°C',   unitKey:'temp_unit',   units:['°C','°F'],           preset:true},
   {key:'rvalue',  label:'R-Value',     icon:'🔲', type:'number', unit:'',      preset:true},
-  {key:'length',  label:'Length',      icon:'📏', type:'text',   unit:'cm/in', preset:true},
-  {key:'volume',  label:'Volume',      icon:'📦', type:'number', unit:'ml/L',  preset:true},
-  {key:'battery', label:'Battery Life',icon:'🔋', type:'text',   unit:'hrs',   preset:true},
+  {key:'length',  label:'Length',      icon:'📏', type:'number', unit:'cm',    unitKey:'length_unit', units:['cm','in','mm'],       preset:true},
+  {key:'volume',  label:'Volume',      icon:'📦', type:'number', unit:'ml',    unitKey:'volume_unit', units:['ml','L','fl oz'],     preset:true},
+  {key:'battery', label:'Battery Life',icon:'🔋', type:'number', unit:'hrs',   preset:true},
 ];
 window.CUSTOM_FIELD_DEFS=[...PRESET_FIELDS];
 function getFieldDefs(){const defs=window.CUSTOM_FIELD_DEFS||[...PRESET_FIELDS];PRESET_FIELDS.forEach(p=>{if(!defs.find(d=>d.key===p.key))defs.unshift(p);});return defs;}
@@ -15236,12 +15274,17 @@ async function adminAddProduct(){
 
 function buildAdminFieldsSection(pid, existingFields){
   const defs = getFieldDefs();
-  const activeRows = defs.filter(def=>existingFields[def.key]!==undefined&&existingFields[def.key]!=='').map(def=>`
-    <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
+  const activeRows = defs.filter(def=>existingFields[def.key]!==undefined&&existingFields[def.key]!=='').map(def=>{
+    const fid = `adm-f-${pid}-${def.key}`;
+    const curUnit = def.unitKey ? (existingFields[def.unitKey]||def.units[0]) : null;
+    const unitSel = def.units ? _fieldUnitSel(fid, def.units, curUnit) : '';
+    return`<div class="gw-field gw-active-field-row" data-field-key="${def.key}">
       <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
-      <input class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${def.key}" type="${def.type==='number'?'number':'text'}" value="${escH(String(existingFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      <input class="gw-field-inp gw-field-val-inp adm-field-val" id="${fid}" data-field-input-id="${fid}" data-field-key="${def.key}" data-field-unit="${curUnit||''}" data-unit-key="${def.unitKey||''}" type="number" value="${escH(String(existingFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      ${unitSel}
       <button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${def.key}\']')?.classList.remove('active')">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   const chips = defs.map(def=>{
     const hasValue = existingFields[def.key]!==undefined&&existingFields[def.key]!=='';
     return`<button type="button" class="gw-field-chip${hasValue?' active':''}" onclick="adminToggleField('${pid}','${def.key}',this)">${def.icon} ${escH(def.label)}</button>`;
@@ -15268,7 +15311,10 @@ function adminToggleField(pid, fieldKey, chipBtn){
     chipBtn.classList.add('active');
     const row = document.createElement('div');
     row.className = 'gw-field gw-active-field-row'; row.dataset.fieldKey = fieldKey;
-    row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${fieldKey}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${fieldKey}\']')?.classList.remove('active')">✕</button>`;
+    const fid = `adm-f-${pid}-${fieldKey}`;
+    const defaultUnit = def.units ? def.units[0] : '';
+    const unitSelHtml = def.units ? _fieldUnitSel(fid, def.units, defaultUnit) : '';
+    row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp adm-field-val" id="${fid}" data-field-input-id="${fid}" data-field-key="${fieldKey}" data-field-unit="${defaultUnit}" data-unit-key="${def.unitKey||''}" type="number" value="" placeholder="${escH(def.unit||'')}"/>${unitSelHtml}<button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${fieldKey}\']')?.classList.remove('active')">✕</button>`;
     activeFields.appendChild(row);
     row.querySelector('input')?.focus();
   }
@@ -15278,7 +15324,13 @@ function readAdminFields(pid){
   const fields = {};
   document.querySelectorAll(`.adm-fields-${pid} .adm-field-val`).forEach(inp=>{
     const key = inp.dataset.fieldKey; const val = inp.value.trim();
-    if(key && val!=='') fields[key] = val;
+    if(key && val!==''){
+      fields[key] = val;
+      // Save companion unit key if present
+      const unitKey = inp.dataset.unitKey;
+      const unit = inp.dataset.fieldUnit;
+      if(unitKey && unit) fields[unitKey] = unit;
+    }
   });
   return fields;
 }
