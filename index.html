@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.82 — Gear Organizer</title>
+<title>BaseCamp v4.83 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2308,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.82</div>
+      <div class="logo-sub">Gear Organizer · v4.83</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6017,7 +6017,7 @@ function renderCats(){
     card.dataset.cid=cat.id;
 
     const rows=items.map(item=>{
-      const extraTag = item.extra ? `<span class="pack-item-extra">${escH(item.extra)}</span>` : '';
+      const extraTag = (item.extra && /[0-9]/.test(item.extra)) ? `<span class="pack-item-extra">${escH(item.extra)}</span>` : '';
       const buyBtn = item.productId ? `<button class="pack-item-buy-btn" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">🛒</button>` : '';
       return `<div class="pack-item-row" data-pack-cid="${cat.id}" data-pack-iid="${item.id}">
         <div class="pack-item-left">
@@ -8066,7 +8066,7 @@ function renderGearWall(){
         const sdots=PACKS.slice(0,6).map(p=>`
           <span class="gw-sdot${item.s.includes(p.id)?' on':''}" data-ss="${p.id}" title="${p.name}"></span>`).join('');
 
-        const extraTag=item.extra?`<span class="gw-item-extra">${item.extra}</span>`:'';
+        const extraTag=(item.extra&&/[0-9]/.test(item.extra))?`<span class="gw-item-extra">${item.extra}</span>`:''; 
         const hasLink=item.link&&item.link.trim();
 
         // CHIP — drag handle on left, click anywhere else to expand drawer
