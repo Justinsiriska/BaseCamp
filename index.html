@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.80 — Gear Organizer</title>
+<title>BaseCamp v4.81 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2308,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.80</div>
+      <div class="logo-sub">Gear Organizer · v4.81</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7207,7 +7207,11 @@ function _scrapeSpecTable(doc){
     if(!result.price_usd && text.includes('price')) result.price_usd = _parsePriceUSD(val||text);
     if(!result.temp_rating && (text.includes('temp rating')||text.includes('comfort rating')||text.includes('°f')||text.includes('°c'))) result.temp_rating = (val||text).trim().slice(0,20)||null;
     if(!result.r_value && text.includes('r-value')) result.r_value = (val||text).replace(/[^0-9.]/g,'').slice(0,6)||null;
-    if(!result.volume_l && (text.includes('volume')||text.includes('capacity')||text.includes('liter'))) result.volume_l = (val||text).trim().slice(0,15)||null;
+    if(!result.volume_l && (text.includes('volume')||text.includes('capacity')||text.includes('liter'))){
+      const v = (val||text).trim().slice(0,20);
+      // Only keep if it contains a number (real measurement, not "See details")
+      if(/[0-9]/.test(v)) result.volume_l = v;
+    }
   }
   // 2. Fallback: scan body text for weight patterns (e.g. "weighs 4.9 oz" or "139 g")
   if(!result.weight_g){
@@ -7324,9 +7328,10 @@ function applyModal(){
     if(nameInp && d.name && (!nameInp.value||nameInp.value==='New Item')) nameInp.value=d.name;
     if(wInp && d.weight_g && (!wInp.value||wInp.value==='0')) wInp.value=d.weight_g;
     if(extraInp && !extraInp.value){
-      if(d.temp_rating) extraInp.value=d.temp_rating;
-      else if(d.r_value) extraInp.value=d.r_value;
-      else if(d.volume_l) extraInp.value=d.volume_l;
+      // Only set extra if it looks like a real measurement (not generic words)
+      const badValues = ['details','description','specifications','specs','n/a','see details','view details',''];
+      const candidates = [d.temp_rating, d.r_value, d.volume_l].filter(v=>v&&!badValues.includes(String(v).toLowerCase().trim()));
+      if(candidates.length) extraInp.value = candidates[0];
     }
     if(linkInp && d.url) linkInp.value=d.url;
     toast('✅ Data filled in — hit Save to keep it');
@@ -8077,7 +8082,7 @@ function renderGearWall(){
           </div>
           <div class="gw-item-right">
             <span class="gw-item-weight">${dw(item.w)}</span>
-            ${hasLink?`<span class="gw-link-indicator" title="Has product link">🔗</span>`:''}
+            ${item.productId?`<button class="pack-item-buy-btn" style="opacity:0.7;" onclick="event.stopPropagation();showProductCard('${item.productId}')">🛒</button>`:hasLink?`<span class="gw-link-indicator" title="Has product link" style="font-size:0.7rem;cursor:pointer;" onclick="event.stopPropagation();window.open('${escH(item.link)}','_blank')">🔗</span>`:''}
             <button class="gw-item-edit-btn" title="Edit item"
               style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
             <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
