@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.92 — Gear Organizer</title>
+<title>BaseCamp v4.93 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2320,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.92</div>
+      <div class="logo-sub">Gear Organizer · v4.93</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -15346,11 +15346,13 @@ async function adminLookupSearch(val){
               ${_weightUnitSel('adm-lu-weight-'+p.id,'g')}
             </div>
             <input class="gw-field-inp" id="adm-lu-price-${p.id}" type="text" value="${escH(p.price||'')}" placeholder="Price" autocomplete="off">
+          </div>
+          ${buildAdminFieldsSection('lu-'+p.id, p.custom_fields||{})}
+          <div class="admin-add-form" style="margin-bottom:0.5rem;">
             <input class="gw-field-inp full" id="adm-lu-url-${p.id}" type="text" value="${escH(p.url||'')}" placeholder="Product URL" autocomplete="off">
             <input class="gw-field-inp full" id="adm-lu-amazon-${p.id}" type="text" value="${escH(p.affiliate_url||'')}" placeholder="Amazon URL" autocomplete="off">
             <input class="gw-field-inp full" id="adm-lu-img-${p.id}" type="text" value="${escH(p.image_url||'')}" placeholder="Image URL" autocomplete="off">
           </div>
-          ${buildAdminFieldsSection('lu-'+p.id, p.custom_fields||{})}
           <div style="display:flex;gap:0.4rem;justify-content:flex-end;margin-top:0.4rem;">
             <label style="display:flex;align-items:center;gap:0.3rem;font-family:Space Mono,monospace;font-size:0.45rem;color:var(--stone);cursor:pointer;">
               <input type="checkbox" id="adm-lu-verified-${p.id}" ${p.verified?'checked':''} style="width:12px;height:12px;"> Verified
