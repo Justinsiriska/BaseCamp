@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.77 — Gear Organizer</title>
+<title>BaseCamp v4.78 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -213,6 +213,30 @@ html.dark .p1-left{
 .gw-field-unit{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--stone);flex-shrink:0;}
 
 /* Divider */
+.admin-section{background:var(--paper);border:1.5px solid rgba(184,201,163,0.4);border-radius:16px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;}
+html.dark .admin-section{background:rgba(14,22,12,0.88);border-color:rgba(72,108,52,0.4);}
+.admin-section-title{font-family:"Space Mono",monospace;font-size:0.55rem;text-transform:uppercase;letter-spacing:2px;color:var(--stone);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem;}
+.admin-section-title span{font-size:0.9rem;}
+.admin-card{background:rgba(245,240,232,0.6);border:1px solid rgba(184,201,163,0.35);border-radius:10px;padding:0.7rem 0.9rem;margin-bottom:0.5rem;display:flex;align-items:flex-start;gap:0.8rem;}
+html.dark .admin-card{background:rgba(15,25,12,0.7);border-color:rgba(55,85,40,0.4);}
+.admin-card-info{flex:1;min-width:0;}
+.admin-card-name{font-family:"Nunito",sans-serif;font-size:0.78rem;font-weight:800;color:var(--bark);margin-bottom:0.15rem;}
+html.dark .admin-card-name{color:#c8e8b0;}
+.admin-card-meta{font-family:"Space Mono",monospace;font-size:0.45rem;color:var(--stone);line-height:1.6;}
+.admin-card-actions{display:flex;gap:0.4rem;flex-shrink:0;align-items:center;}
+.admin-approve-btn{background:rgba(74,103,65,0.15);border:1.5px solid var(--moss);color:var(--forest);border-radius:20px;padding:3px 12px;font-family:"Nunito",sans-serif;font-size:0.65rem;font-weight:800;cursor:pointer;transition:all 0.15s;}
+.admin-approve-btn:hover{background:var(--moss);color:var(--cream);}
+.admin-reject-btn{background:rgba(200,90,42,0.1);border:1.5px solid rgba(200,90,42,0.4);color:var(--ember);border-radius:20px;padding:3px 10px;font-family:"Nunito",sans-serif;font-size:0.65rem;font-weight:800;cursor:pointer;transition:all 0.15s;}
+.admin-reject-btn:hover{background:var(--ember);color:var(--cream);}
+.admin-badge{font-family:"Space Mono",monospace;font-size:0.38rem;border-radius:10px;padding:2px 6px;flex-shrink:0;}
+.admin-badge.pending{background:rgba(232,168,53,0.15);color:var(--sun);border:1px solid rgba(232,168,53,0.3);}
+.admin-badge.dup{background:rgba(200,90,42,0.12);color:var(--ember);border:1px solid rgba(200,90,42,0.25);}
+.admin-empty{font-family:"Space Mono",monospace;font-size:0.52rem;color:var(--stone);opacity:0.5;text-align:center;padding:1rem;}
+.admin-add-form{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;}
+.admin-add-form .full{grid-column:1/-1;}
+.admin-page-title{font-family:"Playfair Display",serif;font-size:1.4rem;color:var(--bark);margin-bottom:0.3rem;}
+html.dark .admin-page-title{color:#a8d890;}
+.admin-page-sub{font-family:"Space Mono",monospace;font-size:0.48rem;color:var(--stone);margin-bottom:1.5rem;}
 .gw-drawer-divider{border:none;border-top:1.5px dashed var(--lichen);margin:0.5rem 0;}
 /* ── Custom data fields in drawer ── */
 .gw-fields-section{margin:0.3rem 0 0.1rem;}
@@ -2284,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.77</div>
+      <div class="logo-sub">Gear Organizer · v4.78</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2294,6 +2318,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <button class="nav-tab" onclick="showPage('trips',this);renderTripsPage()">🏕️ Trips</button>
     <button class="nav-tab" onclick="showPage('crew',this);renderCrewPage()">👥 Crew</button>
     <button class="nav-tab" onclick="showPage('demo',this);renderDemoPage();startDemo()">▶ Demo</button>
+    <button class="nav-tab" id="admin-nav-tab" style="display:none;" onclick="showPage('admin',this);renderAdminPage()">⚙️ Admin</button>
   </div>
   <div class="hdr-right">
     <div class="total-badge">Total: <strong id="total-disp">2000g</strong></div>
@@ -4171,6 +4196,9 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 
 <!-- PAGE 6 — DEMO -->
 <div id="page-demo" class="page"></div>
+
+<!-- PAGE 7 — ADMIN -->
+<div id="page-admin" class="page" style="padding:1.5rem 2rem;max-width:1100px;margin:0 auto;"></div>
 
 <!-- MODALS — body level so they work on all pages -->
 <!-- API KEY MODAL -->
@@ -14731,6 +14759,220 @@ async function showProductCard(productId, itemIid){
   } catch(e){ console.warn('[GearDB] showProductCard failed:', e); }
 }
 
+
+// ============================================================
+// ADMIN PANEL — justinsiriska@gmail.com only
+// ============================================================
+const ADMIN_EMAIL = 'justinsiriska@gmail.com';
+
+function isAdmin(){
+  return _sbUser?.email === ADMIN_EMAIL;
+}
+
+function adminCheckAndShow(){
+  const tab = document.getElementById('admin-nav-tab');
+  if(tab) tab.style.display = isAdmin() ? '' : 'none';
+}
+
+async function renderAdminPage(){
+  if(!isAdmin()){ document.getElementById('page-admin').innerHTML='<div style="padding:3rem;text-align:center;color:var(--stone);font-family:Space Mono,monospace;font-size:0.6rem;">Access denied.</div>'; return; }
+  const el = document.getElementById('page-admin');
+  el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--stone);font-family:Space Mono,monospace;font-size:0.5rem;">Loading…</div>';
+  
+  await waitForSupabase();
+  const sb = sbClient();
+
+  // Fetch pending data in parallel
+  const [prodRes, editRes, fieldRes, dupRes] = await Promise.all([
+    sb.from('gear_products').select('*').eq('source','community').eq('verified',false).is('duplicate_of',null).order('created_at',{ascending:false}).limit(30),
+    sb.from('gear_product_edits').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(30),
+    sb.from('gear_product_field_defs').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(20),
+    sb.from('gear_products').select('*').not('duplicate_of','is',null).limit(20),
+  ]);
+
+  const pending = prodRes.data||[];
+  const edits = editRes.data||[];
+  const fieldDefs = fieldRes.data||[];
+  const dups = dupRes.data||[];
+
+  el.innerHTML = `
+    <div class="admin-page-title">⚙️ Admin Panel</div>
+    <div class="admin-page-sub">Logged in as ${escH(_sbUser.email)}</div>
+
+    <!-- QUICK ADD PRODUCT -->
+    <div class="admin-section">
+      <div class="admin-section-title"><span>➕</span> Add New Product</div>
+      <div class="admin-add-form">
+        <div class="full"><input class="gw-field-inp" id="adm-name" type="text" placeholder="Product name *" style="width:100%;box-sizing:border-box;"></div>
+        <input class="gw-field-inp" id="adm-brand" type="text" placeholder="Brand *">
+        <input class="gw-field-inp" id="adm-category" list="adm-cat-list" placeholder="Category">
+        <datalist id="adm-cat-list"><option value="sleep"><option value="shelter"><option value="pack"><option value="cook"><option value="water"><option value="navigation"><option value="electronics"><option value="footwear"><option value="clothes"><option value="other"></datalist>
+        <input class="gw-field-inp mono" id="adm-weight" type="number" placeholder="Weight (g)">
+        <input class="gw-field-inp" id="adm-price" type="text" placeholder="Price e.g. $149">
+        <div class="full"><input class="gw-field-inp" id="adm-url" type="text" placeholder="Product URL" style="width:100%;box-sizing:border-box;"></div>
+        <div class="full" style="display:flex;gap:0.5rem;justify-content:flex-end;">
+          <button class="gw-confirm-btn" onclick="adminAddProduct()" style="font-size:0.7rem;">✓ Add to Database</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENDING PRODUCTS -->
+    <div class="admin-section">
+      <div class="admin-section-title"><span>🆕</span> Pending Community Products <span class="admin-badge pending">${pending.length}</span></div>
+      ${pending.length===0
+        ? '<div class="admin-empty">No pending products — all clear ✓</div>'
+        : pending.map(p=>`
+        <div class="admin-card" id="adm-prod-${p.id}">
+          <div class="admin-card-info">
+            <div class="admin-card-name">${escH(p.name)}</div>
+            <div class="admin-card-meta">
+              ${escH(p.brand||'—')} · ${p.category||'?'} · ${p.weight_g?p.weight_g+'g':'no weight'} · ${p.price||'no price'}<br>
+              ${p.url?`<a href="${escH(p.url)}" target="_blank" style="color:var(--water);">↗ ${escH(p.url.slice(0,50))}…</a>`:'no url'}
+            </div>
+          </div>
+          <div class="admin-card-actions">
+            <button class="admin-approve-btn" onclick="adminApproveProduct('${p.id}')">✓ Approve</button>
+            <button class="admin-reject-btn" onclick="adminRejectProduct('${p.id}')">✕</button>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- PENDING EDITS -->
+    <div class="admin-section">
+      <div class="admin-section-title"><span>✏️</span> Pending Edits <span class="admin-badge pending">${edits.length}</span></div>
+      ${edits.length===0
+        ? '<div class="admin-empty">No pending edits — all clear ✓</div>'
+        : edits.map(e=>`
+        <div class="admin-card" id="adm-edit-${e.id}">
+          <div class="admin-card-info">
+            <div class="admin-card-name">${escH(e.field)}: <span style="color:var(--stone);font-weight:400;text-decoration:line-through;">${escH(e.old_value||'—')}</span> → <span style="color:var(--forest);font-weight:800;">${escH(e.suggested_value)}</span></div>
+            <div class="admin-card-meta">Product ID: ${e.product_id} · By: ${e.submitted_by||'anon'}</div>
+          </div>
+          <div class="admin-card-actions">
+            <button class="admin-approve-btn" onclick="adminApproveEdit('${e.id}','${e.product_id}','${escH(e.field)}','${escH(e.suggested_value)}')">✓</button>
+            <button class="admin-reject-btn" onclick="adminRejectEdit('${e.id}')">✕</button>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- PENDING FIELD DEFS -->
+    <div class="admin-section">
+      <div class="admin-section-title"><span>🏷️</span> Pending Field Definitions <span class="admin-badge pending">${fieldDefs.length}</span></div>
+      ${fieldDefs.length===0
+        ? '<div class="admin-empty">No pending field definitions ✓</div>'
+        : fieldDefs.map(f=>`
+        <div class="admin-card" id="adm-fdef-${f.id}">
+          <div class="admin-card-info">
+            <div class="admin-card-name">${f.icon||'🏷️'} ${escH(f.label)} <span style="font-weight:400;color:var(--stone);">(${f.key})</span></div>
+            <div class="admin-card-meta">Type: ${f.type} · Unit: ${f.unit||'—'} · Category hint: ${f.category_hint||'any'}</div>
+          </div>
+          <div class="admin-card-actions">
+            <button class="admin-approve-btn" onclick="adminApproveFieldDef('${f.id}')">✓ Approve</button>
+            <button class="admin-reject-btn" onclick="adminRejectFieldDef('${f.id}')">✕</button>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- DUPLICATES -->
+    <div class="admin-section">
+      <div class="admin-section-title"><span>⚠️</span> Flagged Duplicates <span class="admin-badge dup">${dups.length}</span></div>
+      ${dups.length===0
+        ? '<div class="admin-empty">No flagged duplicates ✓</div>'
+        : dups.map(p=>`
+        <div class="admin-card" id="adm-dup-${p.id}">
+          <div class="admin-card-info">
+            <div class="admin-card-name">${escH(p.name)}</div>
+            <div class="admin-card-meta">${escH(p.brand||'—')} — flagged as duplicate of ${p.duplicate_of}</div>
+          </div>
+          <div class="admin-card-actions">
+            <button class="admin-approve-btn" onclick="adminKeepProduct('${p.id}')">Keep</button>
+            <button class="admin-reject-btn" onclick="adminDeleteProduct('${p.id}')">Delete</button>
+          </div>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+async function adminAddProduct(){
+  const name = document.getElementById('adm-name')?.value.trim();
+  const brand = document.getElementById('adm-brand')?.value.trim();
+  if(!name||!brand){ toast('⚠️ Name and brand are required'); return; }
+  const sb = sbClient();
+  const {error} = await sb.from('gear_products').insert([{
+    name, brand,
+    category: document.getElementById('adm-category')?.value.trim()||'other',
+    weight_g: parseFloat(document.getElementById('adm-weight')?.value)||null,
+    price: document.getElementById('adm-price')?.value.trim()||null,
+    url: document.getElementById('adm-url')?.value.trim()||null,
+    source: 'seeded', verified: true
+  }]);
+  if(error){ toast('❌ '+error.message); return; }
+  toast('✅ Product added to database!');
+  ['adm-name','adm-brand','adm-category','adm-weight','adm-price','adm-url'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+}
+
+async function adminApproveProduct(id){
+  const sb=sbClient();
+  await sb.from('gear_products').update({verified:true}).eq('id',id);
+  document.getElementById('adm-prod-'+id)?.remove();
+  toast('✅ Product approved');
+}
+async function adminRejectProduct(id){
+  const sb=sbClient();
+  await sb.from('gear_products').delete().eq('id',id);
+  document.getElementById('adm-prod-'+id)?.remove();
+  toast('🗑 Product rejected and deleted');
+}
+async function adminApproveEdit(editId, productId, field, value){
+  const sb=sbClient();
+  // Apply the edit to the product
+  const update = {};
+  if(field.startsWith('custom_fields.')){
+    // Need to fetch current custom_fields first
+    const {data:p} = await sb.from('gear_products').select('custom_fields').eq('id',productId).single();
+    const cf = p?.custom_fields||{};
+    cf[field.split('.')[1]] = value;
+    update.custom_fields = cf;
+  } else {
+    update[field] = field==='weight_g' ? parseFloat(value) : value;
+  }
+  await sb.from('gear_products').update(update).eq('id',productId);
+  await sb.from('gear_product_edits').update({status:'approved'}).eq('id',editId);
+  document.getElementById('adm-edit-'+editId)?.remove();
+  toast('✅ Edit approved and applied');
+}
+async function adminRejectEdit(editId){
+  const sb=sbClient();
+  await sb.from('gear_product_edits').update({status:'rejected'}).eq('id',editId);
+  document.getElementById('adm-edit-'+editId)?.remove();
+  toast('🗑 Edit rejected');
+}
+async function adminApproveFieldDef(id){
+  const sb=sbClient();
+  await sb.from('gear_product_field_defs').update({status:'approved'}).eq('id',id);
+  document.getElementById('adm-fdef-'+id)?.remove();
+  toast('✅ Field definition approved');
+}
+async function adminRejectFieldDef(id){
+  const sb=sbClient();
+  await sb.from('gear_product_field_defs').update({status:'rejected'}).eq('id',id);
+  document.getElementById('adm-fdef-'+id)?.remove();
+  toast('🗑 Field definition rejected');
+}
+async function adminKeepProduct(id){
+  const sb=sbClient();
+  // Clear the duplicate flag
+  await sb.from('gear_products').update({duplicate_of:null,verified:true}).eq('id',id);
+  document.getElementById('adm-dup-'+id)?.remove();
+  toast('✅ Product kept and verified');
+}
+async function adminDeleteProduct(id){
+  const sb=sbClient();
+  await sb.from('gear_products').delete().eq('id',id);
+  document.getElementById('adm-dup-'+id)?.remove();
+  toast('🗑 Duplicate deleted');
+}
+
 // SUPABASE — Auth & Cloud Sync
 // ================================================================
 const SUPABASE_URL = 'https://hibvetgynyakgeriajty.supabase.co';
@@ -15078,6 +15320,8 @@ async function authSyncNow(){
 function authUpdateUI(user){
   const btn = document.getElementById('auth-btn');
   if(!btn) return;
+  // Show/hide admin tab based on logged-in user
+  adminCheckAndShow();
   if(user){
     const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Account';
     btn.textContent = '⛰️ ' + name;
