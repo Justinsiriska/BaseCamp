@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.74 — Gear Organizer</title>
+<title>BaseCamp v4.76 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2247,7 +2247,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.74</div>
+      <div class="logo-sub">Gear Organizer · v4.76</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6874,6 +6874,7 @@ function autoSaveDrawer(cid, iid){
   if(extraInp) item.extra = extraInp.value.trim();
   const linkInp = drawer?.querySelector('.gw-edit-link');
   if(linkInp) item.link = linkInp.value.trim();
+  item.fields = readDrawerFields(drawer);
   delete item._new;
 
   wrap.classList.remove('open');
@@ -6907,6 +6908,7 @@ function saveDrawer(cid, iid, btn){
   if(extraInp) item.extra = extraInp.value.trim();
   const linkInp = drawer.querySelector('.gw-edit-link');
   if(linkInp) item.link = linkInp.value.trim();
+  item.fields = readDrawerFields(drawer);
   // productId is set directly on item by gearDrawerSelect/gearDrawerUnlink
   delete item._new;
 
@@ -7991,6 +7993,7 @@ function renderGearWall(){
             <span class="gw-field-lbl">${extraLabel.split('/')[0].trim()}</span>
             <input class="gw-field-inp mono gw-edit-extra" type="text" value="${escH(item.extra||'')}" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
           </div>` : ''}
+          ${buildDrawerFieldsSection(item)}
           <hr class="gw-drawer-divider"/>
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
@@ -8532,7 +8535,7 @@ function getPayload(){
       id:cat.id, name:cat.name, icon:cat.icon, color:cat.color,
       hasExtra:cat.hasExtra, extraLabel:cat.extraLabel||'',
       onGearWall: cat.onGearWall!==false,
-      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s,gwCatId:i.gwCatId||cat.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null})),
+      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s,gwCatId:i.gwCatId||cat.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{}})),
       packs: cat.packs||null
     })),
     foodSeason,
@@ -8789,7 +8792,7 @@ function loadState(){
         hasExtra: c.hasExtra||false, extraLabel: c.extraLabel||'',
         pc: PC_MAP[c.id] || 'pill-general',
         cc: CC_MAP[c.id] || 'cc-general',
-        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null})),
+        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{}})),
         packs: c.packs||null,
         onGearWall: c.onGearWall !== false
       });
@@ -8856,6 +8859,7 @@ function loadState(){
     }
 
     _stateLoaded = true;
+    window.CUSTOM_FIELD_DEFS = mergeFieldDefs(d.customFieldDefs||[]);
     return true;
   } catch(e){ return false; }
 }
@@ -14367,6 +14371,82 @@ async function gwFetchSaveToDb(cid, iid, scraped){
     console.warn('[GearDB] gwFetchSaveToDb error:', e);
   }
 }
+
+// ── Custom item data fields ──
+const PRESET_FIELDS=[
+  {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'text',   unit:'°C/°F', preset:true},
+  {key:'rvalue',  label:'R-Value',     icon:'🔲', type:'number', unit:'',      preset:true},
+  {key:'length',  label:'Length',      icon:'📏', type:'text',   unit:'cm/in', preset:true},
+  {key:'volume',  label:'Volume',      icon:'📦', type:'text',   unit:'L/ml',  preset:true},
+  {key:'battery', label:'Battery Life',icon:'🔋', type:'text',   unit:'hrs',   preset:true},
+];
+window.CUSTOM_FIELD_DEFS=[...PRESET_FIELDS];
+function getFieldDefs(){const defs=window.CUSTOM_FIELD_DEFS||[...PRESET_FIELDS];PRESET_FIELDS.forEach(p=>{if(!defs.find(d=>d.key===p.key))defs.unshift(p);});return defs;}
+function mergeFieldDefs(saved){const merged=[...PRESET_FIELDS];(saved||[]).forEach(def=>{if(!def.preset&&!merged.find(d=>d.key===def.key))merged.push(def);});return merged;}
+function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>d.key===def.key)){defs.push(def);window.CUSTOM_FIELD_DEFS=defs;scheduleSave();}}
+function renderItemFieldPills(item){
+  if(!item.fields||!Object.keys(item.fields).length)return'';
+  const defs=getFieldDefs();
+  return Object.entries(item.fields).map(([key,val])=>{
+    if(val===''||val===null||val===undefined)return'';
+    const def=defs.find(d=>d.key===key)||{icon:'🏷️',label:key};
+    return`<span class="item-field-pill" title="${escH(def.label)}"><span class="pill-icon">${def.icon}</span>${escH(String(val))}</span>`;
+  }).join('');
+}
+function buildDrawerFieldsSection(item){
+  const defs=getFieldDefs();const itemFields=item.fields||{};
+  const activeRows=defs.filter(def=>itemFields[def.key]!==undefined&&itemFields[def.key]!=='').map(def=>`
+    <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
+      <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
+      <input class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" type="${def.type==='number'?'number':'text'}" value="${escH(String(itemFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      <button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${item.id}','${def.key}',this)">✕</button>
+    </div>`).join('');
+  const chips=defs.map(def=>{const hasValue=itemFields[def.key]!==undefined&&itemFields[def.key]!=='';return`<button type="button" class="gw-field-chip${hasValue?' active':''}" onclick="drawerToggleField('${item.id}','${def.key}',this)">${def.icon} ${escH(def.label)}</button>`;}).join('');
+  return`<div class="gw-fields-section">
+    <div class="gw-active-fields">${activeRows}</div>
+    <div class="gw-fields-label" style="margin-top:0.35rem;">Add Data Field</div>
+    <div class="gw-field-chips">${chips}<button type="button" class="gw-field-chip" onclick="drawerShowNewFieldForm(this)" style="border-style:dashed;opacity:0.6;">＋ Custom</button></div>
+    <div class="gw-new-field-form" id="gw-new-field-form-${item.id}">
+      <div class="gw-new-field-row"><input class="gw-field-inp" id="gnf-label-${item.id}" type="text" placeholder="Field name" style="flex:2;"><select class="gw-field-inp" id="gnf-type-${item.id}" style="flex:1;"><option value="text">Text</option><option value="number">Number</option></select></div>
+      <div class="gw-new-field-row"><input class="gw-field-inp" id="gnf-unit-${item.id}" type="text" placeholder="Unit e.g. kg, hrs (optional)" style="flex:1;"></div>
+      <div class="gw-new-field-row" style="justify-content:flex-end;gap:0.4rem;">
+        <button type="button" class="gw-cancel-btn" style="font-size:0.6rem;padding:2px 10px;" onclick="drawerHideNewFieldForm(this)">✕</button>
+        <button type="button" class="gw-confirm-btn" style="font-size:0.6rem;padding:2px 10px;" onclick="drawerSaveNewField('${item.id}',this)">＋ Add Field</button>
+      </div>
+    </div>
+  </div>`;
+}
+function readDrawerFields(drawer){const fields={};drawer.querySelectorAll('.gw-field-val-inp').forEach(inp=>{const key=inp.dataset.fieldKey;const val=inp.value.trim();if(key&&val!=='')fields[key]=val;});return fields;}
+function drawerToggleField(iid,fieldKey,chipBtn){
+  const isActive=chipBtn.classList.contains('active');
+  const section=chipBtn.closest('.gw-fields-section');
+  const activeFields=section.querySelector('.gw-active-fields');
+  const def=getFieldDefs().find(d=>d.key===fieldKey);if(!def)return;
+  if(isActive){activeFields.querySelector(`[data-field-key="${fieldKey}"]`)?.remove();chipBtn.classList.remove('active');}
+  else{chipBtn.classList.add('active');const row=document.createElement('div');row.className='gw-field gw-active-field-row';row.dataset.fieldKey=fieldKey;row.innerHTML=`<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp" data-field-key="${fieldKey}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${fieldKey}',this)">✕</button>`;activeFields.appendChild(row);row.querySelector('input')?.focus();}
+}
+function drawerRemoveField(iid,fieldKey,btn){btn.closest('.gw-active-field-row')?.remove();btn.closest('.gw-fields-section')?.querySelector(`.gw-field-chip[onclick*="'${fieldKey}'"]`)?.classList.remove('active');}
+function drawerShowNewFieldForm(btn){const form=btn.closest('.gw-fields-section').querySelector('.gw-new-field-form');if(form){form.classList.add('open');form.querySelector('input')?.focus();}}
+function drawerHideNewFieldForm(btn){btn.closest('.gw-new-field-form').classList.remove('open');}
+function drawerSaveNewField(iid,btn){
+  const form=btn.closest('.gw-new-field-form');
+  const labelInp=form.querySelector(`#gnf-label-${iid}`);const typeInp=form.querySelector(`#gnf-type-${iid}`);const unitInp=form.querySelector(`#gnf-unit-${iid}`);
+  const label=(labelInp?.value||'').trim();
+  if(!label){labelInp.style.borderColor='var(--ember)';labelInp.focus();setTimeout(()=>labelInp.style.borderColor='',1000);return;}
+  const key='cf_'+label.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_');
+  const def={key,label,icon:'🏷️',type:typeInp?.value||'text',unit:unitInp?.value?.trim()||'',preset:false};
+  registerCustomFieldDef(def);form.classList.remove('open');if(labelInp)labelInp.value='';if(unitInp)unitInp.value='';
+  const section=form.closest('.gw-fields-section');
+  const chipsEl=section.querySelector('.gw-field-chips');
+  const customBtn=chipsEl.querySelector('[onclick*="drawerShowNewFieldForm"]');
+  const newChip=document.createElement('button');newChip.type='button';newChip.className='gw-field-chip active';newChip.setAttribute('onclick',`drawerToggleField('${iid}','${key}',this)`);newChip.innerHTML=`🏷️ ${escH(def.label)}`;
+  chipsEl.insertBefore(newChip,customBtn);
+  const activeFields=section.querySelector('.gw-active-fields');
+  const row=document.createElement('div');row.className='gw-field gw-active-field-row';row.dataset.fieldKey=key;
+  row.innerHTML=`<span class="gw-field-lbl">🏷️ ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp" data-field-key="${key}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${key}',this)">✕</button>`;
+  activeFields.appendChild(row);row.querySelector('input')?.focus();
+}
+
 
 async function gearProductSearch(query) {
   if(!query || query.length < 2) return [];
