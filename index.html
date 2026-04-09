@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.69 — Gear Organizer</title>
+<title>BaseCamp v4.70 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -214,6 +214,120 @@ html.dark .p1-left{
 
 /* Divider */
 .gw-drawer-divider{border:none;border-top:1.5px dashed var(--lichen);margin:0.5rem 0;}
+
+/* ── Product search in drawer ── */
+.gw-product-search-wrap{position:relative;margin-bottom:0.2rem;}
+.gw-product-results{
+  position:absolute;top:100%;left:0;right:0;z-index:500;
+  background:var(--paper);border:1.5px solid var(--lichen);
+  border-top:none;border-radius:0 0 10px 10px;
+  max-height:180px;overflow-y:auto;
+  box-shadow:0 6px 20px rgba(45,74,45,0.13);
+}
+html.dark .gw-product-results{background:#0f1a0f;border-color:var(--dm-border);}
+.gw-product-result{
+  display:flex;align-items:center;gap:0.5rem;
+  padding:0.4rem 0.55rem;cursor:pointer;
+  border-bottom:1px solid rgba(184,201,163,0.15);
+  transition:background 0.12s;
+}
+.gw-product-result:last-child{border-bottom:none;}
+.gw-product-result:hover{background:rgba(184,201,163,0.15);}
+html.dark .gw-product-result:hover{background:rgba(30,50,22,0.9);}
+.gw-product-result-img{
+  width:32px;height:32px;border-radius:5px;object-fit:cover;
+  background:rgba(184,201,163,0.15);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;
+}
+.gw-product-result-info{flex:1;min-width:0;}
+.gw-product-result-name{
+  font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;
+  color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+html.dark .gw-product-result-name{color:#c8e8b0;}
+.gw-product-result-meta{
+  font-family:'Space Mono',monospace;font-size:0.48rem;
+  color:var(--stone);display:flex;gap:0.4rem;align-items:center;
+}
+.gw-product-result-badge{
+  font-family:'Space Mono',monospace;font-size:0.38rem;
+  background:rgba(74,143,168,0.15);color:var(--water);
+  border:1px solid rgba(74,143,168,0.3);border-radius:10px;
+  padding:1px 5px;flex-shrink:0;
+}
+/* Linked product banner on drawer */
+.gw-product-linked{
+  display:flex;align-items:center;gap:0.5rem;
+  background:rgba(74,103,65,0.1);border:1.5px solid rgba(74,103,65,0.3);
+  border-radius:8px;padding:0.4rem 0.55rem;margin-bottom:0.3rem;
+}
+html.dark .gw-product-linked{background:rgba(30,50,22,0.7);border-color:rgba(74,143,68,0.35);}
+.gw-product-linked-img{
+  width:36px;height:36px;border-radius:5px;object-fit:cover;
+  background:rgba(184,201,163,0.15);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+}
+.gw-product-linked-info{flex:1;min-width:0;}
+.gw-product-linked-name{
+  font-family:'Nunito',sans-serif;font-size:0.7rem;font-weight:800;
+  color:var(--forest);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+html.dark .gw-product-linked-name{color:#a8d890;}
+.gw-product-linked-meta{font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);}
+.gw-product-unlink-btn{
+  background:none;border:none;cursor:pointer;font-size:0.6rem;
+  color:var(--stone);opacity:0.5;padding:2px 4px;line-height:1;
+  transition:opacity 0.15s;flex-shrink:0;
+}
+.gw-product-unlink-btn:hover{opacity:1;}
+/* Override badge on weight/price */
+.gw-override-badge{
+  font-family:'Space Mono',monospace;font-size:0.38rem;
+  background:rgba(232,168,53,0.15);color:var(--sun);
+  border:1px solid rgba(232,168,53,0.35);border-radius:10px;
+  padding:1px 5px;white-space:nowrap;flex-shrink:0;
+}
+/* 🛒 buy icon on pack item rows */
+.pack-item-buy-btn{
+  background:none;border:none;cursor:pointer;font-size:0.7rem;
+  opacity:0;transition:opacity 0.15s;padding:1px 2px;line-height:1;flex-shrink:0;
+}
+.pack-item-row:hover .pack-item-buy-btn{opacity:0.6;}
+.pack-item-buy-btn:hover{opacity:1!important;}
+/* Product card overlay */
+.product-card-overlay{
+  position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);
+}
+.product-card{
+  background:var(--paper);border-radius:18px;
+  border:2px solid rgba(184,201,163,0.5);
+  box-shadow:0 8px 40px rgba(45,74,45,0.2);
+  max-width:360px;width:90%;overflow:hidden;
+}
+html.dark .product-card{background:#0f1a0f;border-color:var(--dm-border);}
+.product-card-img{width:100%;height:160px;object-fit:cover;background:rgba(184,201,163,0.1);display:flex;align-items:center;justify-content:center;font-size:3rem;}
+.product-card-body{padding:1rem 1.1rem 1.1rem;}
+.product-card-brand{font-family:'Space Mono',monospace;font-size:0.5rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);margin-bottom:0.2rem;}
+.product-card-name{font-family:'Playfair Display',serif;font-size:1rem;color:var(--bark);margin-bottom:0.5rem;line-height:1.3;}
+html.dark .product-card-name{color:#c8e8b0;}
+.product-card-stats{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.7rem;}
+.product-card-stat{display:flex;align-items:center;gap:3px;font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--stone);background:rgba(184,201,163,0.12);border-radius:20px;padding:2px 8px;}
+.product-card-buy{
+  display:flex;align-items:center;justify-content:center;gap:0.4rem;
+  width:100%;padding:0.6rem;border-radius:30px;border:none;cursor:pointer;
+  background:var(--forest);color:var(--cream);
+  font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:800;
+  text-decoration:none;transition:background 0.2s;
+}
+.product-card-buy:hover{background:var(--moss);}
+.product-card-close{
+  position:absolute;top:0.6rem;right:0.7rem;background:none;border:none;
+  cursor:pointer;font-size:0.9rem;color:var(--stone);opacity:0.5;
+  transition:opacity 0.15s;
+}
+.product-card-close:hover{opacity:1;}
 
 /* Link row */
 .gw-link-row{display:flex;align-items:center;gap:0.4rem;}
@@ -2133,7 +2247,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.69</div>
+      <div class="logo-sub">Gear Organizer · v4.70</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5839,13 +5953,14 @@ function renderCats(){
 
     const rows=items.map(item=>{
       const extraTag = item.extra ? `<span class="pack-item-extra">${escH(item.extra)}</span>` : '';
+      const buyBtn = item.productId ? `<button class="pack-item-buy-btn" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">🛒</button>` : '';
       return `<div class="pack-item-row" data-pack-cid="${cat.id}" data-pack-iid="${item.id}">
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
           <span class="pack-item-name">${escH(item.name)}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
-          ${extraTag}
+          ${buyBtn}${extraTag}
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}"
@@ -5905,7 +6020,7 @@ function renderCats(){
         </div>`;
     }
 
-    // Whole row draggable — set fromPack before pdStart so _pdCommit knows source
+    // Whole row draggable — set fromPack before pdStart
     card.addEventListener('pointerdown', e=>{
       if(e.target.closest('button')) return;
       const row = e.target.closest('.pack-item-row');
@@ -6027,6 +6142,7 @@ function renderCats(){
           <div class="g-dot" style="background:#8b8b8b"></div>
           <span class="pack-item-name">${escH(item.name)}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
+          ${item.productId?`<button class="pack-item-buy-btn" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">🛒</button>`:''}
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}" onclick="startWeightEdit(this,'uncategorised','${item.id}')">${dw(item.w)}</span>
@@ -6780,11 +6896,15 @@ function saveDrawer(cid, iid, btn){
 
   // Apply values
   item.name = name;
-  item.w = toGrams(drawer.querySelector('.gw-edit-w')?.value);
+  const newW = toGrams(drawer.querySelector('.gw-edit-w')?.value);
+  // If linked to product and user changed weight, mark as override
+  if(item.productId && newW !== item.w && item.w !== 0) item.wOverride = newW;
+  item.w = newW;
   const extraInp = drawer.querySelector('.gw-edit-extra');
   if(extraInp) item.extra = extraInp.value.trim();
   const linkInp = drawer.querySelector('.gw-edit-link');
   if(linkInp) item.link = linkInp.value.trim();
+  // productId is set directly on item by gearDrawerSelect/gearDrawerUnlink
   delete item._new;
 
   // Animate confirm
@@ -7845,6 +7965,7 @@ function renderGearWall(){
         const _orig = {name:item.name, w:item.w, extra:item.extra||'', link:item.link||''};
 
         drawer.innerHTML=`
+          ${buildProductSearchSection(item)}
           <div class="gw-field">
             <span class="gw-field-lbl">Name</span>
             <input class="gw-field-inp gw-edit-name" type="text" value="${escH(item.name)}" placeholder="Item name"/>
@@ -7853,6 +7974,7 @@ function renderGearWall(){
             <span class="gw-field-lbl">Weight</span>
             <input class="gw-field-inp mono gw-edit-w" type="number" min="0" value="${item.w ? displayWVal(item.w) : ''}" placeholder="0"/>
             <span class="gw-field-unit">${U.v==='oz'?'oz':'g'}</span>
+            ${item.wOverride!=null?'<span class="gw-override-badge">📐 your measurement</span>':''}
           </div>
           ${extraLabel ? `
           <div class="gw-field">
@@ -7862,7 +7984,7 @@ function renderGearWall(){
           <hr class="gw-drawer-divider"/>
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…"
+            <input class="gw-drawer-url gw-edit-link" type="text" inputmode="url" autocomplete="new-password" placeholder="Paste product URL…"
               value="${escH(item.link||'')}"/>
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${srcCatId}','${item.id}',this)">Find all data</button>
           </div>
@@ -7872,6 +7994,8 @@ function renderGearWall(){
             <button class="gw-cancel-btn" onclick="discardDrawer('${srcCatId}','${item.id}')">✕ Discard</button>
           </div>
         `;
+        // If item already linked to a product, load the banner async
+        if(item.productId) gearDrawerLoadLinked(item.id, item.productId);
 
         // Store snapshot on the drawer element for discard
         drawer._orig = _orig;
@@ -8104,7 +8228,6 @@ function pdStart(e, item, catId, chip){
   PD.startX = e.clientX;
   PD.startY = e.clientY;
   PD.moved  = false;
-  // PD.fromPack is set by pack col handlers BEFORE calling pdStart; default false for GW drags
   if(!PD.fromPack) PD.fromPack = false;
   document.body.classList.add('dragging-active');
 
@@ -8178,7 +8301,6 @@ function _pdHitTest(x, y){
     const r=pill.getBoundingClientRect();
     if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return 'season-'+pill.dataset.s;
   }
-  // Use gear-wall-body left edge to decide which column pointer is in
   const gwRoot=document.getElementById('gear-wall-body');
   const gwLeft=gwRoot?gwRoot.getBoundingClientRect().left:Infinity;
   if(x < gwLeft){
@@ -8276,36 +8398,31 @@ function _pdCancel(){
 }
 
 function _pdCommit(zone){
-  // Capture everything from PD before cleanup resets it
   const fromPack = PD.fromPack;
   const catId = PD.catId;
   const _pdItem = PD.item;
-  // Always resolve live item from CATS — gwGroups uses spread copies
   const item = CATS.flatMap(c=>c.items).find(i=>i.id===_pdItem?.id) || _pdItem;
   console.log('[PD] _pdCommit zone='+zone+' catId='+catId+' fromPack='+fromPack+' item='+item?.name);
   _pdCleanup();
   if(!item) return;
 
-  // ── TRASH ──
   if(zone==='trash'){
     if(fromPack){
-      // Remove from current pack only — item stays on GW
       item.s = item.s.filter(ss=>ss!==season);
       toast(`⊖ ${item.name} removed from pack`);
+      scheduleSave(); renderAll();
     } else {
-      // Full delete from GW
       const cat = CATS.find(c=>c.id===catId);
       if(!cat) return;
       DELETED.unshift({id:item.id,name:item.name,w:item.w,extra:item.extra||'',link:item.link||'',s:[...item.s],catId,catName:cat.name,catIcon:cat.icon,deletedAt:Date.now()});
       if(DELETED.length>30) DELETED.length=30;
       cat.items = cat.items.filter(i=>i.id!==item.id);
       toast(`🗑 ${item.name} deleted — see Recently Deleted`);
+      scheduleSave(); renderAll();
     }
-    scheduleSave(); renderAll();
     return;
   }
 
-  // ── SEASON PILL ──
   if(zone && zone.startsWith('season-')){
     const s = zone.slice(7);
     if(s !== season){
@@ -8316,64 +8433,44 @@ function _pdCommit(zone){
     return;
   }
 
-  // ── DROPPED ON PACK COLUMN ──
   if(zone && zone.startsWith('pack-cat-')){
     const toCatId = zone.slice(9);
     const toCat = CATS.find(c=>c.id===toCatId);
     if(!toCat) return;
     if(fromPack){
-      // Moving between pack categories — update which cat the item lives in
       if(toCatId !== catId){
         const fromCat = CATS.find(c=>c.id===catId);
-        if(fromCat){
-          fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
-          toCat.items.push(item);
-          item.gwCatId = toCatId; // keep GW in sync
-        }
+        if(fromCat){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); item.gwCatId = toCatId; }
         toast(`✅ ${item.name} moved to ${toCat.name}`);
-      } else {
-        toast(`ℹ️ ${item.name} is already in ${toCat.name}`);
-      }
+      } else { toast(`ℹ️ ${item.name} is already in ${toCat.name}`); }
     } else {
-      // Dragging from GW to pack column — add to pack
       if(!item.s.includes(season)){
-        // Move to the target pack cat
         const fromCat = CATS.find(c=>c.id===catId);
-        if(fromCat && catId !== toCatId){
-          fromCat.items = fromCat.items.filter(i=>i.id!==item.id);
-          toCat.items.push(item);
-        }
+        if(fromCat && catId !== toCatId){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); }
         item.s = [...item.s, season];
         toast(`✅ ${item.name} added to pack`);
-      } else {
-        toast(`ℹ️ ${item.name} is already in your pack`);
-      }
+      } else { toast(`ℹ️ ${item.name} is already in your pack`); }
     }
     scheduleSave(); renderAll();
     return;
   }
 
-  // ── DROPPED ON GEAR WALL ──
   if(zone && zone.startsWith('gw-cat-')){
     const toGwCatId = zone.slice(7);
     if(fromPack){
-      // Dragged from pack column to GW — remove from current pack
       item.s = item.s.filter(ss=>ss!==season);
       toast(`⊖ ${item.name} removed from pack`);
       scheduleSave(); renderAll();
     } else {
-      // GW-to-GW move — only update gwCatId, NEVER touch item.s
       if(toGwCatId !== item.gwCatId){
         item.gwCatId = toGwCatId;
         const toCat = CATS.find(c=>c.id===toGwCatId);
         toast(`✅ ${item.name} moved to ${toCat ? toCat.name : toGwCatId}`);
         scheduleSave(); renderAll();
       }
-      // Same category — do nothing
     }
     return;
   }
-  // Dropped on nothing — no action
 }
 
 function _pdCleanup(){
@@ -8417,7 +8514,7 @@ function getPayload(){
       id:cat.id, name:cat.name, icon:cat.icon, color:cat.color,
       hasExtra:cat.hasExtra, extraLabel:cat.extraLabel||'',
       onGearWall: cat.onGearWall!==false,
-      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s,gwCatId:i.gwCatId||cat.id})),
+      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s,gwCatId:i.gwCatId||cat.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null})),
       packs: cat.packs||null
     })),
     foodSeason,
@@ -8674,7 +8771,7 @@ function loadState(){
         hasExtra: c.hasExtra||false, extraLabel: c.extraLabel||'',
         pc: PC_MAP[c.id] || 'pill-general',
         cc: CC_MAP[c.id] || 'cc-general',
-        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id})),
+        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null})),
         packs: c.packs||null,
         onGearWall: c.onGearWall !== false
       });
@@ -14176,6 +14273,247 @@ function toggleTheme() {
 
 
 // ================================================================
+// ============================================================
+// GEAR PRODUCT DATABASE — Search, Link, Product Card
+// ============================================================
+
+let _gearSearchTimer = null;
+
+async function gearProductSearch(query) {
+  if(!query || query.length < 2) return [];
+  try {
+    await sbReady();
+    const sb = getSupabase();
+    if(!sb) return [];
+    // Use prefix search for short queries, full-text for longer
+    if(query.length < 3){
+      const { data } = await sb.rpc('search_gear_products_prefix', { query: query.toLowerCase() });
+      return data || [];
+    } else {
+      const { data } = await sb.rpc('search_gear_products', { query });
+      return data || [];
+    }
+  } catch(e){ console.warn('[GearDB] search failed:', e); return []; }
+}
+
+async function gearProductSave(product){
+  // Save a new product to the shared DB (from URL scrape)
+  try {
+    await sbReady();
+    const sb = getSupabase();
+    if(!sb || !_sbUser) return null;
+    const { data, error } = await sb.from('gear_products').insert([{
+      name: product.name,
+      brand: product.brand || '',
+      weight_g: product.weight_g || null,
+      price: product.price || null,
+      url: product.url || null,
+      image_url: product.image_url || null,
+      category: product.category || 'other',
+      source: 'community',
+      verified: false
+    }]).select().single();
+    if(error){ console.warn('[GearDB] save failed:', error); return null; }
+    return data;
+  } catch(e){ console.warn('[GearDB] save error:', e); return null; }
+}
+
+async function gearProductSubmitEdit(productId, field, oldVal, newVal){
+  try {
+    await sbReady();
+    const sb = getSupabase();
+    if(!sb || !_sbUser) return;
+    await sb.from('gear_product_edits').insert([{
+      product_id: productId,
+      field,
+      old_value: String(oldVal||''),
+      suggested_value: String(newVal),
+      submitted_by: _sbUser.id,
+      status: 'pending'
+    }]);
+    toast('💡 Correction submitted — thanks!');
+  } catch(e){ console.warn('[GearDB] edit submit failed:', e); }
+}
+
+function gearDrawerSearch(iid, val){
+  clearTimeout(_gearSearchTimer);
+  const drawer = document.querySelector(`.gw-item-wrap[data-iid="${iid}"] .gw-drawer`);
+  if(!drawer) return;
+  const resultsEl = drawer.querySelector('.gw-product-results');
+  if(!resultsEl) return;
+  if(!val || val.length < 2){ resultsEl.style.display='none'; return; }
+  _gearSearchTimer = setTimeout(async ()=>{
+    const results = await gearProductSearch(val);
+    if(!results.length){ resultsEl.style.display='none'; return; }
+    resultsEl.innerHTML = results.map(p=>`
+      <div class="gw-product-result" onclick="gearDrawerSelect('${iid}','${p.id}')">
+        <div class="gw-product-result-img">${p.image_url?`<img src="${escH(p.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;" onerror="this.parentElement.textContent='🎒'">`:'🎒'}</div>
+        <div class="gw-product-result-info">
+          <div class="gw-product-result-name">${escH(p.name)}</div>
+          <div class="gw-product-result-meta">
+            <span>${escH(p.brand)}</span>
+            ${p.weight_g?`<span>· ${p.weight_g}g</span>`:''}
+            ${p.price?`<span>· ${escH(p.price)}</span>`:''}
+            ${p.verified?`<span class="gw-product-result-badge">✓ verified</span>`:''}
+          </div>
+        </div>
+      </div>`).join('');
+    resultsEl.style.display='block';
+  }, 280);
+}
+
+async function gearDrawerSelect(iid, productId){
+  // Find item
+  const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+  if(!item) return;
+  // Fetch full product
+  try {
+    await sbReady();
+    const sb = getSupabase();
+    const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
+    if(!p) return;
+    // Link product to item
+    item.productId = productId;
+    // Autofill: weight and price always; name only if empty
+    const drawer = document.querySelector(`.gw-item-wrap[data-iid="${iid}"] .gw-drawer`);
+    if(drawer){
+      const nameInp = drawer.querySelector('.gw-edit-name');
+      const wInp = drawer.querySelector('.gw-edit-w');
+      if(nameInp && !nameInp.value.trim()) nameInp.value = p.name;
+      if(wInp && p.weight_g){
+        wInp.value = U.v==='oz' ? (p.weight_g/28.3495).toFixed(1) : p.weight_g;
+        // Clear any override since we just set from product
+        delete item.wOverride;
+      }
+      // Hide search results, show linked banner
+      drawer.querySelector('.gw-product-results').style.display='none';
+      _gearDrawerRenderLinked(drawer, iid, p);
+    }
+    scheduleSave();
+  } catch(e){ console.warn('[GearDB] select failed:', e); }
+}
+
+function _gearDrawerRenderLinked(drawer, iid, product){
+  const banner = drawer.querySelector('.gw-product-linked');
+  if(banner) banner.remove();
+  const searchWrap = drawer.querySelector('.gw-product-search-wrap');
+  if(!searchWrap) return;
+  const div = document.createElement('div');
+  div.className = 'gw-product-linked';
+  div.innerHTML = `
+    <div class="gw-product-linked-img">${product.image_url?`<img src="${escH(product.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;" onerror="this.parentElement.textContent='🎒'">`:'🎒'}</div>
+    <div class="gw-product-linked-info">
+      <div class="gw-product-linked-name">${escH(product.name)}</div>
+      <div class="gw-product-linked-meta">${escH(product.brand)}${product.price?' · '+escH(product.price):''}${product.verified?' · ✓ verified':''}</div>
+    </div>
+    <button class="gw-product-unlink-btn" onclick="gearDrawerUnlink('${iid}')" title="Unlink product">✕</button>`;
+  searchWrap.parentNode.insertBefore(div, searchWrap);
+  searchWrap.style.display='none'; // hide search box when linked
+}
+
+function gearDrawerUnlink(iid){
+  const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+  if(!item) return;
+  delete item.productId;
+  delete item.wOverride;
+  delete item.priceOverride;
+  const drawer = document.querySelector(`.gw-item-wrap[data-iid="${iid}"] .gw-drawer`);
+  if(drawer){
+    drawer.querySelector('.gw-product-linked')?.remove();
+    const searchWrap = drawer.querySelector('.gw-product-search-wrap');
+    if(searchWrap) searchWrap.style.display='';
+  }
+  scheduleSave();
+  toast('⊖ Product unlinked');
+}
+
+function buildProductSearchSection(item){
+  // If already linked, fetch product async and show banner
+  const linkedSection = item.productId
+    ? `<div class="gw-product-linked" id="gw-linked-${item.id}">
+        <div class="gw-product-linked-img">🎒</div>
+        <div class="gw-product-linked-info">
+          <div class="gw-product-linked-name" style="opacity:0.5">Loading product…</div>
+          <div class="gw-product-linked-meta"></div>
+        </div>
+        <button class="gw-product-unlink-btn" onclick="gearDrawerUnlink('${item.id}')" title="Unlink product">✕</button>
+      </div>`
+    : '';
+  return `
+    ${linkedSection}
+    <div class="gw-product-search-wrap"${item.productId?' style="display:none"':''}>
+      <div class="gw-field">
+        <span class="gw-field-lbl">Find</span>
+        <input class="gw-field-inp gw-product-search-inp" type="text"
+          placeholder="Search gear database…"
+          oninput="gearDrawerSearch('${item.id}',this.value)"
+          onblur="setTimeout(()=>{const r=document.querySelector('.gw-item-wrap[data-iid=&quot;${item.id}&quot;] .gw-product-results');if(r)r.style.display='none';},200)"
+          autocomplete="new-password"/>
+      </div>
+      <div class="gw-product-results" style="display:none"></div>
+    </div>`;
+}
+
+// Load linked product banner async after drawer renders
+async function gearDrawerLoadLinked(iid, productId){
+  const el = document.getElementById(`gw-linked-${iid}`);
+  if(!el) return;
+  try {
+    await sbReady();
+    const sb = getSupabase();
+    const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
+    if(!p || !el) return;
+    el.querySelector('.gw-product-linked-img').innerHTML = p.image_url
+      ? `<img src="${escH(p.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;" onerror="this.textContent='🎒'">`
+      : '🎒';
+    el.querySelector('.gw-product-linked-name').textContent = p.name;
+    el.querySelector('.gw-product-linked-name').style.opacity='1';
+    el.querySelector('.gw-product-linked-meta').textContent =
+      p.brand + (p.price?' · '+p.price:'') + (p.verified?' · ✓ verified':'');
+  } catch(e){ /* silent */ }
+}
+
+// Show product card overlay
+async function showProductCard(productId, itemIid){
+  if(!productId) return;
+  try {
+    await sbReady();
+    const sb = getSupabase();
+    const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
+    if(!p) return;
+    // Get approved custom fields
+    const { data: fieldDefs } = await sb.from('gear_product_field_defs').select('*').eq('status','approved');
+    const defs = fieldDefs || [];
+    const customFields = p.custom_fields || {};
+    const statsHtml = [
+      p.weight_g ? `<span class="product-card-stat">⚖️ ${p.weight_g}g</span>` : '',
+      p.price    ? `<span class="product-card-stat">💰 ${escH(p.price)}</span>` : '',
+      ...Object.entries(customFields).map(([k,v])=>{
+        const def = defs.find(d=>d.key===k);
+        return def ? `<span class="product-card-stat">${def.icon} ${escH(String(v))} ${escH(def.unit||'')}</span>` : '';
+      })
+    ].filter(Boolean).join('');
+    const buyUrl = p.affiliate_url || p.url;
+    const overlay = document.createElement('div');
+    overlay.className = 'product-card-overlay';
+    overlay.onclick = e=>{ if(e.target===overlay) overlay.remove(); };
+    overlay.innerHTML = `
+      <div class="product-card" style="position:relative;">
+        <button class="product-card-close" onclick="this.closest('.product-card-overlay').remove()">✕</button>
+        ${p.image_url
+          ? `<img class="product-card-img" src="${escH(p.image_url)}" alt="${escH(p.name)}" onerror="this.style.display='none'">`
+          : `<div class="product-card-img">🎒</div>`}
+        <div class="product-card-body">
+          <div class="product-card-brand">${escH(p.brand)}</div>
+          <div class="product-card-name">${escH(p.name)}</div>
+          <div class="product-card-stats">${statsHtml||'<span class="product-card-stat">No specs yet</span>'}</div>
+          ${buyUrl ? `<a class="product-card-buy" href="${escH(buyUrl)}" target="_blank" rel="noopener">🛒 Buy this gear</a>` : ''}
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  } catch(e){ console.warn('[GearDB] showProductCard failed:', e); }
+}
+
 // SUPABASE — Auth & Cloud Sync
 // ================================================================
 const SUPABASE_URL = 'https://hibvetgynyakgeriajty.supabase.co';
