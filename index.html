@@ -4389,17 +4389,22 @@ function initCatPacks(){
 
 // Collapse all categories except the first on first load
 function initDefaultCollapsed(){
-  // Only set defaults if nothing has been explicitly collapsed/expanded yet
-  if(Object.keys(collapsed).length === 0){
-    CATS.forEach((cat, i) => { if(i > 0) collapsed[cat.id] = true; });
-  }
+  // Pack cats — expand if they have items in current season, collapse if empty
+  CATS.forEach((cat) => {
+    if(collapsed[cat.id] === undefined){
+      const hasItems = cat.items.some(i => i.s && i.s.includes(season));
+      collapsed[cat.id] = !hasItems;
+    }
+  });
   if(Object.keys(foodCatCollapsed).length === 0){
     FOOD_CATS.forEach((cat, i) => { if(i > 0) foodCatCollapsed[cat.id] = true; });
   }
-  // Gear Wall — collapse all cats except the first
-  if(Object.keys(gwCollapsed).length === 0){
-    CATS.forEach((cat) => { gwCollapsed[cat.id] = cat.items.length === 0; });
-  }
+  // Gear Wall — expand if cat has any items at all
+  CATS.forEach((cat) => {
+    if(gwCollapsed[cat.id] === undefined){
+      gwCollapsed[cat.id] = cat.items.length === 0;
+    }
+  });
   // Fridge — collapse all sections except Fruit (first)
   if(Object.keys(fridgeCollapsed).length === 0){
     const fridgeSections = ['meat','carbs','custom','snacks','drinks'];
@@ -5811,7 +5816,9 @@ function renderCats(){
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     // Auto-collapse categories with no items in this pack (user can expand)
-    if(collapsed[cat.id] === undefined) collapsed[cat.id] = items.length === 0;
+    // Always expand if items exist; only leave collapsed if truly empty
+    if(items.length > 0) collapsed[cat.id] = false;
+    else if(collapsed[cat.id] === undefined) collapsed[cat.id] = true;
     const w=cw(cat);
     const card=document.createElement('div');
     card.className=`cat-card ${cat.cc} ${collapsed[cat.id]?'collapsed':''}`;
@@ -7694,6 +7701,9 @@ function renderGearWall(){
   gwGroups.delete('uncategorised');
 
   [...gwGroups.values()].forEach(({cat, items})=>{
+    // Re-derive collapse: always expand if has items, collapse if empty
+    if(items.length > 0) gwCollapsed[cat.id] = false;
+    else if(gwCollapsed[cat.id] === undefined) gwCollapsed[cat.id] = true;
     const group=document.createElement('div');
     group.className=`gw-cat${gwCollapsed[cat.id]?' gw-collapsed':''}`;
     group.dataset.cid=cat.id;
@@ -7840,9 +7850,7 @@ function renderGearWall(){
           <hr class="gw-drawer-divider"/>
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input type="text" style="display:none" aria-hidden="true"/>
-            <input type="password" style="display:none" aria-hidden="true"/>
-            <input class="gw-drawer-url gw-edit-link" type="text" autocomplete="off" inputmode="url" placeholder="Paste product URL…"
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…"
               value="${escH(item.link||'')}"/>
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${srcCatId}','${item.id}',this)">Find all data</button>
           </div>
