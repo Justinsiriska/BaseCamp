@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.91 — Gear Organizer</title>
+<title>BaseCamp v4.92 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2320,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.91</div>
+      <div class="logo-sub">Gear Organizer · v4.92</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14471,35 +14471,35 @@ let _gearSearchTimer = null;
 
 
 // ── Extract size/volume from product name ──
-function extractSizeFromName(name){
+function extractMetricsFromName(name){
   if(!name) return {};
   const result = {};
   const n = name.toLowerCase();
-  // Volume: 550ml, 750ml, 1L, 2L, 65L etc
-  const vol = n.match(/(\d+\.?\d*)\s*(ml|fl\s*oz|liter|litre|l)/);
-  if(vol){
-    const num = parseFloat(vol[1]);
-    const unit = vol[2].trim();
-    if(unit==='ml') result.volume = num+'ml';
-    else if(unit.startsWith('fl')) result.volume = num+'fl oz';
-    else result.volume = num+'L'; // l, liter, litre
-  }
-  // Capacity in liters for packs: 45L, 65L
-  const pack = n.match(/(\d+)\s*l/);
-  if(pack && !result.volume) result.volume = pack[1]+'L';
-  // Oz for small items
-  const oz = n.match(/(\d+\.?\d*)\s*oz/);
-  if(oz && !result.volume) result.volume = oz[1]+'oz';
+  // Volume: 550ml, 750ml, 1.5L, 65L, 20fl oz
+  const mlMatch = n.match(/(\d+\.?\d*)\s*ml\b/);
+  const lMatch  = n.match(/(\d+\.?\d*)\s*(?:liter|litre|(?<![a-z])l(?![a-z]))/);
+  const flMatch = n.match(/(\d+\.?\d*)\s*fl\.?\s*oz/);
+  if(mlMatch)       result.volume = mlMatch[1]+'ml';
+  else if(lMatch)   result.volume = lMatch[1]+'L';
+  else if(flMatch)  result.volume = flMatch[1]+' fl oz';
+  // Temp rating: -9C, -7°C, 20°F, 32f
+  const tempMatch = n.match(/([+-]?\d+)\s*°?\s*([cf])\b/);
+  if(tempMatch) result.temp_rating = tempMatch[1]+'°'+tempMatch[2].toUpperCase();
+  // R-value: R4, R4.2, r-value 4
+  const rMatch = n.match(/r[-\s]?value[-\s]?(\d+\.?\d*)|\br(\d+\.?\d*)\b/i);
+  if(rMatch) result.r_value = 'R'+(rMatch[1]||rMatch[2]);
   return result;
 }
+// Keep old name as alias
+function extractSizeFromName(name){ return extractMetricsFromName(name); }
 
-// Apply extracted size fields to a product's custom_fields
 function applySizeFieldsToProduct(product){
-  const extracted = extractSizeFromName(product.name);
-  if(!extracted.volume) return product;
+  const extracted = extractMetricsFromName(product.name);
+  if(!Object.keys(extracted).length) return product;
   const cf = product.custom_fields || {};
-  // Only set if not already present
-  if(!cf.volume && !cf.volume_liters) cf.volume = extracted.volume;
+  if(extracted.volume      && !cf.volume      && !cf.volume_liters) cf.volume      = extracted.volume;
+  if(extracted.temp_rating && !cf.temp_rating)                      cf.temp_rating = extracted.temp_rating;
+  if(extracted.r_value     && !cf.r_value)                          cf.r_value     = extracted.r_value;
   product.custom_fields = cf;
   return product;
 }
@@ -15383,6 +15383,14 @@ async function adminLookupSave(id){
     image_url: document.getElementById('adm-lu-img-'+id)?.value.trim()||null,
     verified: document.getElementById('adm-lu-verified-'+id)?.checked||false,
   };
+  // Auto-extract metrics from name if fields not manually set
+  const nameVal = document.getElementById('adm-lu-name-'+id)?.value.trim();
+  if(nameVal){
+    const extracted = extractMetricsFromName(nameVal);
+    if(extracted.volume    && !customFields.volume)      customFields.volume      = extracted.volume;
+    if(extracted.temp_rating && !customFields.temp_rating) customFields.temp_rating = extracted.temp_rating;
+    if(extracted.r_value   && !customFields.r_value)     customFields.r_value     = extracted.r_value;
+  }
   if(Object.keys(customFields).length) update.custom_fields = customFields;
   // Remove undefined keys
   Object.keys(update).forEach(k=>update[k]===undefined&&delete update[k]);
