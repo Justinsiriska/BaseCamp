@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.78 — Gear Organizer</title>
+<title>BaseCamp v4.79 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2308,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.78</div>
+      <div class="logo-sub">Gear Organizer · v4.79</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7132,74 +7132,143 @@ function apikeyCancel(){
   if(_apiKeyResolve){ _apiKeyResolve(null); _apiKeyResolve=null; }
 }
 
+// ── Free product scraper — no API key needed ──
+// Uses corsproxy.io to fetch the page, then parses JSON-LD / OG / meta tags
+function _parseWeightToGrams(str){
+  if(!str) return null;
+  const s = String(str).toLowerCase().replace(/,/g,'');
+  const oz = s.match(/([\d.]+)\s*oz/);  if(oz) return Math.round(parseFloat(oz[1])*28.3495);
+  const lb = s.match(/([\d.]+)\s*lb/);  if(lb) return Math.round(parseFloat(lb[1])*453.592);
+  const kg = s.match(/([\d.]+)\s*kg/);  if(kg) return Math.round(parseFloat(kg[1])*1000);
+  const g  = s.match(/([\d.]+)\s*g/); if(g)  return Math.round(parseFloat(g[1]));
+  return null;
+}
+function _parsePriceUSD(str){
+  if(!str) return null;
+  const m = String(str).match(/[\d,]+\.?\d*/);
+  return m ? parseFloat(m[0].replace(/,/g,'')) : null;
+}
+function _scrapeJsonLd(doc){
+  const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+  for(const s of scripts){
+    try{
+      const data = JSON.parse(s.textContent);
+      const items = Array.isArray(data) ? data : [data];
+      for(const d of items){
+        const type = d['@type']||'';
+        if(type==='Product'||type.includes('Product')){
+          const offers = d.offers||d.Offers;
+          const offer = Array.isArray(offers)?offers[0]:offers;
+          return {
+            name: d.name||null,
+            brand: (d.brand?.name||d.brand)||null,
+            weight_g: _parseWeightToGrams(d.weight||d.netWeight||null),
+            price_usd: _parsePriceUSD(offer?.price||offer?.lowPrice||null),
+            image_url: Array.isArray(d.image)?d.image[0]:d.image||null,
+            description: d.description||null,
+            url: d.url||null,
+          };
+        }
+      }
+    }catch(_){}
+  }
+  return null;
+}
+function _scrapeOgMeta(doc){
+  const get = (name)=>doc.querySelector(`meta[property="${name}"],meta[name="${name}"]`)?.content||null;
+  const title = get('og:title')||get('twitter:title')||doc.title||null;
+  const image = get('og:image')||null;
+  const priceStr = get('product:price:amount')||get('og:price:amount')||null;
+  const weightStr = get('product:weight')||null;
+  // Try to extract brand from title (e.g. "MSR PocketRocket 2 | MSR Gear")
+  let brand = get('og:brand')||get('brand')||null;
+  if(!brand && title){
+    const parts = title.split(/[|·\-]/);
+    if(parts.length>1) brand = parts[parts.length-1].trim();
+  }
+  return {
+    name: title,
+    brand,
+    weight_g: _parseWeightToGrams(weightStr),
+    price_usd: _parsePriceUSD(priceStr),
+    image_url: image,
+    description: get('og:description')||get('description')||null,
+    url: get('og:url')||null,
+  };
+}
+function _scrapeSpecTable(doc){
+  // Look for weight in spec tables (common on gear sites)
+  const result = {weight_g:null, price_usd:null, temp_rating:null, r_value:null, volume_l:null};
+  const rows = doc.querySelectorAll('tr,dl dt,li,.spec-row,.product-spec,.specification');
+  for(const row of rows){
+    const text = row.textContent.toLowerCase();
+    const val = row.nextElementSibling?.textContent||row.querySelector('td:last-child,dd,.value')?.textContent||'';
+    if(!result.weight_g && text.includes('weight')) result.weight_g = _parseWeightToGrams(val||text);
+    if(!result.price_usd && text.includes('price')) result.price_usd = _parsePriceUSD(val||text);
+    if(!result.temp_rating && (text.includes('temp')||text.includes('rating')||text.includes('°'))) result.temp_rating = (val||text).trim().slice(0,20)||null;
+    if(!result.r_value && text.includes('r-value')) result.r_value = (val||text).replace(/[^0-9.]/g,'').slice(0,6)||null;
+    if(!result.volume_l && (text.includes('volume')||text.includes('capacity'))) result.volume_l = (val||text).trim().slice(0,15)||null;
+  }
+  return result;
+}
+
 async function gwFetch(cid,iid,btn){
   const cat=CATS.find(c=>c.id===cid);
   const item=cat.items.find(i=>i.id===iid);
   if(!item)return;
   const url=(item.link||'').trim();
-  if(!url){toast('⚠️ Paste a product URL first, then click Fetch');return;}
-
-  // Get API key — try session storage first, then show inline prompt
-  let apiKey = sessionStorage.getItem('tw_apikey');
-  if(!apiKey){
-    apiKey = await promptApiKey();
-    if(!apiKey) return;
-    sessionStorage.setItem('tw_apikey', apiKey);
-  }
+  if(!url){toast('⚠️ Paste a product URL first');return;}
 
   btn.classList.add('loading');btn.textContent='…';btn.disabled=true;
   try{
-    const prompt=`You are an outdoor gear data extractor. Search the web for the product at this URL and extract its specifications.
-
-URL: ${url}
-
-Return ONLY a valid JSON object with exactly these keys (use null for any field you cannot find):
-{
-  "name": "full product name",
-  "brand": "brand name",
-  "weight_g": <weight in grams as a number, e.g. 454>,
-  "price_usd": <price in USD as a number, e.g. 699, or null>,
-  "temp_rating": "temperature rating string e.g. -7°C or 20°F, or null",
-  "r_value": "R-value string e.g. R4.2, or null",
-  "volume_l": "volume in liters string e.g. 65L, or null",
-  "description": "one concise sentence describing the product"
-}
-
-Return ONLY the JSON object. No markdown fences. No explanation. No preamble.`;
-
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data=await res.json();
-    if(!res.ok){
-      // Bad key — clear it so next attempt re-prompts
-      if(res.status===401) sessionStorage.removeItem('tw_apikey');
-      throw new Error(data?.error?.message||`API error ${res.status}`);
+    // Try two CORS proxies in case one is down
+    let html = null;
+    const proxies = [
+      `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    ];
+    for(const proxy of proxies){
+      try{
+        const res = await fetch(proxy, {signal: AbortSignal.timeout(8000)});
+        if(res.ok){ html = await res.text(); break; }
+      }catch(_){}
     }
-    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const match=text.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error('No data found for this URL');
-    const parsed=JSON.parse(match[0]);
-    pendingData=parsed;
-    pendingRef={cid,iid};
-    showModal(parsed,item.name);
+    if(!html) throw new Error('Could not reach the product page — check the URL and try again');
+
+    // Parse into a DOM
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Extract data in priority order: JSON-LD > OG/meta > spec table
+    const jsonld = _scrapeJsonLd(doc);
+    const og = _scrapeOgMeta(doc);
+    const specs = _scrapeSpecTable(doc);
+
+    const parsed = {
+      name:        jsonld?.name        || og?.name        || null,
+      brand:       jsonld?.brand       || og?.brand       || null,
+      weight_g:    jsonld?.weight_g    || og?.weight_g    || specs.weight_g || null,
+      price_usd:   jsonld?.price_usd   || og?.price_usd   || specs.price_usd || null,
+      image_url:   jsonld?.image_url   || og?.image_url   || null,
+      description: jsonld?.description || og?.description || null,
+      temp_rating: specs.temp_rating   || null,
+      r_value:     specs.r_value       || null,
+      volume_l:    specs.volume_l      || null,
+      url,
+    };
+
+    if(!parsed.name && !parsed.brand && !parsed.weight_g){
+      throw new Error('No product data found — the site may block scrapers. Try a different URL.');
+    }
+
+    pendingData = parsed;
+    pendingRef = {cid, iid};
+    showModal(parsed, item.name);
   }catch(e){
     console.error(e);
     toast(`❌ ${e.message||'Fetch failed — check URL or try again'}`);
   }finally{
-    btn.classList.remove('loading');btn.textContent='⬇ Fetch';btn.disabled=false;
+    btn.classList.remove('loading');btn.textContent='Find all data';btn.disabled=false;
   }
 }
 
