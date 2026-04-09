@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.67 — Gear Organizer</title>
+<title>BaseCamp v4.68 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -584,7 +584,9 @@ html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.28);}
   padding:0.14rem 0.2rem;
   border-bottom:1px solid rgba(184,201,163,0.15);
   gap:0.4rem;
+  cursor:grab;
 }
+.pack-item-row:active{cursor:grabbing;}
 .pack-item-row:last-child{border-bottom:none;}
 .pack-item-row:hover{background:rgba(184,201,163,0.07);border-radius:5px;}
 .pack-item-left{display:flex;align-items:center;gap:0.35rem;min-width:0;flex:1;}
@@ -2127,7 +2129,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.67</div>
+      <div class="logo-sub">Gear Organizer · v4.68</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4169,7 +4171,6 @@ function startRenamePack(packId, pillEl){
 function setSeason(s,el){
   season=s;
   foodSeason=s; // keep food bag in sync
-  collapsedManual.clear(); // reset manual overrides so new pack derives from item count
   renderPackPills();
   renderCats();
   renderChart();renderStats();renderThermal();renderLegend();renderLab();renderGearWall();renderChartLabel();
@@ -4180,8 +4181,6 @@ let pendingData=null,pendingRef=null;
 let dragItem=null;       // market item (lab page)
 let gwCollapsed={};
 let collapsed={};
-const collapsedManual=new Set();
-const gwCollapsedManual=new Set();
 // Pointer-drag state for gear wall items
 const PD={
   active:false, item:null, catId:null, ghost:null,
@@ -5814,11 +5813,7 @@ function renderCats(){
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     // Auto-collapse categories with no items in this pack (user can expand)
-    // Expand only if cat has items IN THIS PACK; respect manual user toggles
-    if(!collapsedManual.has(cat.id)){
-      if(items.length > 0) collapsed[cat.id] = false;
-      else collapsed[cat.id] = true;
-    }
+    if(items.length === 0 && collapsed[cat.id] === undefined) collapsed[cat.id] = true;
     const w=cw(cat);
     const card=document.createElement('div');
     card.className=`cat-card ${cat.cc} ${collapsed[cat.id]?'collapsed':''}`;
@@ -5891,11 +5886,10 @@ function renderCats(){
         </div>`;
     }
 
-    // Delegate pointerdown on drag handles to trigger pdStart
+    // Delegate pointerdown on pack item rows to trigger pdStart (whole row is draggable)
     card.addEventListener('pointerdown', e=>{
-      const handle = e.target.closest('.pack-item-drag-handle');
-      if(!handle) return;
-      const row = handle.closest('.pack-item-row');
+      if(e.target.closest('button')||e.target.closest('input')) return;
+      const row = e.target.closest('.pack-item-row');
       if(!row) return;
       const cid = row.dataset.packCid;
       const iid = row.dataset.packIid;
@@ -5903,8 +5897,8 @@ function renderCats(){
       const cat2 = CATS.find(c=>c.id===cid);
       const item2 = cat2?.items.find(i=>i.id===iid);
       if(!item2) return;
-      console.log('[PD] pack handle pointerdown item='+item2.name+' cid='+cid);
-      pdStart(e, item2, cid, handle);
+      const handle = row.querySelector('.pack-item-drag-handle');
+      pdStart(e, item2, cid, handle||row);
     });
 
     // Accept drops from pack item drag
@@ -5963,18 +5957,18 @@ function renderCats(){
     ucCard.className = 'cat-card cc-uncategorised';
     ucCard.dataset.cid = 'uncategorised';
     ucCard.style.cssText = 'margin-bottom:0.5rem;border:1.5px dashed rgba(184,201,163,0.4);background:rgba(184,201,163,0.04);';
-    // Delegate pointerdown on uc drag handles
+    // Delegate pointerdown on uc item rows (whole row draggable)
     ucCard.addEventListener('pointerdown', e=>{
-      const handle = e.target.closest('.pack-item-drag-handle');
-      if(!handle) return;
-      const row = handle.closest('.pack-item-row');
+      if(e.target.closest('button')||e.target.closest('input')) return;
+      const row = e.target.closest('.pack-item-row');
       if(!row) return;
       const cid = row.dataset.packCid || 'uncategorised';
       const iid = row.dataset.packIid;
       const cat2 = CATS.find(c=>c.id===cid);
       const item2 = cat2?.items.find(i=>i.id===iid);
       if(!item2) return;
-      pdStart(e, item2, cid, handle);
+      const handle = row.querySelector('.pack-item-drag-handle');
+      pdStart(e, item2, cid, handle||row);
     });
 
     // Accept drops from pack item drag
@@ -6048,7 +6042,7 @@ function addCatToPack(catId){
 }
 
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function toggleCat(id){collapsed[id]=!collapsed[id];collapsedManual.add(id);renderCats();}
+function toggleCat(id){collapsed[id]=!collapsed[id];renderCats();}
 
 // ============================================================
 // CATEGORY REORDER — pointer drag
@@ -7701,9 +7695,6 @@ function renderGearWall(){
   gwGroups.delete('uncategorised');
 
   [...gwGroups.values()].forEach(({cat, items})=>{
-    if(!gwCollapsedManual.has(cat.id)){
-      gwCollapsed[cat.id] = items.length === 0;
-    }
     const group=document.createElement('div');
     group.className=`gw-cat${gwCollapsed[cat.id]?' gw-collapsed':''}`;
     group.dataset.cid=cat.id;
@@ -7734,7 +7725,7 @@ function renderGearWall(){
     hd.addEventListener('mouseenter',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0.5'; hd.querySelector('.gw-cat-edit-btn').style.opacity='0.55'; });
     hd.addEventListener('mouseleave',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0'; hd.querySelector('.gw-cat-edit-btn').style.opacity='0'; });
 
-    hd.addEventListener('click',()=>{gwCollapsed[cat.id]=!gwCollapsed[cat.id];gwCollapsedManual.add(cat.id);renderGearWall();});
+    hd.addEventListener('click',()=>{gwCollapsed[cat.id]=!gwCollapsed[cat.id];renderGearWall();});
     group.appendChild(hd);
 
     const itemsDiv=document.createElement('div');
