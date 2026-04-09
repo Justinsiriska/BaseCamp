@@ -4189,23 +4189,14 @@ let collapsed={};
 const collapsedManual=new Set();
 const gwCollapsedManual=new Set();
 
-// Open the gear wall drawer for any item by its id
 function openItemDrawer(iid){
-  // Switch to gear wall tab first if needed, then open drawer
-  const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
+  const wrap=document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
   if(wrap){
-    if(!wrap.classList.contains('open')){
-      wrap.classList.add('open');
-      requestAnimationFrame(()=>wrap.querySelector('.gw-edit-name')?.focus());
-    }
+    if(!wrap.classList.contains('open')){wrap.classList.add('open');requestAnimationFrame(()=>wrap.querySelector('.gw-edit-name')?.focus());}
     wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
   } else {
-    // GW not rendered yet — switch to gear tab then open
     document.querySelector('.nav-tab[data-page="gear"]')?.click();
-    setTimeout(()=>{
-      const w2 = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
-      if(w2){ w2.classList.add('open'); requestAnimationFrame(()=>w2.querySelector('.gw-edit-name')?.focus()); w2.scrollIntoView({behavior:'smooth',block:'nearest'}); }
-    }, 120);
+    setTimeout(()=>{const w2=document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);if(w2){w2.classList.add('open');requestAnimationFrame(()=>w2.querySelector('.gw-edit-name')?.focus());w2.scrollIntoView({behavior:'smooth',block:'nearest'});}},120);
   }
 }
 // Pointer-drag state for gear wall items
@@ -5914,7 +5905,7 @@ function renderCats(){
         </div>`;
     }
 
-    // Whole row is draggable — exclude buttons
+    // Whole row draggable — exclude buttons
     card.addEventListener('pointerdown', e=>{
       if(e.target.closest('button')) return;
       const row = e.target.closest('.pack-item-row');
@@ -8189,15 +8180,23 @@ function _pdHitTest(x, y){
     if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom)
       return 'season-'+pill.dataset.s;
   }
-  // Check pack col cat cards FIRST — they always win over GW cats
-  for(const card of document.querySelectorAll('.cat-card[data-cid]')){
-    const r = card.getBoundingClientRect();
-    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'pack-cat-'+card.dataset.cid;
-  }
-  // Check gear wall cat sections — only if pointer is in GW area (not pack col)
-  for(const gwCat of document.querySelectorAll('.gw-cat[data-cid]')){
-    const r = gwCat.getBoundingClientRect();
-    if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'gw-cat-'+gwCat.dataset.cid;
+  // Determine if pointer is in GW column by checking GW container bounds
+  const gwRoot = document.getElementById('gear-wall-body');
+  const gwLeft = gwRoot ? gwRoot.getBoundingClientRect().left : Infinity;
+  const inGW = x >= gwLeft;
+
+  if(!inGW){
+    // Pointer is in pack column — check pack cat cards
+    for(const card of document.querySelectorAll('.cat-card[data-cid]')){
+      const r = card.getBoundingClientRect();
+      if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'pack-cat-'+card.dataset.cid;
+    }
+  } else {
+    // Pointer is in GW column — check GW cats only
+    for(const gwCat of document.querySelectorAll('.gw-cat[data-cid]')){
+      const r = gwCat.getBoundingClientRect();
+      if(x>=r.left && x<=r.right && y>=r.top && y<=r.bottom) return 'gw-cat-'+gwCat.dataset.cid;
+    }
   }
   return null;
 }
