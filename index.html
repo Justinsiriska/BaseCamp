@@ -4169,6 +4169,7 @@ function startRenamePack(packId, pillEl){
 function setSeason(s,el){
   season=s;
   foodSeason=s; // keep food bag in sync
+  collapsedManual.clear(); // reset manual overrides so new pack derives from item count
   renderPackPills();
   renderCats();
   renderChart();renderStats();renderThermal();renderLegend();renderLab();renderGearWall();renderChartLabel();
@@ -4179,8 +4180,8 @@ let pendingData=null,pendingRef=null;
 let dragItem=null;       // market item (lab page)
 let gwCollapsed={};
 let collapsed={};
-const collapsedManual=new Set();    // cats the user has explicitly toggled in pack
-const gwCollapsedManual=new Set();  // cats the user has explicitly toggled in gear wall
+const collapsedManual=new Set();
+const gwCollapsedManual=new Set();
 // Pointer-drag state for gear wall items
 const PD={
   active:false, item:null, catId:null, ghost:null,
@@ -4393,14 +4394,14 @@ function initCatPacks(){
 function initDefaultCollapsed(){
   // Only set defaults if nothing has been explicitly collapsed/expanded yet
   if(Object.keys(collapsed).length === 0){
-    CATS.forEach((cat, i) => { if(collapsed[cat.id]===undefined) collapsed[cat.id] = false; });
+    CATS.forEach((cat, i) => { if(i > 0) collapsed[cat.id] = true; });
   }
   if(Object.keys(foodCatCollapsed).length === 0){
     FOOD_CATS.forEach((cat, i) => { if(i > 0) foodCatCollapsed[cat.id] = true; });
   }
   // Gear Wall — collapse all cats except the first
   if(Object.keys(gwCollapsed).length === 0){
-    CATS.forEach((cat) => { if(gwCollapsed[cat.id]===undefined) gwCollapsed[cat.id] = cat.items.length === 0; });
+    CATS.forEach((cat, i) => { if(i > 0) gwCollapsed[cat.id] = true; });
   }
   // Fridge — collapse all sections except Fruit (first)
   if(Object.keys(fridgeCollapsed).length === 0){
@@ -5813,10 +5814,10 @@ function renderCats(){
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     // Auto-collapse categories with no items in this pack (user can expand)
-    // Expand if items exist unless user manually toggled; collapse if empty
+    // Expand only if cat has items IN THIS PACK; respect manual user toggles
     if(!collapsedManual.has(cat.id)){
       if(items.length > 0) collapsed[cat.id] = false;
-      else if(collapsed[cat.id] === undefined) collapsed[cat.id] = true;
+      else collapsed[cat.id] = true;
     }
     const w=cw(cat);
     const card=document.createElement('div');
@@ -7700,10 +7701,8 @@ function renderGearWall(){
   gwGroups.delete('uncategorised');
 
   [...gwGroups.values()].forEach(({cat, items})=>{
-    // Expand if items exist unless user manually toggled; collapse if empty
     if(!gwCollapsedManual.has(cat.id)){
-      if(items.length > 0) gwCollapsed[cat.id] = false;
-      else if(gwCollapsed[cat.id] === undefined) gwCollapsed[cat.id] = true;
+      gwCollapsed[cat.id] = items.length === 0;
     }
     const group=document.createElement('div');
     group.className=`gw-cat${gwCollapsed[cat.id]?' gw-collapsed':''}`;
