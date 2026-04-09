@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.83 — Gear Organizer</title>
+<title>BaseCamp v4.84 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2308,7 +2308,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.83</div>
+      <div class="logo-sub">Gear Organizer · v4.84</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14843,7 +14843,16 @@ async function showProductCard(productId, itemIid){
           <div class="product-card-brand">${escH(p.brand)}</div>
           <div class="product-card-name">${escH(p.name)}</div>
           <div class="product-card-stats">${statsHtml||'<span class="product-card-stat">No specs yet</span>'}</div>
-          ${buyUrl ? `<a class="product-card-buy" href="${escH(buyUrl)}" target="_blank" rel="noopener">🛒 Buy this gear</a>` : ''}
+          ${(()=>{
+            if(p.affiliate_url && p.url) return `
+              <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                <a class="product-card-buy" href="${escH(p.affiliate_url)}" target="_blank" rel="noopener" style="background:#c85a2a;">🛒 Buy on Amazon</a>
+                <a class="product-card-buy" href="${escH(p.url)}" target="_blank" rel="noopener" style="font-size:0.68rem;padding:0.4rem;opacity:0.85;">↗ Brand Website</a>
+              </div>`;
+            if(p.affiliate_url) return `<a class="product-card-buy" href="${escH(p.affiliate_url)}" target="_blank" rel="noopener" style="background:#c85a2a;">🛒 Buy on Amazon</a>`;
+            if(p.url) return `<a class="product-card-buy" href="${escH(p.url)}" target="_blank" rel="noopener">🛒 Buy this gear</a>`;
+            return '';
+          })()}
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -14900,7 +14909,8 @@ async function renderAdminPage(){
         <datalist id="adm-cat-list"><option value="sleep"><option value="shelter"><option value="pack"><option value="cook"><option value="water"><option value="navigation"><option value="electronics"><option value="footwear"><option value="clothes"><option value="other"></datalist>
         <input class="gw-field-inp mono" id="adm-weight" type="number" placeholder="Weight (g)">
         <input class="gw-field-inp" id="adm-price" type="text" placeholder="Price e.g. $149">
-        <div class="full"><input class="gw-field-inp" id="adm-url" type="text" placeholder="Product URL" style="width:100%;box-sizing:border-box;"></div>
+        <div class="full"><input class="gw-field-inp" id="adm-url" type="text" placeholder="Product URL (brand site)" style="width:100%;box-sizing:border-box;"></div>
+        <div class="full"><input class="gw-field-inp" id="adm-amazon-url" type="text" placeholder="Amazon URL (optional)" style="width:100%;box-sizing:border-box;"></div>
         <div class="full" style="display:flex;gap:0.5rem;justify-content:flex-end;">
           <button class="gw-confirm-btn" onclick="adminAddProduct()" style="font-size:0.7rem;">✓ Add to Database</button>
         </div>
@@ -14995,6 +15005,7 @@ async function adminAddProduct(){
     weight_g: parseFloat(document.getElementById('adm-weight')?.value)||null,
     price: document.getElementById('adm-price')?.value.trim()||null,
     url: document.getElementById('adm-url')?.value.trim()||null,
+    affiliate_url: document.getElementById('adm-amazon-url')?.value.trim()||null,
     source: 'seeded', verified: true
   }]);
   if(error){ toast('❌ '+error.message); return; }
