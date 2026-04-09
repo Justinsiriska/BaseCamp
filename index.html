@@ -2350,7 +2350,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <hr class="gw-drawer-divider">
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…" value="">
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…" value="">
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('pack','qprhk3n',this)">Find all data</button>
           </div>
           
@@ -2399,7 +2399,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <hr class="gw-drawer-divider">
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…" value="">
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…" value="">
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('uncategorised','l0r80ey',this)">Find all data</button>
           </div>
           
@@ -2444,7 +2444,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <hr class="gw-drawer-divider">
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…" value="">
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…" value="">
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('cooking','arfgb9x',this)">Find all data</button>
           </div>
           
@@ -2479,7 +2479,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <hr class="gw-drawer-divider">
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…" value="">
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…" value="">
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('cooking','nlt2esw',this)">Find all data</button>
           </div>
           
@@ -2524,7 +2524,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <hr class="gw-drawer-divider">
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…" value="">
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…" value="">
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('clothes','2y7qk47',this)">Find all data</button>
           </div>
           
@@ -2569,7 +2569,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <hr class="gw-drawer-divider">
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…" value="">
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…" value="">
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('cat_1775651725603','6nn1eo6',this)">Find all data</button>
           </div>
           
@@ -2604,7 +2604,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <hr class="gw-drawer-divider">
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…" value="">
+            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="off" placeholder="Paste product URL…" value="">
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('cat_1775651725603','3jp3vn6',this)">Find all data</button>
           </div>
           
@@ -4398,7 +4398,7 @@ function initDefaultCollapsed(){
   }
   // Gear Wall — collapse all cats except the first
   if(Object.keys(gwCollapsed).length === 0){
-    CATS.forEach((cat, i) => { if(i > 0) gwCollapsed[cat.id] = true; });
+    CATS.forEach((cat) => { gwCollapsed[cat.id] = cat.items.length === 0; });
   }
   // Fridge — collapse all sections except Fruit (first)
   if(Object.keys(fridgeCollapsed).length === 0){
@@ -5811,7 +5811,7 @@ function renderCats(){
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     // Auto-collapse categories with no items in this pack (user can expand)
-    if(items.length === 0 && collapsed[cat.id] === undefined) collapsed[cat.id] = true;
+    if(collapsed[cat.id] === undefined) collapsed[cat.id] = items.length === 0;
     const w=cw(cat);
     const card=document.createElement('div');
     card.className=`cat-card ${cat.cc} ${collapsed[cat.id]?'collapsed':''}`;
@@ -7840,7 +7840,9 @@ function renderGearWall(){
           <hr class="gw-drawer-divider"/>
           <div class="gw-field" style="margin-bottom:0.2rem">
             <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="url" autocomplete="new-password" placeholder="Paste product URL…"
+            <input type="text" style="display:none" aria-hidden="true"/>
+            <input type="password" style="display:none" aria-hidden="true"/>
+            <input class="gw-drawer-url gw-edit-link" type="text" autocomplete="off" inputmode="url" placeholder="Paste product URL…"
               value="${escH(item.link||'')}"/>
             <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${srcCatId}','${item.id}',this)">Find all data</button>
           </div>
