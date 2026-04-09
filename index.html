@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.70 — Gear Organizer</title>
+<title>BaseCamp v4.71 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2247,7 +2247,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.70</div>
+      <div class="logo-sub">Gear Organizer · v4.71</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14282,15 +14282,16 @@ let _gearSearchTimer = null;
 async function gearProductSearch(query) {
   if(!query || query.length < 2) return [];
   try {
-    await sbReady();
-    const sb = getSupabase();
+    await waitForSupabase();
+    const sb = sbClient();
     if(!sb) return [];
-    // Use prefix search for short queries, full-text for longer
     if(query.length < 3){
-      const { data } = await sb.rpc('search_gear_products_prefix', { query: query.toLowerCase() });
+      const { data, error } = await sb.rpc('search_gear_products_prefix', { query: query.toLowerCase() });
+      if(error) console.warn('[GearDB] prefix search error:', error);
       return data || [];
     } else {
-      const { data } = await sb.rpc('search_gear_products', { query });
+      const { data, error } = await sb.rpc('search_gear_products', { query });
+      if(error) console.warn('[GearDB] search error:', error);
       return data || [];
     }
   } catch(e){ console.warn('[GearDB] search failed:', e); return []; }
@@ -14299,8 +14300,8 @@ async function gearProductSearch(query) {
 async function gearProductSave(product){
   // Save a new product to the shared DB (from URL scrape)
   try {
-    await sbReady();
-    const sb = getSupabase();
+    await waitForSupabase();
+    const sb = sbClient();
     if(!sb || !_sbUser) return null;
     const { data, error } = await sb.from('gear_products').insert([{
       name: product.name,
@@ -14320,8 +14321,8 @@ async function gearProductSave(product){
 
 async function gearProductSubmitEdit(productId, field, oldVal, newVal){
   try {
-    await sbReady();
-    const sb = getSupabase();
+    await waitForSupabase();
+    const sb = sbClient();
     if(!sb || !_sbUser) return;
     await sb.from('gear_product_edits').insert([{
       product_id: productId,
@@ -14368,8 +14369,8 @@ async function gearDrawerSelect(iid, productId){
   if(!item) return;
   // Fetch full product
   try {
-    await sbReady();
-    const sb = getSupabase();
+    await waitForSupabase();
+    const sb = sbClient();
     const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
     if(!p) return;
     // Link product to item
@@ -14459,8 +14460,8 @@ async function gearDrawerLoadLinked(iid, productId){
   const el = document.getElementById(`gw-linked-${iid}`);
   if(!el) return;
   try {
-    await sbReady();
-    const sb = getSupabase();
+    await waitForSupabase();
+    const sb = sbClient();
     const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
     if(!p || !el) return;
     el.querySelector('.gw-product-linked-img').innerHTML = p.image_url
@@ -14477,8 +14478,8 @@ async function gearDrawerLoadLinked(iid, productId){
 async function showProductCard(productId, itemIid){
   if(!productId) return;
   try {
-    await sbReady();
-    const sb = getSupabase();
+    await waitForSupabase();
+    const sb = sbClient();
     const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
     if(!p) return;
     // Get approved custom fields
