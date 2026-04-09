@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.90 — Gear Organizer</title>
+<title>BaseCamp v4.91 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2320,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.90</div>
+      <div class="logo-sub">Gear Organizer · v4.91</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14469,6 +14469,41 @@ function toggleTheme() {
 
 let _gearSearchTimer = null;
 
+
+// ── Extract size/volume from product name ──
+function extractSizeFromName(name){
+  if(!name) return {};
+  const result = {};
+  const n = name.toLowerCase();
+  // Volume: 550ml, 750ml, 1L, 2L, 65L etc
+  const vol = n.match(/(\d+\.?\d*)\s*(ml|fl\s*oz|liter|litre|l)/);
+  if(vol){
+    const num = parseFloat(vol[1]);
+    const unit = vol[2].trim();
+    if(unit==='ml') result.volume = num+'ml';
+    else if(unit.startsWith('fl')) result.volume = num+'fl oz';
+    else result.volume = num+'L'; // l, liter, litre
+  }
+  // Capacity in liters for packs: 45L, 65L
+  const pack = n.match(/(\d+)\s*l/);
+  if(pack && !result.volume) result.volume = pack[1]+'L';
+  // Oz for small items
+  const oz = n.match(/(\d+\.?\d*)\s*oz/);
+  if(oz && !result.volume) result.volume = oz[1]+'oz';
+  return result;
+}
+
+// Apply extracted size fields to a product's custom_fields
+function applySizeFieldsToProduct(product){
+  const extracted = extractSizeFromName(product.name);
+  if(!extracted.volume) return product;
+  const cf = product.custom_fields || {};
+  // Only set if not already present
+  if(!cf.volume && !cf.volume_liters) cf.volume = extracted.volume;
+  product.custom_fields = cf;
+  return product;
+}
+
 // ── Save scraped product data to gear_products DB ──
 // Called after user confirms scraped data. Checks for duplicates before saving.
 async function gwFetchSaveToDb(cid, iid, scraped){
@@ -14518,6 +14553,9 @@ async function gwFetchSaveToDb(cid, iid, scraped){
     if(scraped.temp_rating) product.custom_fields.temp_rating = scraped.temp_rating;
     if(scraped.r_value) product.custom_fields.r_value = scraped.r_value;
     if(scraped.volume_l) product.custom_fields.volume_liters = scraped.volume_l;
+
+    // Auto-extract volume/size from product name if not already set
+    applySizeFieldsToProduct(product);
 
     // Insert — duplicate trigger will auto-flag if similar product exists
     const {data:saved, error} = await sb.from('gear_products')
@@ -15174,15 +15212,18 @@ async function adminAddProduct(){
   const brand = document.getElementById('adm-brand')?.value.trim();
   if(!name||!brand){ toast('⚠️ Name and brand are required'); return; }
   const sb = sbClient();
-  const {error} = await sb.from('gear_products').insert([{
+  const admProduct = {
     name, brand,
     category: document.getElementById('adm-category')?.value.trim()||'other',
     weight_g: getWeightInGrams(document.getElementById('adm-weight'))||null,
     price: document.getElementById('adm-price')?.value.trim()||null,
     url: document.getElementById('adm-url')?.value.trim()||null,
     affiliate_url: document.getElementById('adm-amazon-url')?.value.trim()||null,
-    source: 'seeded', verified: true
-  }]);
+    source: 'seeded', verified: true,
+    custom_fields: {}
+  };
+  applySizeFieldsToProduct(admProduct);
+  const {error} = await sb.from('gear_products').insert([admProduct]);
   if(error){ toast('❌ '+error.message); return; }
   toast('✅ Product added to database!');
   ['adm-name','adm-brand','adm-category','adm-weight','adm-price','adm-url'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -15378,6 +15419,11 @@ async function adminApproveProduct(id){
   const image_url = document.getElementById('adm-ep-img-'+id)?.value.trim()||null;
 
   const customFields = readAdminFields(id);
+  // Auto-extract size from name if no volume field set manually
+  if(name && !customFields.volume && !customFields.volume_liters){
+    const extracted = extractSizeFromName(name);
+    if(extracted.volume) customFields.volume = extracted.volume;
+  }
   const update = { verified: true };
   if(name)  update.name = name;
   if(brand) update.brand = brand;
