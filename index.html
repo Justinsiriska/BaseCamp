@@ -4170,7 +4170,8 @@ function startRenamePack(packId, pillEl){
 }
 function setSeason(s,el){
   season=s;
-  foodSeason=s; // keep food bag in sync
+  foodSeason=s;
+  collapsedManual.clear();
   renderPackPills();
   renderCats();
   renderChart();renderStats();renderThermal();renderLegend();renderLab();renderGearWall();renderChartLabel();
@@ -4181,6 +4182,8 @@ let pendingData=null,pendingRef=null;
 let dragItem=null;       // market item (lab page)
 let gwCollapsed={};
 let collapsed={};
+const collapsedManual=new Set();
+const gwCollapsedManual=new Set();
 // Pointer-drag state for gear wall items
 const PD={
   active:false, item:null, catId:null, ghost:null,
@@ -5813,7 +5816,9 @@ function renderCats(){
   CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
     const items=sItems(cat);
     // Auto-collapse categories with no items in this pack (user can expand)
-    if(items.length === 0 && collapsed[cat.id] === undefined) collapsed[cat.id] = true;
+    if(!collapsedManual.has(cat.id)){
+      collapsed[cat.id] = items.length === 0;
+    }
     const w=cw(cat);
     const card=document.createElement('div');
     card.className=`cat-card ${cat.cc} ${collapsed[cat.id]?'collapsed':''}`;
@@ -5886,7 +5891,7 @@ function renderCats(){
         </div>`;
     }
 
-    // Delegate pointerdown on pack item rows to trigger pdStart (whole row is draggable)
+    // Whole row is draggable (like gear wall) — exclude buttons and inputs
     card.addEventListener('pointerdown', e=>{
       if(e.target.closest('button')||e.target.closest('input')) return;
       const row = e.target.closest('.pack-item-row');
@@ -5897,8 +5902,7 @@ function renderCats(){
       const cat2 = CATS.find(c=>c.id===cid);
       const item2 = cat2?.items.find(i=>i.id===iid);
       if(!item2) return;
-      const handle = row.querySelector('.pack-item-drag-handle');
-      pdStart(e, item2, cid, handle||row);
+      pdStart(e, item2, cid, row.querySelector('.pack-item-drag-handle')||row);
     });
 
     // Accept drops from pack item drag
@@ -5957,7 +5961,7 @@ function renderCats(){
     ucCard.className = 'cat-card cc-uncategorised';
     ucCard.dataset.cid = 'uncategorised';
     ucCard.style.cssText = 'margin-bottom:0.5rem;border:1.5px dashed rgba(184,201,163,0.4);background:rgba(184,201,163,0.04);';
-    // Delegate pointerdown on uc item rows (whole row draggable)
+    // Whole row draggable for uncategorised too
     ucCard.addEventListener('pointerdown', e=>{
       if(e.target.closest('button')||e.target.closest('input')) return;
       const row = e.target.closest('.pack-item-row');
@@ -5967,8 +5971,7 @@ function renderCats(){
       const cat2 = CATS.find(c=>c.id===cid);
       const item2 = cat2?.items.find(i=>i.id===iid);
       if(!item2) return;
-      const handle = row.querySelector('.pack-item-drag-handle');
-      pdStart(e, item2, cid, handle||row);
+      pdStart(e, item2, cid, row.querySelector('.pack-item-drag-handle')||row);
     });
 
     // Accept drops from pack item drag
@@ -6042,7 +6045,7 @@ function addCatToPack(catId){
 }
 
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function toggleCat(id){collapsed[id]=!collapsed[id];renderCats();}
+function toggleCat(id){collapsed[id]=!collapsed[id];collapsedManual.add(id);renderCats();}
 
 // ============================================================
 // CATEGORY REORDER — pointer drag
@@ -7695,6 +7698,7 @@ function renderGearWall(){
   gwGroups.delete('uncategorised');
 
   [...gwGroups.values()].forEach(({cat, items})=>{
+    if(!gwCollapsedManual.has(cat.id)) gwCollapsed[cat.id] = items.length === 0;
     const group=document.createElement('div');
     group.className=`gw-cat${gwCollapsed[cat.id]?' gw-collapsed':''}`;
     group.dataset.cid=cat.id;
@@ -7725,7 +7729,7 @@ function renderGearWall(){
     hd.addEventListener('mouseenter',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0.5'; hd.querySelector('.gw-cat-edit-btn').style.opacity='0.55'; });
     hd.addEventListener('mouseleave',()=>{ hd.querySelector('.gw-cat-del-btn').style.opacity='0'; hd.querySelector('.gw-cat-edit-btn').style.opacity='0'; });
 
-    hd.addEventListener('click',()=>{gwCollapsed[cat.id]=!gwCollapsed[cat.id];renderGearWall();});
+    hd.addEventListener('click',()=>{gwCollapsed[cat.id]=!gwCollapsed[cat.id];gwCollapsedManual.add(cat.id);renderGearWall();});
     group.appendChild(hd);
 
     const itemsDiv=document.createElement('div');
