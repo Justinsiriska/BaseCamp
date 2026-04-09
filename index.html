@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.72 — Gear Organizer</title>
+<title>BaseCamp v4.73 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2247,7 +2247,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.72</div>
+      <div class="logo-sub">Gear Organizer · v4.73</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5972,29 +5972,26 @@ function renderCats(){
 
     // Pack category gets special banner treatment
     if(cat.id==='pack'){
-      const packItem = items[0]; // only one pack per config
-      const packName = packItem ? packItem.name : 'No pack added';
+      const packItem = items[0]; // there's only ever one pack
+      const packName = packItem ? packItem.name : 'My Pack';
       const extraVol = packItem?.extra ? packItem.extra+'L' : '';
-      const packBuyBtn = packItem?.productId ? `<button class="pack-item-buy-btn" style="opacity:0.6;font-size:0.7rem;" title="View product" onclick="showProductCard('${packItem.productId}')">🛒</button>` : '';
       card.innerHTML=`
         <div class="pack-cat-banner">
           <div class="pack-cat-banner-left">
             <span class="pack-cat-banner-icon">🎒</span>
             <span class="pack-cat-banner-name" title="Click to edit" style="cursor:pointer"
-              onclick="${packItem ? `openItemDrawer('${packItem.id}')` : ''}">${escH(packName)}</span>
+              onclick="packItem && startWeightEdit(document.querySelector('[data-iid=\\\"${packItem?.id}\\\"]'), 'pack', '${packItem?.id}')">${escH(packName)}</span>
             ${extraVol ? `<span class="pack-cat-banner-meta">${extraVol}</span>` : ''}
-            ${packBuyBtn}
           </div>
           <div class="pack-cat-banner-right">
             <span class="pack-cat-banner-w" data-cid="pack">${dw(w)}</span>
-            ${packItem ? `<button class="del-btn" style="margin-left:0.3rem;" onclick="delItem('pack','${packItem.id}')" title="Remove pack">✕</button>` : ''}
           </div>
         </div>
         ${items.length===0
-          ? `<div style="padding:0.5rem 0.85rem;font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);opacity:0.6;">No pack — drag one here from Gear Wall</div>`
+          ? `<div style="padding:0.5rem 0.85rem;font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);opacity:0.6;">No pack added — use ＋ Add Item above, select Pack</div>`
           : ''
         }`;
-      // No item rows for pack cat — the banner IS the item display
+      // No body/rows for pack — the item name IS the header
     } else {
       card.innerHTML=`
         <div class="cat-drag-handle" data-cid="${cat.id}">· · · · ·</div>
@@ -7178,6 +7175,9 @@ function applyModal(){
     if(linkInp && d.url) linkInp.value=d.url;
     toast('✅ Data filled in — hit Save to keep it');
   }
+
+  // Save to shared gear_products DB so others can find it by search
+  gwFetchSaveToDb(cid, iid, d);
 }
 function closeModal(){
   document.getElementById('modal-ov').classList.remove('open');
@@ -7923,6 +7923,7 @@ function renderGearWall(){
             <span class="gw-item-weight">${dw(item.w)}</span>
             ${hasLink?`<span class="gw-link-indicator" title="Has product link">🔗</span>`:''}
             <button class="gw-item-edit-btn" title="Edit item"
+              onclick="event.stopPropagation();(()=>{if(wrap.classList.contains('open')){autoSaveDrawer('${srcCatId}','${item.id}');}else{wrap.classList.add('open');requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());}})();"
               style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
             <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
               onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">
@@ -7945,16 +7946,6 @@ function renderGearWall(){
         });
         chip.addEventListener('mouseenter',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0.45'; });
         chip.addEventListener('mouseleave',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0'; });
-        // Edit button uses closure-safe event listener (inline onclick can't access wrap/drawer)
-        chip.querySelector('.gw-item-edit-btn')?.addEventListener('click', e=>{
-          e.stopPropagation();
-          if(wrap.classList.contains('open')){
-            autoSaveDrawer(srcCatId, item.id);
-          } else {
-            wrap.classList.add('open');
-            requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());
-          }
-        });
         chip.addEventListener('click', e=>{ if(e.target.closest('button')) return; });
         chip.addEventListener('dblclick', e=>{
           if(e.target.closest('button')) return;
@@ -8456,21 +8447,12 @@ function _pdCommit(zone){
         toast(`✅ ${item.name} moved to ${toCat.name}`);
       } else { toast(`ℹ️ ${item.name} is already in ${toCat.name}`); }
     } else {
-      // Dragging from GW onto pack column
-      if(toCatId === 'pack'){
-        // Pack cat: only one item per season — remove existing first
-        const packCat = CATS.find(c=>c.id==='pack');
-        if(packCat) packCat.items.forEach(p=>{ p.s = p.s.filter(ss=>ss!==season); });
-        if(!item.s.includes(season)) item.s = [...item.s, season];
-        toast(`✅ ${item.name} set as your pack`);
-      } else {
-        if(!item.s.includes(season)){
-          const fromCat = CATS.find(c=>c.id===catId);
-          if(fromCat && catId !== toCatId){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); }
-          item.s = [...item.s, season];
-          toast(`✅ ${item.name} added to pack`);
-        } else { toast(`ℹ️ ${item.name} is already in your pack`); }
-      }
+      if(!item.s.includes(season)){
+        const fromCat = CATS.find(c=>c.id===catId);
+        if(fromCat && catId !== toCatId){ fromCat.items = fromCat.items.filter(i=>i.id!==item.id); toCat.items.push(item); }
+        item.s = [...item.s, season];
+        toast(`✅ ${item.name} added to pack`);
+      } else { toast(`ℹ️ ${item.name} is already in your pack`); }
     }
     scheduleSave(); renderAll();
     return;
@@ -14299,6 +14281,77 @@ function toggleTheme() {
 // ============================================================
 
 let _gearSearchTimer = null;
+
+// ── Save scraped product data to gear_products DB ──
+// Called after user confirms scraped data. Checks for duplicates before saving.
+async function gwFetchSaveToDb(cid, iid, scraped){
+  if(!scraped || !scraped.name) return;
+  try {
+    await waitForSupabase();
+    const sb = sbClient();
+    if(!sb) return;
+
+    // Determine category from the gear wall cat
+    const cat = CATS.find(c=>c.id===cid);
+    const catMap = {sleep:'sleep',pack:'pack',cooking:'cook',clothes:'clothes',
+                    shelter:'shelter',electronics:'electronics',footwear:'footwear',
+                    water:'water',navigation:'navigation'};
+    const category = catMap[cid] || 'other';
+
+    // Check for existing product with same URL first
+    const url = scraped.url || (CATS.find(c=>c.id===cid)?.items.find(i=>i.id===iid)?.link) || null;
+    if(url){
+      const {data:existing} = await sb.from('gear_products').select('id').eq('url', url).maybeSingle();
+      if(existing){
+        // Already in DB — just link the item to it
+        const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+        if(item && !item.productId){
+          item.productId = existing.id;
+          scheduleSave();
+          console.log('[GearDB] linked to existing product', existing.id);
+        }
+        return;
+      }
+    }
+
+    // Build product object
+    const product = {
+      name: scraped.name,
+      brand: scraped.brand || '',
+      weight_g: scraped.weight_g || null,
+      price: scraped.price_usd ? '$'+scraped.price_usd : null,
+      url: url,
+      category,
+      source: 'scraped',
+      verified: false,
+      custom_fields: {}
+    };
+
+    // Add any extra fields to custom_fields
+    if(scraped.temp_rating) product.custom_fields.temp_rating = scraped.temp_rating;
+    if(scraped.r_value) product.custom_fields.r_value = scraped.r_value;
+    if(scraped.volume_l) product.custom_fields.volume_liters = scraped.volume_l;
+
+    // Insert — duplicate trigger will auto-flag if similar product exists
+    const {data:saved, error} = await sb.from('gear_products')
+      .insert([product]).select().single();
+
+    if(error){
+      console.warn('[GearDB] save failed:', error);
+      return;
+    }
+
+    // Link item to the new product
+    const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+    if(item && saved){
+      item.productId = saved.id;
+      scheduleSave();
+      console.log('[GearDB] saved & linked new product', saved.id, saved.name);
+    }
+  } catch(e){
+    console.warn('[GearDB] gwFetchSaveToDb error:', e);
+  }
+}
 
 async function gearProductSearch(query) {
   if(!query || query.length < 2) return [];
