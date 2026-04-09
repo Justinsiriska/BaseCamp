@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.89 — Gear Organizer</title>
+<title>BaseCamp v4.90 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2320,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.89</div>
+      <div class="logo-sub">Gear Organizer · v4.90</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14989,7 +14989,7 @@ async function renderAdminPage(){
     sb.from('gear_products').select('*').in('source',['community','scraped']).eq('verified',false).is('duplicate_of',null).order('created_at',{ascending:false}).limit(30),
     sb.from('gear_product_edits').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(30),
     sb.from('gear_product_field_defs').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(20),
-    sb.from('gear_products').select('*').not('duplicate_of','is',null).limit(20),
+    sb.from('gear_products').select('*').not('duplicate_of','is',null).order('duplicate_of').limit(40),
   ]);
 
   const pending = prodRes.data||[];
@@ -15101,17 +15101,70 @@ async function renderAdminPage(){
       <div class="admin-section-title"><span>⚠️</span> Flagged Duplicates <span class="admin-badge dup">${dups.length}</span></div>
       ${dups.length===0
         ? '<div class="admin-empty">No flagged duplicates ✓</div>'
-        : dups.map(p=>`
-        <div class="admin-card" id="adm-dup-${p.id}">
-          <div class="admin-card-info">
-            <div class="admin-card-name">${escH(p.name)}</div>
-            <div class="admin-card-meta">${escH(p.brand||'—')} — flagged as duplicate of ${p.duplicate_of}</div>
-          </div>
-          <div class="admin-card-actions">
-            <button class="admin-approve-btn" onclick="adminKeepProduct('${p.id}')">Keep</button>
-            <button class="admin-reject-btn" onclick="adminDeleteProduct('${p.id}')">Delete</button>
-          </div>
-        </div>`).join('')}
+        : (()=>{
+          // Group duplicates by duplicate_of so pairs sit together
+          const groups = {};
+          dups.forEach(p=>{
+            const key = p.duplicate_of;
+            if(!groups[key]) groups[key] = {original:null, dupes:[]};
+            groups[key].dupes.push(p);
+          });
+          // For each group, find original in dups or show ID
+          return Object.entries(groups).map(([origId, grp])=>{
+            const origInDups = dups.find(p=>p.id===origId);
+            const origLabel = origInDups ? escH(origInDups.name) : `<span style="font-family:Space Mono,monospace;font-size:0.42rem;opacity:0.6;">${origId.slice(0,8)}…</span>`;
+            return `
+            <div style="border:1.5px solid rgba(200,90,42,0.2);border-radius:12px;padding:0.6rem;margin-bottom:0.8rem;background:rgba(200,90,42,0.04);">
+              <div style="font-family:Space Mono,monospace;font-size:0.42rem;color:var(--stone);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:1px;">
+                Possible duplicate group — original: ${origLabel}
+              </div>
+              ${grp.dupes.map(p=>`
+              <div class="admin-card" id="adm-dup-${p.id}" style="flex-direction:column;gap:0.5rem;margin-bottom:0.4rem;">
+                <div style="display:flex;align-items:flex-start;gap:0.8rem;">
+                  <div class="admin-card-info">
+                    <div class="admin-card-name">${escH(p.name)}</div>
+                    <div class="admin-card-meta">${escH(p.brand||'—')} · ${p.category||'?'} · ${p.weight_g?p.weight_g+'g':'no weight'} · ${p.price||'no price'}
+                      ${p.url?`<br><a href="${escH(p.url)}" target="_blank" style="color:var(--water);">↗ ${escH(p.url.slice(0,45))}…</a>`:''}
+                    </div>
+                  </div>
+                  <div class="admin-card-actions">
+                    <button class="admin-approve-btn" style="font-size:0.55rem;" onclick="adminExpandDupEdit('${p.id}')">✎ Edit</button>
+                    <button class="admin-approve-btn" onclick="adminKeepProduct('${p.id}')">Keep</button>
+                    <button class="admin-reject-btn" onclick="adminDeleteProduct('${p.id}')">Delete</button>
+                  </div>
+                </div>
+                <div id="adm-dup-edit-${p.id}" style="display:none;border-top:1px solid rgba(184,201,163,0.3);padding-top:0.6rem;">
+                  <div class="admin-add-form" style="margin-bottom:0.5rem;">
+                    <input class="gw-field-inp" id="adm-dp-name-${p.id}" type="text" value="${escH(p.name||'')}" placeholder="Name" autocomplete="off">
+                    <input class="gw-field-inp" id="adm-dp-brand-${p.id}" type="text" value="${escH(p.brand||'')}" placeholder="Brand" autocomplete="off">
+                    <div style="display:flex;gap:0.4rem;align-items:center;">
+                      <input class="gw-field-inp mono" id="adm-dp-weight-${p.id}" type="number" value="${p.weight_g||''}" placeholder="Weight" data-weight-unit="g" style="flex:1;">
+                      \${_weightUnitSel('adm-dp-weight-${p.id}','g')}
+                    </div>
+                    <input class="gw-field-inp" id="adm-dp-price-${p.id}" type="text" value="${escH(p.price||'')}" placeholder="Price" autocomplete="off">
+                    <input class="gw-field-inp full" id="adm-dp-url-${p.id}" type="text" value="${escH(p.url||'')}" placeholder="Product URL" autocomplete="off">
+                    <input class="gw-field-inp full" id="adm-dp-img-${p.id}" type="text" value="${escH(p.image_url||'')}" placeholder="Image URL" autocomplete="off">
+                  </div>
+                  \${buildAdminFieldsSection('dup-'+p.id, p.custom_fields||{})}
+                  <div style="display:flex;gap:0.4rem;justify-content:flex-end;">
+                    <button class="gw-cancel-btn" style="font-size:0.6rem;padding:3px 10px;" onclick="document.getElementById('adm-dup-edit-${p.id}').style.display='none'">Cancel</button>
+                    <button class="admin-approve-btn" onclick="adminSaveDupEdit('${p.id}')">✓ Save</button>
+                  </div>
+                </div>
+              </div>`).join('')}
+            </div>`;
+          }).join('');
+        })()}
+    </div>
+
+    <!-- PRODUCT LOOKUP -->
+    <div class="admin-section">
+      <div class="admin-section-title"><span>🔍</span> Product Lookup</div>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.8rem;">
+        <input class="gw-field-inp" id="adm-lookup-inp" type="text" placeholder="Search by name, brand…" autocomplete="off" style="flex:1;"
+          oninput="adminLookupSearch(this.value)">
+      </div>
+      <div id="adm-lookup-results"></div>
     </div>
   `;
 }
@@ -15183,6 +15236,130 @@ function readAdminFields(pid){
     if(key && val!=='') fields[key] = val;
   });
   return fields;
+}
+
+
+function adminExpandDupEdit(id){
+  const form = document.getElementById('adm-dup-edit-'+id);
+  if(form) form.style.display = form.style.display==='none' ? 'block' : 'none';
+}
+
+async function adminSaveDupEdit(id){
+  const sb = sbClient();
+  const name  = document.getElementById('adm-dp-name-'+id)?.value.trim();
+  const brand = document.getElementById('adm-dp-brand-'+id)?.value.trim();
+  const weight_g = getWeightInGrams(document.getElementById('adm-dp-weight-'+id))||null;
+  const price = document.getElementById('adm-dp-price-'+id)?.value.trim()||null;
+  const url   = document.getElementById('adm-dp-url-'+id)?.value.trim()||null;
+  const image_url = document.getElementById('adm-dp-img-'+id)?.value.trim()||null;
+  const customFields = readAdminFields('dup-'+id);
+  const update = {};
+  if(name)  update.name = name;
+  if(brand) update.brand = brand;
+  if(weight_g) update.weight_g = weight_g;
+  if(price) update.price = price;
+  if(url)   update.url = url;
+  if(image_url) update.image_url = image_url;
+  if(Object.keys(customFields).length) update.custom_fields = customFields;
+  const {error} = await sb.from('gear_products').update(update).eq('id',id);
+  if(error){ toast('❌ '+error.message); return; }
+  // Update display
+  const card = document.getElementById('adm-dup-'+id);
+  if(card){
+    card.querySelector('.admin-card-name').textContent = name||'';
+    card.querySelector('.admin-card-meta').textContent = (brand||'—')+' · '+(weight_g?weight_g+'g':'no weight');
+  }
+  document.getElementById('adm-dup-edit-'+id).style.display='none';
+  toast('✅ Product updated');
+}
+
+let _lookupTimer = null;
+async function adminLookupSearch(val){
+  clearTimeout(_lookupTimer);
+  const res = document.getElementById('adm-lookup-results');
+  if(!val || val.length < 2){ res.innerHTML = ''; return; }
+  _lookupTimer = setTimeout(async()=>{
+    res.innerHTML = '<div class="admin-empty">Searching…</div>';
+    const sb = sbClient();
+    const {data} = await sb.from('gear_products').select('*')
+      .or(`name.ilike.%${val}%,brand.ilike.%${val}%`)
+      .order('verified',{ascending:false}).limit(10);
+    if(!data?.length){ res.innerHTML = '<div class="admin-empty">No products found</div>'; return; }
+    res.innerHTML = data.map(p=>`
+      <div class="admin-card" id="adm-lu-${p.id}" style="flex-direction:column;gap:0.5rem;margin-bottom:0.4rem;">
+        <div style="display:flex;align-items:flex-start;gap:0.8rem;">
+          <div class="admin-card-info">
+            <div class="admin-card-name">${escH(p.name)} ${p.verified?'<span class="admin-badge" style="background:rgba(74,103,65,0.15);color:var(--forest);border:1px solid rgba(74,103,65,0.3);">✓ verified</span>':''}</div>
+            <div class="admin-card-meta">${escH(p.brand||'—')} · ${p.category||'?'} · ${p.weight_g?p.weight_g+'g':'no weight'} · ${p.price||'no price'}
+              ${p.url?`<br><a href="${escH(p.url)}" target="_blank" style="color:var(--water);">↗ ${escH(p.url.slice(0,50))}</a>`:''}
+            </div>
+          </div>
+          <button class="admin-approve-btn" style="font-size:0.55rem;flex-shrink:0;" onclick="adminExpandLookupEdit('${p.id}')">✎ Edit</button>
+        </div>
+        <div id="adm-lu-edit-${p.id}" style="display:none;border-top:1px solid rgba(184,201,163,0.3);padding-top:0.6rem;">
+          <div class="admin-add-form" style="margin-bottom:0.5rem;">
+            <input class="gw-field-inp" id="adm-lu-name-${p.id}" type="text" value="${escH(p.name||'')}" placeholder="Name" autocomplete="off">
+            <input class="gw-field-inp" id="adm-lu-brand-${p.id}" type="text" value="${escH(p.brand||'')}" placeholder="Brand" autocomplete="off">
+            <div style="display:flex;gap:0.4rem;align-items:center;">
+              <input class="gw-field-inp mono" id="adm-lu-weight-${p.id}" type="number" value="${p.weight_g||''}" placeholder="Weight" data-weight-unit="g" style="flex:1;">
+              ${_weightUnitSel('adm-lu-weight-'+p.id,'g')}
+            </div>
+            <input class="gw-field-inp" id="adm-lu-price-${p.id}" type="text" value="${escH(p.price||'')}" placeholder="Price" autocomplete="off">
+            <input class="gw-field-inp full" id="adm-lu-url-${p.id}" type="text" value="${escH(p.url||'')}" placeholder="Product URL" autocomplete="off">
+            <input class="gw-field-inp full" id="adm-lu-amazon-${p.id}" type="text" value="${escH(p.affiliate_url||'')}" placeholder="Amazon URL" autocomplete="off">
+            <input class="gw-field-inp full" id="adm-lu-img-${p.id}" type="text" value="${escH(p.image_url||'')}" placeholder="Image URL" autocomplete="off">
+          </div>
+          ${buildAdminFieldsSection('lu-'+p.id, p.custom_fields||{})}
+          <div style="display:flex;gap:0.4rem;justify-content:flex-end;margin-top:0.4rem;">
+            <label style="display:flex;align-items:center;gap:0.3rem;font-family:Space Mono,monospace;font-size:0.45rem;color:var(--stone);cursor:pointer;">
+              <input type="checkbox" id="adm-lu-verified-${p.id}" ${p.verified?'checked':''} style="width:12px;height:12px;"> Verified
+            </label>
+            <button class="gw-cancel-btn" style="font-size:0.6rem;padding:3px 10px;" onclick="document.getElementById('adm-lu-edit-${p.id}').style.display='none'">Cancel</button>
+            <button class="admin-reject-btn" onclick="adminLookupDelete('${p.id}')">Delete</button>
+            <button class="admin-approve-btn" onclick="adminLookupSave('${p.id}')">✓ Save</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }, 300);
+}
+
+function adminExpandLookupEdit(id){
+  const form = document.getElementById('adm-lu-edit-'+id);
+  if(form) form.style.display = form.style.display==='none' ? 'block' : 'none';
+}
+
+async function adminLookupSave(id){
+  const sb = sbClient();
+  const weight_g = getWeightInGrams(document.getElementById('adm-lu-weight-'+id))||null;
+  const customFields = readAdminFields('lu-'+id);
+  const update = {
+    name:  document.getElementById('adm-lu-name-'+id)?.value.trim()||undefined,
+    brand: document.getElementById('adm-lu-brand-'+id)?.value.trim()||undefined,
+    weight_g,
+    price: document.getElementById('adm-lu-price-'+id)?.value.trim()||null,
+    url:   document.getElementById('adm-lu-url-'+id)?.value.trim()||null,
+    affiliate_url: document.getElementById('adm-lu-amazon-'+id)?.value.trim()||null,
+    image_url: document.getElementById('adm-lu-img-'+id)?.value.trim()||null,
+    verified: document.getElementById('adm-lu-verified-'+id)?.checked||false,
+  };
+  if(Object.keys(customFields).length) update.custom_fields = customFields;
+  // Remove undefined keys
+  Object.keys(update).forEach(k=>update[k]===undefined&&delete update[k]);
+  const {error} = await sb.from('gear_products').update(update).eq('id',id);
+  if(error){ toast('❌ '+error.message); return; }
+  if(weight_g) adminBackfillProductWeight(id, weight_g);
+  document.getElementById('adm-lu-edit-'+id).style.display='none';
+  toast('✅ Product saved');
+  // Refresh search
+  adminLookupSearch(document.getElementById('adm-lookup-inp')?.value||'');
+}
+
+async function adminLookupDelete(id){
+  if(!confirm('Delete this product? This cannot be undone.')) return;
+  const sb = sbClient();
+  await sb.from('gear_products').delete().eq('id',id);
+  document.getElementById('adm-lu-'+id)?.remove();
+  toast('🗑 Product deleted');
 }
 
 function adminExpandEdit(id){
