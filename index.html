@@ -15190,6 +15190,44 @@ async function renderAdminPage(){
   const fieldDefs = fieldRes.data||[];
   const dups = dupRes.data||[];
 
+  // Render import section immediately (doesn't need async data)
+  const importHtml = `
+    <div class="admin-section" id="adm-import-section">
+      <div class="admin-section-title"><span>📥</span> Bulk Import Products</div>
+      <div style="margin-bottom:0.6rem;">
+        <div id="adm-import-drop" onclick="document.getElementById('adm-import-file').click()"
+          style="border:1.5px dashed rgba(184,201,163,0.5);border-radius:8px;padding:1.2rem;text-align:center;cursor:pointer;font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);transition:background 0.15s;"
+          onmouseover="this.style.background='rgba(184,201,163,0.06)'" onmouseout="this.style.background=''"
+          ondragover="event.preventDefault();this.style.background='rgba(184,201,163,0.12)'"
+          ondragleave="this.style.background=''"
+          ondrop="event.preventDefault();this.style.background='';adminImportLoadFile(event.dataTransfer.files[0])">
+          📂 Click or drag a CSV file here
+        </div>
+        <input type="file" id="adm-import-file" accept=".csv" style="display:none" onchange="adminImportLoadFile(this.files[0])">
+        <div style="text-align:center;margin-top:0.5rem;">
+          <button class="admin-approve-btn" onclick="adminImportBundled()" style="font-size:0.5rem;">
+            📦 Load bundled trial data (226 products)
+          </button>
+        </div>
+      </div>
+      <div id="adm-import-preview" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.4rem;">
+          <span id="adm-import-count" style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);"></span>
+          <div style="display:flex;gap:0.4rem;">
+            <button class="admin-approve-btn" onclick="adminImportRun()">Import all →</button>
+            <button class="admin-reject-btn" onclick="adminImportClear()">✕ Clear</button>
+          </div>
+        </div>
+        <div id="adm-import-progress" style="display:none;margin-bottom:0.5rem;">
+          <div style="height:4px;background:rgba(184,201,163,0.2);border-radius:2px;overflow:hidden;">
+            <div id="adm-import-bar" style="height:100%;background:var(--moss);border-radius:2px;width:0%;transition:width 0.3s;"></div>
+          </div>
+          <div id="adm-import-status" style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-top:0.3rem;"></div>
+        </div>
+        <div id="adm-import-table" style="overflow-x:auto;max-height:320px;overflow-y:auto;border:0.5px solid rgba(184,201,163,0.2);border-radius:6px;"></div>
+      </div>
+    </div>`;
+
   el.innerHTML = `
     <div class="admin-page-title">⚙️ Admin Panel</div>
     <div class="admin-page-sub">Logged in as ${escH(_sbUser.email)}</div>
@@ -15360,44 +15398,10 @@ async function renderAdminPage(){
       <div id="adm-lookup-results"></div>
     </div>
 
-    <!-- BULK IMPORT -->
-    <div class="admin-section">
-      <div class="admin-section-title"><span>📥</span> Bulk Import Products</div>
-      <div style="margin-bottom:0.6rem;">
-        <div id="adm-import-drop" onclick="document.getElementById('adm-import-file').click()"
-          style="border:1.5px dashed rgba(184,201,163,0.5);border-radius:8px;padding:1.2rem;text-align:center;cursor:pointer;font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);transition:background 0.15s;"
-          onmouseover="this.style.background='rgba(184,201,163,0.06)'" onmouseout="this.style.background=''"
-          ondragover="event.preventDefault();this.style.background='rgba(184,201,163,0.12)'"
-          ondragleave="this.style.background=''"
-          ondrop="event.preventDefault();this.style.background='';adminImportLoadFile(event.dataTransfer.files[0])">
-          📂 Click or drag a CSV file here
-        </div>
-        <input type="file" id="adm-import-file" accept=".csv" style="display:none"
-          onchange="adminImportLoadFile(this.files[0])">
-        <div style="text-align:center;margin-top:0.5rem;">
-          <button class="admin-approve-btn" onclick="adminImportBundled()" style="font-size:0.5rem;">
-            📦 Load bundled trial data (226 products)
-          </button>
-        </div>
-      </div>
-      <div id="adm-import-preview" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.4rem;">
-          <span id="adm-import-count" style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);"></span>
-          <div style="display:flex;gap:0.4rem;">
-            <button class="admin-approve-btn" onclick="adminImportRun()">Import all →</button>
-            <button class="admin-reject-btn" onclick="adminImportClear()">✕ Clear</button>
-          </div>
-        </div>
-        <div id="adm-import-progress" style="display:none;margin-bottom:0.5rem;">
-          <div style="height:4px;background:rgba(184,201,163,0.2);border-radius:2px;overflow:hidden;">
-            <div id="adm-import-bar" style="height:100%;background:var(--moss);border-radius:2px;width:0%;transition:width 0.3s;"></div>
-          </div>
-          <div id="adm-import-status" style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-top:0.3rem;"></div>
-        </div>
-        <div id="adm-import-table" style="overflow-x:auto;max-height:320px;overflow-y:auto;border:0.5px solid rgba(184,201,163,0.2);border-radius:6px;"></div>
-      </div>
-    </div>
   `;
+
+  // Append import section AFTER innerHTML is set so DOM elements exist
+  el.insertAdjacentHTML('beforeend', importHtml);
 }
 
 async function adminAddProduct(){
