@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v5.7 — Gear Organizer</title>
+<title>BaseCamp v5.8 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -242,12 +242,10 @@ html.dark .admin-page-title{color:#a8d890;}
 /* ── Unified name/search input ── */
 .gw-unified-name-wrap{position:relative;margin-bottom:0.4rem;}
 .gw-unified-name-inp{width:100%;font-size:0.82rem;}
-.gw-unified-name-wrap{position:relative;}
+.gw-unified-name-wrap{position:static;}
 .gw-unified-name-wrap .gw-product-results{
-  position:absolute;
-  top:0;
-  right:calc(100% + 0.6rem);
-  width:280px;
+  position:fixed;
+  width:260px;
   z-index:500;
   background:var(--paper);
   border:1.5px solid var(--lichen);
@@ -2371,7 +2369,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v5.7</div>
+      <div class="logo-sub">Gear Organizer · v5.8</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -15024,6 +15022,19 @@ function gearUnifiedSearch(iid, val){
       </div>
     </div>`;
     resultsEl.innerHTML = rows + findRow;
+    // Position dropdown to the right of the item chip (gw-item row)
+    const itemWrap = resultsEl.closest('.gw-item-wrap');
+    const chip = itemWrap?.querySelector('.gw-item');
+    const nameInp = resultsEl.closest('.gw-unified-name-wrap')?.querySelector('.gw-unified-name-inp');
+    if (chip) {
+      const r = chip.getBoundingClientRect();
+      resultsEl.style.top  = r.top + 'px';
+      resultsEl.style.left = (r.right + 8) + 'px';
+    } else if (nameInp) {
+      const r = nameInp.getBoundingClientRect();
+      resultsEl.style.top  = r.bottom + 4 + 'px';
+      resultsEl.style.left = r.left + 'px';
+    }
     resultsEl.style.display = 'block';
   }, 280);
 }
