@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v5.2 — Gear Organizer</title>
+<title>BaseCamp v5.3 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2329,7 +2329,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v5.2</div>
+      <div class="logo-sub">Gear Organizer · v5.3</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -17003,11 +17003,11 @@ window.adminImportRun = async function adminImportRun(rows) {
     }));
 
     const { error, data } = await sb.from('gear_products')
-      .upsert(batch, { onConflict: 'url', ignoreDuplicates: true })
+      .insert(batch)
       .select('id');
 
     if (error) { errors += batch.length; console.warn('Import batch error:', error); }
-    else { inserted += data?.length || 0; skipped += batch.length - (data?.length || 0); }
+    else { inserted += data?.length || 0; }
 
     const pct = Math.round((i + batch.length) / toImport.length * 100);
     if (barEl) barEl.style.width = pct + '%';
