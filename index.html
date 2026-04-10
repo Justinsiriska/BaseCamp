@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v5.5 — Gear Organizer</title>
+<title>BaseCamp v5.6 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -190,6 +190,7 @@ html.dark .p1-left{
 .gw-item-wrap{margin-bottom:0.22rem;}
 .gw-drawer{
   display:none;
+  position:relative;
   background:var(--cream);
   border:1.5px solid var(--lichen);
   border-top:none;
@@ -241,7 +242,20 @@ html.dark .admin-page-title{color:#a8d890;}
 /* ── Unified name/search input ── */
 .gw-unified-name-wrap{position:relative;margin-bottom:0.4rem;}
 .gw-unified-name-inp{width:100%;font-size:0.82rem;}
-.gw-unified-name-wrap .gw-product-results{position:relative;top:0;left:0;right:0;z-index:10;background:var(--paper);border:1.5px solid var(--lichen);border-top:none;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;margin-bottom:0.4rem;}
+.gw-unified-name-wrap{position:relative;}
+.gw-unified-name-wrap .gw-product-results{
+  position:absolute;
+  top:0;
+  left:calc(100% + 0.6rem);
+  width:280px;
+  z-index:500;
+  background:var(--paper);
+  border:1.5px solid var(--lichen);
+  border-radius:10px;
+  max-height:320px;
+  overflow-y:auto;
+  box-shadow:0 6px 20px rgba(45,74,45,0.13);
+}
 html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-color:var(--dm-border);}
 .gw-find-exact-btn{border-top:1px dashed rgba(184,201,163,0.3)!important;margin-top:0.1rem;}
 .gw-find-exact-btn:hover{background:rgba(74,103,65,0.08)!important;}
@@ -2357,7 +2371,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v5.5</div>
+      <div class="logo-sub">Gear Organizer · v5.6</div>
     </div>
   </div>
   <div class="nav-tabs">
