@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v6.1 — Gear Organizer</title>
+<title>BaseCamp v6.2 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2393,7 +2393,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v6.1</div>
+      <div class="logo-sub">Gear Organizer · v6.2</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8400,19 +8400,7 @@ function openAddItemModal(catId){
         <span class="gw-field-lbl">${escH(extraLabel)}</span>
         <input class="gw-field-inp mono" id="gam-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
       </div>` : ''}
-      <div class="gw-active-fields" id="gam-fields-${iid}"></div>
-      <div class="gw-new-field-form" id="gam-nff-${iid}">
-        <div class="gw-new-field-row">
-          <input class="gw-field-inp" id="gam-nf-label-${iid}" placeholder="Field name" style="flex:1;font-size:0.68rem;"/>
-          <select class="gw-field-inp" id="gam-nf-type-${iid}" style="width:80px;font-size:0.68rem;">
-            <option value="text">Text</option>
-            <option value="number">Number</option>
-          </select>
-          <button class="gw-confirm-btn" style="font-size:0.6rem;padding:3px 8px;" onclick="addModalCustomField('${iid}')">Add</button>
-          <button class="gw-cancel-btn" style="font-size:0.6rem;padding:3px 8px;" onclick="document.getElementById('gam-nff-${iid}').classList.remove('open')">✕</button>
-        </div>
-      </div>
-      <button class="gw-add-field-btn" onclick="document.getElementById('gam-nff-${iid}').classList.toggle('open')">＋ ADD DATA FIELD</button>
+      ${buildDrawerFieldsSection({id:'modal-'+iid, fields:{}})}
       <div class="gw-confirm-row" style="margin-top:0.6rem;">
         <button class="gw-confirm-btn" onclick="saveAddItemModal('${catId}','${iid}','${activePack}')">✓ Save</button>
         <button class="gw-cancel-btn" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕ Discard</button>
@@ -8487,10 +8475,12 @@ function saveAddItemModal(catId, iid, activePack){
   const linkedProductId = window._pendingLink?.[iid] || null;
   const localVerified   = window._pendingLocalVerified?.[iid] || false;
 
-  // Collect any custom fields entered
+  // Collect fields from the chips system (modal uses id prefix 'modal-'+iid)
   const customFields = {};
-  document.querySelectorAll(`#gam-fields-${iid} .gw-field-val-inp`).forEach(inp=>{
-    if(inp.value.trim()) customFields[inp.dataset.fieldKey] = inp.value.trim();
+  const modalEl = document.getElementById(`gw-add-modal-${iid}`);
+  modalEl?.querySelectorAll('.gw-field-val-inp').forEach(inp=>{
+    const val = inp.value.trim();
+    if(val) customFields[inp.dataset.fieldKey] = isNaN(val) ? val : Number(val);
   });
 
   const newItem = {
