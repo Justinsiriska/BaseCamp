@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v4.96 — Gear Organizer</title>
+<title>BaseCamp v4.97 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2320,7 +2320,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v4.96</div>
+      <div class="logo-sub">Gear Organizer · v4.97</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -17190,8 +17190,30 @@ async function adminImportRun(rows) {
 }
 
 // Auto-import the bundled trial data on admin page load
-async function adminImportBundled() {
-  adminImportShowPreview(IMPORT_PRODUCTS.map(p => ({...p, weight_g: p.weight_g || '', price: p.price || ''})));
+function adminImportBundled() {
+  const preview = document.getElementById('adm-import-preview');
+  if (!preview) {
+    // page not ready yet — try again in 500ms
+    setTimeout(adminImportBundled, 500);
+    return;
+  }
+  const rows = IMPORT_PRODUCTS.map(p => ({...p, weight_g: p.weight_g||'', price: p.price||''}));
+  preview._rows = rows;
+  preview.style.display = 'block';
+  const countEl = document.getElementById('adm-import-count');
+  const tableEl = document.getElementById('adm-import-table');
+  if (countEl) countEl.textContent = rows.length + ' products ready to import';
+  if (tableEl) {
+    const cols = ['name','brand','category','weight_g','price'];
+    let html = '<table style="width:100%;border-collapse:collapse;font-family:Space Mono,monospace;font-size:0.42rem;">';
+    html += '<thead><tr>' + cols.map(h => `<th style="padding:4px 8px;text-align:left;border-bottom:1px solid rgba(184,201,163,0.3);color:var(--stone);font-weight:400;white-space:nowrap">${h}</th>`).join('') + '</tr></thead><tbody>';
+    rows.slice(0,50).forEach(r => {
+      html += '<tr>' + cols.map(h => `<td style="padding:3px 8px;border-bottom:0.5px solid rgba(184,201,163,0.1);color:var(--bark);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(String(r[h]||''))}</td>`).join('') + '</tr>';
+    });
+    if (rows.length > 50) html += `<tr><td colspan="5" style="padding:4px 8px;color:var(--stone);font-size:0.42rem;font-family:Space Mono,monospace;">… and ${rows.length-50} more</td></tr>`;
+    html += '</tbody></table>';
+    tableEl.innerHTML = html;
+  }
 }
 
 </body></html>
