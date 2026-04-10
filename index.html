@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v6.0 — Gear Organizer</title>
+<title>BaseCamp v6.1 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2393,7 +2393,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v6.0</div>
+      <div class="logo-sub">Gear Organizer · v6.1</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8400,6 +8400,19 @@ function openAddItemModal(catId){
         <span class="gw-field-lbl">${escH(extraLabel)}</span>
         <input class="gw-field-inp mono" id="gam-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
       </div>` : ''}
+      <div class="gw-active-fields" id="gam-fields-${iid}"></div>
+      <div class="gw-new-field-form" id="gam-nff-${iid}">
+        <div class="gw-new-field-row">
+          <input class="gw-field-inp" id="gam-nf-label-${iid}" placeholder="Field name" style="flex:1;font-size:0.68rem;"/>
+          <select class="gw-field-inp" id="gam-nf-type-${iid}" style="width:80px;font-size:0.68rem;">
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+          </select>
+          <button class="gw-confirm-btn" style="font-size:0.6rem;padding:3px 8px;" onclick="addModalCustomField('${iid}')">Add</button>
+          <button class="gw-cancel-btn" style="font-size:0.6rem;padding:3px 8px;" onclick="document.getElementById('gam-nff-${iid}').classList.remove('open')">✕</button>
+        </div>
+      </div>
+      <button class="gw-add-field-btn" onclick="document.getElementById('gam-nff-${iid}').classList.toggle('open')">＋ ADD DATA FIELD</button>
       <div class="gw-confirm-row" style="margin-top:0.6rem;">
         <button class="gw-confirm-btn" onclick="saveAddItemModal('${catId}','${iid}','${activePack}')">✓ Save</button>
         <button class="gw-cancel-btn" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕ Discard</button>
@@ -8423,7 +8436,7 @@ function _positionAddResultsPanel(iid){
   if(!modal || !panel) return;
   const r = modal.getBoundingClientRect();
   const gap = 12;
-  const panelW = 260;
+  const panelW = 340;
   // Place to the right; if not enough room place to the left
   const spaceRight = window.innerWidth - r.right - gap;
   if(spaceRight >= panelW){
@@ -8434,6 +8447,27 @@ function _positionAddResultsPanel(iid){
   panel.style.top       = r.top + 'px';
   panel.style.width     = panelW + 'px';
   panel.style.maxHeight = r.height + 'px';
+}
+
+function addModalCustomField(iid){
+  const label = document.getElementById(`gam-nf-label-${iid}`)?.value.trim();
+  const type  = document.getElementById(`gam-nf-type-${iid}`)?.value || 'text';
+  if(!label) return;
+  const key = label.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  const fieldsEl = document.getElementById(`gam-fields-${iid}`);
+  if(!fieldsEl) return;
+  // Check not duplicate
+  if(fieldsEl.querySelector(`[data-modal-field="${key}"]`)) return;
+  const row = document.createElement('div');
+  row.className = 'gw-field gw-active-field-row';
+  row.dataset.modalField = key;
+  row.innerHTML = `<span class="gw-field-lbl">${escH(label)}</span>
+    <input class="gw-field-inp gw-field-val-inp" data-field-key="${key}" type="${type==='number'?'number':'text'}" placeholder="${escH(label)}"/>
+    <button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove()">✕</button>`;
+  fieldsEl.appendChild(row);
+  // Reset form
+  document.getElementById(`gam-nf-label-${iid}`).value = '';
+  document.getElementById(`gam-nff-${iid}`).classList.remove('open');
 }
 
 function saveAddItemModal(catId, iid, activePack){
@@ -8453,12 +8487,18 @@ function saveAddItemModal(catId, iid, activePack){
   const linkedProductId = window._pendingLink?.[iid] || null;
   const localVerified   = window._pendingLocalVerified?.[iid] || false;
 
+  // Collect any custom fields entered
+  const customFields = {};
+  document.querySelectorAll(`#gam-fields-${iid} .gw-field-val-inp`).forEach(inp=>{
+    if(inp.value.trim()) customFields[inp.dataset.fieldKey] = inp.value.trim();
+  });
+
   const newItem = {
     id: iid, name, w, extra, link:'',
     s: [activePack], gwCatId: catId,
     productId: linkedProductId||null,
     _localVerified: localVerified,
-    fields: {}
+    fields: customFields
   };
   cat.items.push(newItem);
   gwCollapsed[catId] = false;
