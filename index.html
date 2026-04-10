@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v6.2 — Gear Organizer</title>
+<title>BaseCamp v6.3 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2393,7 +2393,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v6.2</div>
+      <div class="logo-sub">Gear Organizer · v6.3</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -15206,6 +15206,36 @@ async function gearDrawerSelect(iid, productId){
     // Close dropdown, show linked indicator
     const resultsEl = document.getElementById(`gw-results-${iid}`);
     if(resultsEl) resultsEl.style.display = 'none';
+    // Auto-populate volume field if product name contains a volume
+    const volMatch = p.name.match(/(\d+(?:\.\d+)?)\s*(ml|mL|L|l|fl\s*oz)/i);
+    if(volMatch){
+      const rawVal = parseFloat(volMatch[1]);
+      const rawUnit = volMatch[2].toLowerCase().replace(/\s/,'');
+      // Convert to ml for storage, but show in detected unit
+      let volMl = rawVal;
+      if(rawUnit === 'l') volMl = rawVal * 1000;
+      else if(rawUnit === 'floz' || rawUnit === 'fl oz') volMl = rawVal * 29.5735;
+      // Toggle the volume chip on if not already active, then fill value
+      setTimeout(()=>{
+        const modal2 = document.getElementById(`gw-add-modal-${iid}`);
+        if(!modal2) return;
+        const volChip = [...modal2.querySelectorAll('.gw-field-chip')].find(b=>b.onclick?.toString().includes("'volume'"));
+        if(volChip && !volChip.classList.contains('active')) volChip.click();
+        setTimeout(()=>{
+          const volInp = modal2.querySelector('.gw-field-val-inp[data-field-key="volume"]');
+          if(volInp){
+            volInp.value = Math.round(volMl);
+            // Try to set unit selector to match
+            const unitSel = volInp.nextElementSibling;
+            if(unitSel?.tagName === 'SELECT'){
+              const matchUnit = rawUnit === 'l' ? 'L' : rawUnit === 'ml' ? 'ml' : 'fl oz';
+              [...unitSel.options].forEach(o=>{ if(o.value===matchUnit||o.text===matchUnit) unitSel.value=o.value; });
+            }
+          }
+        }, 50);
+      }, 80);
+    }
+
     // Show small verified banner inside modal
     const modal = document.getElementById(`gw-add-modal-${iid}`);
     const existing = modal?.querySelector('.gw-modal-linked');
@@ -15214,7 +15244,13 @@ async function gearDrawerSelect(iid, productId){
       const banner = document.createElement('div');
       banner.className = 'gw-modal-linked';
       banner.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(74,103,65,0.1);border:1px solid rgba(74,103,65,0.3);border-radius:8px;padding:5px 8px;margin-bottom:6px;font-family:Space Mono,monospace;font-size:0.5rem;color:var(--forest);';
-      banner.innerHTML = `<span>✓</span><span>${escH(p.name)}</span><button style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--stone);" onclick="this.closest('.gw-modal-linked').remove();window._pendingLink&&delete window._pendingLink['${iid}']">✕</button>`;
+      banner.innerHTML = `<span>✓</span><span>${escH(p.name)}</span><button style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--stone);" onclick="
+        this.closest('.gw-modal-linked').remove();
+        if(window._pendingLink) delete window._pendingLink['${iid}'];
+        if(window._pendingLocalVerified) delete window._pendingLocalVerified['${iid}'];
+        const nw=document.getElementById('gw-add-modal-${iid}')?.querySelector('.gw-unified-name-wrap');
+        if(nw){nw.style.display='';const inp=nw.querySelector('input');if(inp){inp.value='';inp.focus();}}
+      ">✕</button>`;
       const nameWrap = modal.querySelector('.gw-unified-name-wrap');
       nameWrap?.parentNode.insertBefore(banner, nameWrap);
       nameWrap.style.display = 'none';
