@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v5.8 — Gear Organizer</title>
+<title>BaseCamp v5.9 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -263,6 +263,32 @@ html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-co
 .gw-verified-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.45rem;font-weight:700;margin-left:4px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
 .gw-item-verified{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.4rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;line-height:1;}
 .pack-item-verified{display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.38rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
+
+/* ── Add item modal ── */
+.gw-add-modal{
+  background:var(--cream);
+  border-radius:14px;
+  padding:1.1rem 1.25rem;
+  width:min(420px,92vw);
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  border:1.5px solid var(--lichen);
+}
+html.dark .gw-add-modal{background:#0f1a0f;border-color:var(--dm-border);}
+.gw-add-modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;}
+.gw-add-modal-title{font-family:'Space Mono',monospace;font-size:0.55rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);}
+/* Dropdown inside modal flows inline */
+.gw-add-modal .gw-unified-name-wrap{position:relative;}
+.gw-add-modal .gw-product-results{
+  position:absolute;top:100%;left:0;right:0;
+  z-index:100;
+  background:var(--paper);
+  border:1.5px solid var(--lichen);
+  border-top:none;
+  border-radius:0 0 10px 10px;
+  max-height:200px;overflow-y:auto;
+  box-shadow:0 6px 20px rgba(45,74,45,0.13);
+}
+html.dark .gw-add-modal .gw-product-results{background:#0f1a0f;border-color:var(--dm-border);}
 
 /* ── Find exact product overlay ── */
 .find-exact-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;}
@@ -2369,7 +2395,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v5.8</div>
+      <div class="logo-sub">Gear Organizer · v5.9</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8334,25 +8360,87 @@ function renderGearWall(){
 
 // Handle dropping an item into a gear wall category (changes gwCatId)
 function gwInlineAdd(catId){
-  const cat=CATS.find(c=>c.id===catId);
+  openAddItemModal(catId);
+}
+
+function openAddItemModal(catId){
+  const cat = CATS.find(c=>c.id===catId);
   if(!cat) return;
   const activePill = document.querySelector('.s-pill.active');
   const activePack = activePill?.dataset?.s || season;
-  const newItem={id:uid(),name:'',w:0,extra:'',link:'',s:[activePack],gwCatId:catId,_new:true};
+  const iid = uid();
+  const wUnit = U.v==='oz'?'oz':'g';
+  const extraLabel = cat.hasExtra ? cat.extraLabel?.split('/')[0].trim() : null;
+
+  // Remove any existing add modal
+  document.getElementById('gw-add-modal-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gw-add-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;';
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+
+  overlay.innerHTML = `
+    <div class="gw-add-modal" id="gw-add-modal-${iid}">
+      <div class="gw-add-modal-hd">
+        <span class="gw-add-modal-title">Add to ${escH(cat.name)}</span>
+        <button class="gw-cancel-btn" style="padding:2px 8px;" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕</button>
+      </div>
+      <div class="gw-unified-name-wrap">
+        <input class="gw-field-inp gw-unified-name-inp" id="gam-name-${iid}" type="text"
+          placeholder="Item name…" autocomplete="new-password"
+          oninput="gearUnifiedSearch('${iid}',this.value)"/>
+        <div class="gw-product-results" id="gw-results-${iid}" style="display:none"></div>
+      </div>
+      <div class="gw-field">
+        <span class="gw-field-lbl">Weight</span>
+        <input class="gw-field-inp mono" id="gam-w-${iid}" type="number" min="0" value="" placeholder="0" data-weight-unit="${wUnit}"/>
+        ${_weightUnitSel('gam-w-'+iid, wUnit)}
+      </div>
+      ${extraLabel ? `
+      <div class="gw-field">
+        <span class="gw-field-lbl">${escH(extraLabel)}</span>
+        <input class="gw-field-inp mono" id="gam-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
+      </div>` : ''}
+      <div class="gw-confirm-row" style="margin-top:0.6rem;">
+        <button class="gw-confirm-btn" onclick="saveAddItemModal('${catId}','${iid}','${activePack}')">✓ Save</button>
+        <button class="gw-cancel-btn" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕ Discard</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>document.getElementById(`gam-name-${iid}`)?.focus());
+}
+
+function saveAddItemModal(catId, iid, activePack){
+  const name  = document.getElementById(`gam-name-${iid}`)?.value.trim();
+  const wInp  = document.getElementById(`gam-w-${iid}`);
+  const extra = document.getElementById(`gam-extra-${iid}`)?.value.trim()||'';
+  if(!name){
+    const inp = document.getElementById(`gam-name-${iid}`);
+    if(inp){ inp.style.borderColor='var(--ember)'; inp.focus(); setTimeout(()=>inp.style.borderColor='',1000); }
+    return;
+  }
+  const w = getWeightInGrams(wInp) || 0;
+  const cat = CATS.find(c=>c.id===catId);
+  if(!cat) return;
+
+  // Check if a product was linked via search
+  const linkedProductId = window._pendingLink?.[iid] || null;
+  const localVerified   = window._pendingLocalVerified?.[iid] || false;
+
+  const newItem = {
+    id: iid, name, w, extra, link:'',
+    s: [activePack], gwCatId: catId,
+    productId: linkedProductId||null,
+    _localVerified: localVerified,
+    fields: {}
+  };
   cat.items.push(newItem);
-  gwCollapsed[catId]=false;
+  gwCollapsed[catId] = false;
+  document.getElementById('gw-add-modal-overlay')?.remove();
+  scheduleSave();
   renderGearWall();
-  // Open the drawer immediately so user can fill in data
-  setTimeout(()=>{
-    const wrap=document.querySelector(`.gw-item-wrap[data-iid="${newItem.id}"]`);
-    if(wrap){
-      wrap.classList.add('open');
-      requestAnimationFrame(()=>{
-        const nameInput = wrap.querySelector('.gw-edit-name');
-        if(nameInput) nameInput.focus();
-      });
-    }
-  }, 60);
 }
 
 function _gwCatDrop(e, toCatId){
@@ -15022,24 +15110,59 @@ function gearUnifiedSearch(iid, val){
       </div>
     </div>`;
     resultsEl.innerHTML = rows + findRow;
-    // Position dropdown to the right of the item chip (gw-item row)
-    const itemWrap = resultsEl.closest('.gw-item-wrap');
-    const chip = itemWrap?.querySelector('.gw-item');
-    const nameInp = resultsEl.closest('.gw-unified-name-wrap')?.querySelector('.gw-unified-name-inp');
-    if (chip) {
-      const r = chip.getBoundingClientRect();
-      resultsEl.style.top  = r.top + 'px';
-      resultsEl.style.left = (r.right + 8) + 'px';
-    } else if (nameInp) {
-      const r = nameInp.getBoundingClientRect();
-      resultsEl.style.top  = r.bottom + 4 + 'px';
-      resultsEl.style.left = r.left + 'px';
+    // Inside add modal: CSS handles positioning (absolute below input)
+    // For inline drawers: use fixed positioning to avoid clipping
+    const inModal = !!resultsEl.closest('.gw-add-modal');
+    if(!inModal){
+      const chip = resultsEl.closest('.gw-item-wrap')?.querySelector('.gw-item');
+      if(chip){
+        const r = chip.getBoundingClientRect();
+        resultsEl.style.top  = r.top + 'px';
+        resultsEl.style.left = (r.right + 8) + 'px';
+      }
     }
     resultsEl.style.display = 'block';
   }, 280);
 }
 
 async function gearDrawerSelect(iid, productId){
+  // Handle modal context (item not yet created)
+  const isModal = !!document.getElementById(`gam-name-${iid}`);
+  if(isModal){
+    await waitForSupabase();
+    const sb = sbClient();
+    const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
+    if(!p) return;
+    // Fill modal name
+    const nameInp = document.getElementById(`gam-name-${iid}`);
+    if(nameInp) nameInp.value = p.name;
+    // Fill weight if present
+    const wInp = document.getElementById(`gam-w-${iid}`);
+    if(wInp && p.weight_g) wInp.value = U.v==='oz' ? (p.weight_g/28.3495).toFixed(1) : p.weight_g;
+    // Store link for when modal saves
+    window._pendingLink = window._pendingLink || {};
+    window._pendingLink[iid] = productId;
+    window._pendingLocalVerified = window._pendingLocalVerified || {};
+    window._pendingLocalVerified[iid] = p.verified || false;
+    // Close dropdown, show linked indicator
+    const resultsEl = document.getElementById(`gw-results-${iid}`);
+    if(resultsEl) resultsEl.style.display = 'none';
+    // Show small verified banner inside modal
+    const modal = document.getElementById(`gw-add-modal-${iid}`);
+    const existing = modal?.querySelector('.gw-modal-linked');
+    if(existing) existing.remove();
+    if(modal && p){
+      const banner = document.createElement('div');
+      banner.className = 'gw-modal-linked';
+      banner.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(74,103,65,0.1);border:1px solid rgba(74,103,65,0.3);border-radius:8px;padding:5px 8px;margin-bottom:6px;font-family:Space Mono,monospace;font-size:0.5rem;color:var(--forest);';
+      banner.innerHTML = `<span>✓</span><span>${escH(p.name)}</span><button style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--stone);" onclick="this.closest('.gw-modal-linked').remove();window._pendingLink&&delete window._pendingLink['${iid}']">✕</button>`;
+      const nameWrap = modal.querySelector('.gw-unified-name-wrap');
+      nameWrap?.parentNode.insertBefore(banner, nameWrap);
+      nameWrap.style.display = 'none';
+    }
+    return;
+  }
+
   // Find item
   const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
   if(!item) return;
