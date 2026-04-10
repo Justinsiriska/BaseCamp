@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v5.3 — Gear Organizer</title>
+<title>BaseCamp v5.4 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -238,6 +238,34 @@ html.dark .admin-card-name{color:#c8e8b0;}
 html.dark .admin-page-title{color:#a8d890;}
 .admin-page-sub{font-family:"Space Mono",monospace;font-size:0.48rem;color:var(--stone);margin-bottom:1.5rem;}
 .gw-drawer-divider{border:none;border-top:1.5px dashed var(--lichen);margin:0.5rem 0;}
+/* ── Unified name/search input ── */
+.gw-unified-name-wrap{position:relative;margin-bottom:0.4rem;}
+.gw-unified-name-inp{width:100%;font-size:0.82rem;}
+.gw-unified-name-wrap .gw-product-results{position:absolute;top:100%;left:0;right:0;z-index:500;background:var(--paper);border:1.5px solid var(--lichen);border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(45,74,45,0.13);}
+html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-color:var(--dm-border);}
+.gw-find-exact-btn{border-top:1px dashed rgba(184,201,163,0.3)!important;margin-top:0.1rem;}
+.gw-find-exact-btn:hover{background:rgba(74,103,65,0.08)!important;}
+.gw-drawer-link-row{display:flex;gap:0.4rem;align-items:center;margin-bottom:0.2rem;}
+
+/* ── Verified product badge ── */
+.gw-verified-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.45rem;font-weight:700;margin-left:4px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
+.gw-item-verified{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.4rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;line-height:1;}
+.pack-item-verified{display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.38rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
+
+/* ── Find exact product overlay ── */
+.find-exact-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;}
+.find-exact-modal{background:var(--paper);border-radius:16px;padding:1.4rem 1.6rem;width:min(480px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.18);position:relative;}
+html.dark .find-exact-modal{background:#0f1a0f;border:1.5px solid var(--dm-border);}
+.find-exact-modal h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--bark);margin-bottom:0.2rem;}
+html.dark .find-exact-modal h3{color:#a8d890;}
+.find-exact-modal p{font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);margin-bottom:1rem;line-height:1.6;}
+.find-exact-row{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.8rem;}
+.find-exact-label{font-family:'Space Mono',monospace;font-size:0.45rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.15rem;}
+.find-exact-thankyou{text-align:center;padding:1rem 0 0.5rem;}
+.find-exact-thankyou .fet-icon{font-size:2.5rem;margin-bottom:0.5rem;}
+.find-exact-thankyou h3{color:var(--forest);}
+html.dark .find-exact-thankyou h3{color:#a8d890;}
+
 /* ── Weight unit selector ── */
 .weight-unit-sel{
   display:flex;border:1.5px solid rgba(184,201,163,0.4);border-radius:20px;
@@ -2329,7 +2357,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v5.3</div>
+      <div class="logo-sub">Gear Organizer · v5.4</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5474,6 +5502,18 @@ function renderCrewPage(){
           const nm = document.createElement('span');
           nm.className = 'crew-pack-item-name';
           nm.textContent = item.name;
+          // Add verified badge for crew view
+          if(item.productId && (item._localVerified || _isProductVerified(item.productId))){
+            const badge = document.createElement('span');
+            badge.className = 'pack-item-verified';
+            badge.title = 'Verified product — tap to view';
+            badge.textContent = '✓';
+            badge.style.cursor = 'pointer';
+            badge.onclick = e => { e.stopPropagation(); showProductCard(item.productId, item.id); };
+            nm.appendChild(badge);
+            nm.style.cursor = 'pointer';
+            nm.onclick = () => showProductCard(item.productId, item.id);
+          }
           const wt = document.createElement('span');
           wt.className = 'crew-pack-item-w';
           wt.textContent = dwTrip(item.w||0);
@@ -6044,7 +6084,7 @@ function renderCats(){
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
-          <span class="pack-item-name">${escH(item.name)}</span>
+          <span class="pack-item-name" ${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`style="cursor:pointer" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')"`:''}>${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?'<span class="pack-item-verified" title="Verified product — tap to view">✓</span>':''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${buyBtn}${extraTag}
         </div>
@@ -6229,7 +6269,7 @@ function renderCats(){
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
-          <span class="pack-item-name">${escH(item.name)}</span>
+          <span class="pack-item-name" ${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`style="cursor:pointer" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')"`:''}>${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?'<span class="pack-item-verified" title="Verified product — tap to view">✓</span>':''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${item.productId?`<button class="pack-item-buy-btn" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">🛒</button>`:''}
         </div>
@@ -8098,7 +8138,7 @@ function renderGearWall(){
           <div class="gw-drag-handle" title="Drag to add/remove from pack">⠿</div>
           <div class="gw-item-left">
             <div class="gw-item-dot" style="background:${cat.color}"></div>
-            <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>
+            <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId && (item._localVerified || _isProductVerified(item.productId)))?'<span class="gw-item-verified" title="Verified product — click to view">✓</span>':''}
             ${extraTag}
           </div>
           <div class="gw-item-right">
@@ -8154,35 +8194,7 @@ function renderGearWall(){
         const _orig = {name:item.name, w:item.w, extra:item.extra||'', link:item.link||''};
 
         drawer.innerHTML=`
-          ${buildProductSearchSection(item)}
-          <div class="gw-field">
-            <span class="gw-field-lbl">Name</span>
-            <input class="gw-field-inp gw-edit-name" type="text" value="${escH(item.name)}" placeholder="Item name"/>
-          </div>
-          <div class="gw-field">
-            <span class="gw-field-lbl">Weight</span>
-            <input class="gw-field-inp mono gw-edit-w" id="wInp-${item.id}" type="number" min="0" value="${item.w ? displayWVal(item.w) : ''}" placeholder="0" data-weight-unit="${U.v==='oz'?'oz':'g'}"/>
-            ${_weightUnitSel('wInp-'+item.id, U.v==='oz'?'oz':'g')}
-            ${item.wOverride!=null?'<span class="gw-override-badge">📐 your measurement</span>':''}
-          </div>
-          ${extraLabel ? `
-          <div class="gw-field">
-            <span class="gw-field-lbl">${extraLabel.split('/')[0].trim()}</span>
-            <input class="gw-field-inp mono gw-edit-extra" type="text" value="${escH(item.extra||'')}" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
-          </div>` : ''}
-          ${buildDrawerFieldsSection(item)}
-          <hr class="gw-drawer-divider"/>
-          <div class="gw-field" style="margin-bottom:0.2rem">
-            <span class="gw-field-lbl">Link</span>
-            <input class="gw-drawer-url gw-edit-link" type="text" inputmode="url" autocomplete="new-password" placeholder="Paste product URL…"
-              value="${escH(item.link||'')}"/>
-            <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${srcCatId}','${item.id}',this)">Find all data</button>
-          </div>
-          ${hasLink?`<a class="gw-open-link" href="${escH(item.link)}" target="_blank">↗ Open product page</a>`:''}
-          <div class="gw-confirm-row">
-            <button class="gw-confirm-btn" onclick="saveDrawer('${srcCatId}','${item.id}',this)">✓ Save</button>
-            <button class="gw-cancel-btn" onclick="discardDrawer('${srcCatId}','${item.id}')">✕ Discard</button>
-          </div>
+          ${buildNewItemDrawer(item, cat, srcCatId)}
         `;
         // If item already linked to a product, load the banner async
         if(item.productId) gearDrawerLoadLinked(item.id, item.productId);
@@ -8712,7 +8724,7 @@ function getPayload(){
       id:cat.id, name:cat.name, icon:cat.icon, color:cat.color,
       hasExtra:cat.hasExtra, extraLabel:cat.extraLabel||'',
       onGearWall: cat.onGearWall!==false,
-      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s,gwCatId:i.gwCatId||cat.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{}})),
+      items:cat.items.map(i=>({id:i.id,name:i.name,w:i.w,extra:i.extra||'',link:i.link||'',s:i.s,gwCatId:i.gwCatId||cat.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{},_localVerified:i._localVerified||false})),
       packs: cat.packs||null
     })),
     foodSeason,
@@ -8969,7 +8981,7 @@ function loadState(){
         hasExtra: c.hasExtra||false, extraLabel: c.extraLabel||'',
         pc: PC_MAP[c.id] || 'pill-general',
         cc: CC_MAP[c.id] || 'cc-general',
-        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{}})),
+        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{},_localVerified:i._localVerified||false})),
         packs: c.packs||null,
         onGearWall: c.onGearWall !== false
       });
@@ -14878,30 +14890,127 @@ async function gearProductSubmitEdit(productId, field, oldVal, newVal){
   } catch(e){ console.warn('[GearDB] edit submit failed:', e); }
 }
 
-function gearDrawerSearch(iid, val){
+// ── "Find exact product" overlay flow ──────────────────────────────────────
+function openFindExactFlow(iid){
+  // Close results dropdown
+  const resultsEl = document.getElementById(`gw-results-${iid}`);
+  if(resultsEl) resultsEl.style.display='none';
+
+  const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+  const itemName = item?.name || '';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'find-exact-overlay';
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+
+  overlay.innerHTML = `
+    <div class="find-exact-modal">
+      <h3>Find your exact product</h3>
+      <p>Help us add it to the database so everyone can benefit.</p>
+      <div class="find-exact-row">
+        <div class="find-exact-label">Product name</div>
+        <input class="gw-field-inp" id="fex-name-${iid}" type="text" value="${escH(itemName)}" placeholder="e.g. MSR PocketRocket 2" autocomplete="off"/>
+      </div>
+      <div class="find-exact-row">
+        <div class="find-exact-label">Brand</div>
+        <input class="gw-field-inp" id="fex-brand-${iid}" type="text" placeholder="e.g. MSR" autocomplete="off"/>
+      </div>
+      <div class="find-exact-row">
+        <div class="find-exact-label">Product URL <span style="opacity:0.5;font-size:0.9em">(optional)</span></div>
+        <input class="gw-field-inp" id="fex-url-${iid}" type="text" inputmode="url" placeholder="https://..." autocomplete="off"/>
+      </div>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+        <button class="gw-cancel-btn" onclick="this.closest('.find-exact-overlay').remove()">Cancel</button>
+        <button class="gw-confirm-btn" onclick="submitFindExact('${iid}',this)">Submit ✓</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitFindExact(iid, btn){
+  const modal  = btn.closest('.find-exact-modal');
+  const name   = modal.querySelector(`#fex-name-${iid}`)?.value.trim();
+  const brand  = modal.querySelector(`#fex-brand-${iid}`)?.value.trim();
+  const url    = modal.querySelector(`#fex-url-${iid}`)?.value.trim();
+  if(!name){ toast('Please enter a product name'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    await waitForSupabase();
+    const sb = sbClient();
+
+    // Insert as community product (unverified in DB, but locally linked)
+    const { data: inserted, error } = await sb.from('gear_products')
+      .insert([{ name, brand: brand||null, url: url||null, source:'community', verified:false }])
+      .select('id')
+      .single();
+
+    if(error) throw error;
+
+    // Link item to this pending product — locally it looks verified immediately
+    const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+    if(item){
+      item.productId = inserted.id;
+      item._localVerified = true; // visual-only flag
+      scheduleSave();
+      renderAll();
+    }
+
+    // Show thank-you screen
+    modal.innerHTML = `
+      <div class="find-exact-thankyou">
+        <div class="fet-icon">🙌</div>
+        <h3>Thank you!</h3>
+        <p style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);margin-top:0.4rem;line-height:1.6;">
+          We've added <strong>${escH(name)}</strong> to our database.<br>
+          Once verified by our team it will show as a verified product for all users.
+        </p>
+        <button class="gw-confirm-btn" style="margin-top:0.8rem;" onclick="this.closest('.find-exact-overlay').remove()">Done</button>
+      </div>`;
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Submit ✓';
+    toast('Error submitting — please try again');
+    console.warn('[FindExact] error:', e);
+  }
+}
+
+function gearDrawerSearch(iid, val){ gearUnifiedSearch(iid, val); } // legacy alias
+
+function gearUnifiedSearch(iid, val){
   clearTimeout(_gearSearchTimer);
-  const drawer = document.querySelector(`.gw-item-wrap[data-iid="${iid}"] .gw-drawer`);
-  if(!drawer) return;
-  const resultsEl = drawer.querySelector('.gw-product-results');
+  const resultsEl = document.getElementById(`gw-results-${iid}`);
   if(!resultsEl) return;
   if(!val || val.length < 2){ resultsEl.style.display='none'; return; }
   _gearSearchTimer = setTimeout(async ()=>{
     const results = await gearProductSearch(val);
-    if(!results.length){ resultsEl.style.display='none'; return; }
-    resultsEl.innerHTML = results.map(p=>`
-      <div class="gw-product-result" onclick="gearDrawerSelect('${iid}','${p.id}')">
+    // Always show dropdown — even if no results (show "find exact" option)
+    const rows = results.map(p=>{
+      const isVerified = p.verified;
+      return `<div class="gw-product-result" onclick="gearDrawerSelect('${iid}','${p.id}')">
         <div class="gw-product-result-img">${p.image_url?`<img src="${escH(p.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;" onerror="this.parentElement.textContent='🎒'">`:'🎒'}</div>
         <div class="gw-product-result-info">
-          <div class="gw-product-result-name">${escH(p.name)}</div>
+          <div class="gw-product-result-name">${escH(p.name)}${isVerified?'<span class="gw-verified-badge" title="Verified product">✓</span>':''}</div>
           <div class="gw-product-result-meta">
-            <span>${escH(p.brand)}</span>
+            <span>${escH(p.brand||'')}</span>
             ${p.weight_g?`<span>· ${p.weight_g}g</span>`:''}
-            ${p.price?`<span>· ${escH(p.price)}</span>`:''}
-            ${p.verified?`<span class="gw-product-result-badge">✓ verified</span>`:''}
+            ${p.price?`<span>· $${escH(p.price)}</span>`:''}
           </div>
         </div>
-      </div>`).join('');
-    resultsEl.style.display='block';
+      </div>`;
+    }).join('');
+    const findRow = `<div class="gw-product-result gw-find-exact-btn" onclick="openFindExactFlow('${iid}')">
+      <div class="gw-product-result-img" style="font-size:1rem;color:var(--moss);">+</div>
+      <div class="gw-product-result-info">
+        <div class="gw-product-result-name" style="color:var(--moss);">Want to find your exact product?</div>
+        <div class="gw-product-result-meta">Help us add it to the database</div>
+      </div>
+    </div>`;
+    resultsEl.innerHTML = rows + findRow;
+    resultsEl.style.display = 'block';
   }, 280);
 }
 
@@ -14928,8 +15037,13 @@ async function gearDrawerSelect(iid, productId){
         // Clear any override since we just set from product
         delete item.wOverride;
       }
-      // Hide search results, show linked banner
-      drawer.querySelector('.gw-product-results').style.display='none';
+      // Hide unified search, show linked banner, show link row
+      const resultsEl = drawer.querySelector('.gw-product-results');
+      if(resultsEl) resultsEl.style.display='none';
+      const nameWrap = drawer.querySelector('.gw-unified-name-wrap');
+      if(nameWrap) nameWrap.style.display='none';
+      const linkRow = drawer.querySelector('.gw-drawer-link-row');
+      if(linkRow) linkRow.style.display='';
       _gearDrawerRenderLinked(drawer, iid, p);
       // Inject product custom_fields into drawer fields section
       const productFields = p.custom_fields || {};
@@ -14988,38 +15102,77 @@ function gearDrawerUnlink(iid){
   const drawer = document.querySelector(`.gw-item-wrap[data-iid="${iid}"] .gw-drawer`);
   if(drawer){
     drawer.querySelector('.gw-product-linked')?.remove();
-    const searchWrap = drawer.querySelector('.gw-product-search-wrap');
-    if(searchWrap) searchWrap.style.display='';
+    // Restore unified name input, hide link row
+    const nameWrap = drawer.querySelector('.gw-unified-name-wrap');
+    if(nameWrap) nameWrap.style.display='';
+    const hiddenName = drawer.querySelector('.gw-field:has(.gw-edit-name[style*="none"])');
+    const linkRow = drawer.querySelector('.gw-drawer-link-row');
+    if(linkRow) linkRow.style.display='none';
   }
   scheduleSave();
   toast('⊖ Product unlinked');
 }
 
-function buildProductSearchSection(item){
-  // If already linked, fetch product async and show banner
-  const linkedSection = item.productId
+// ── New unified item drawer builder ─────────────────────────────────────────
+function buildNewItemDrawer(item, cat, srcCatId){
+  const hasLink   = !!(item.link);
+  const extraLabel = cat.hasExtra ? cat.extraLabel : null;
+  const wVal      = item.w ? displayWVal(item.w) : '';
+  const wUnit     = U.v==='oz' ? 'oz' : 'g';
+
+  // If already linked, show linked banner; else show unified name+search
+  const topSection = item.productId
     ? `<div class="gw-product-linked" id="gw-linked-${item.id}">
         <div class="gw-product-linked-img">🎒</div>
         <div class="gw-product-linked-info">
           <div class="gw-product-linked-name" style="opacity:0.5">Loading product…</div>
           <div class="gw-product-linked-meta"></div>
         </div>
-        <button class="gw-product-unlink-btn" onclick="gearDrawerUnlink('${item.id}')" title="Unlink product">✕</button>
-      </div>`
-    : '';
-  return `
-    ${linkedSection}
-    <div class="gw-product-search-wrap"${item.productId?' style="display:none"':''}>
-      <div class="gw-field">
-        <span class="gw-field-lbl">Find</span>
-        <input class="gw-field-inp gw-product-search-inp" type="text"
-          placeholder="Search gear database…"
-          oninput="gearDrawerSearch('${item.id}',this.value)"
-          onblur="setTimeout(()=>{const r=document.querySelector('.gw-item-wrap[data-iid=&quot;${item.id}&quot;] .gw-product-results');if(r)r.style.display='none';},200)"
-          autocomplete="new-password"/>
+        <button class="gw-product-unlink-btn" onclick="gearDrawerUnlink('${item.id}')" title="Unlink">✕</button>
       </div>
-      <div class="gw-product-results" style="display:none"></div>
+      <div class="gw-field" style="display:none">
+        <input class="gw-field-inp gw-edit-name" type="text" value="${escH(item.name)}" placeholder="Item name"/>
+      </div>`
+    : `<div class="gw-unified-name-wrap">
+        <input class="gw-field-inp gw-edit-name gw-unified-name-inp" type="text"
+          value="${escH(item.name)}" placeholder="Item name"
+          oninput="gearUnifiedSearch('${item.id}',this.value)"
+          autocomplete="new-password"/>
+        <div class="gw-product-results" id="gw-results-${item.id}" style="display:none"></div>
+      </div>`;
+
+  return `
+    ${topSection}
+    <div class="gw-field">
+      <span class="gw-field-lbl">Weight</span>
+      <input class="gw-field-inp mono gw-edit-w" id="wInp-${item.id}" type="number" min="0"
+        value="${wVal}" placeholder="0" data-weight-unit="${wUnit}"/>
+      ${_weightUnitSel('wInp-'+item.id, wUnit)}
+      ${item.wOverride!=null?'<span class="gw-override-badge">📐 your weight</span>':''}
+    </div>
+    ${extraLabel ? `
+    <div class="gw-field">
+      <span class="gw-field-lbl">${extraLabel.split('/')[0].trim()}</span>
+      <input class="gw-field-inp mono gw-edit-extra" type="text" value="${escH(item.extra||'')}"
+        placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
+    </div>` : ''}
+    ${buildDrawerFieldsSection(item)}
+    <hr class="gw-drawer-divider"/>
+    <div class="gw-drawer-link-row" ${item.productId?'':'style="display:none"'} id="gw-link-row-${item.id}">
+      <input class="gw-drawer-url gw-edit-link" type="text" inputmode="url" autocomplete="new-password"
+        placeholder="Paste product URL…" value="${escH(item.link||'')}"/>
+      <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${srcCatId}','${item.id}',this)">Find all data</button>
+    </div>
+    ${hasLink?`<a class="gw-open-link" href="${escH(item.link)}" target="_blank">↗ Open product page</a>`:''}
+    <div class="gw-confirm-row">
+      <button class="gw-confirm-btn" onclick="saveDrawer('${srcCatId}','${item.id}',this)">✓ Save</button>
+      <button class="gw-cancel-btn" onclick="discardDrawer('${srcCatId}','${item.id}')">✕ Discard</button>
     </div>`;
+}
+
+// Old function kept for any remaining references
+function buildProductSearchSection(item){
+  return buildNewItemDrawer(item, {hasExtra:false, extraLabel:null, id:'gear'}, 'gear');
 }
 
 // Load linked product banner async after drawer renders
@@ -15123,6 +15276,20 @@ async function showProductCard(productId, itemIid){
 }
 
 
+
+// ── Verified product ID cache (populated on load) ──────────────────────────
+const _verifiedProductIds = new Set();
+function _isProductVerified(productId){
+  return _verifiedProductIds.has(productId);
+}
+async function _loadVerifiedProductIds(){
+  try {
+    await waitForSupabase();
+    const sb = sbClient();
+    const { data } = await sb.from('gear_products').select('id').eq('verified', true);
+    (data||[]).forEach(r => _verifiedProductIds.add(r.id));
+  } catch(e){}
+}
 
 // ── Backfill weights from verified products ──
 // Runs on load: finds items linked to a product but w=0 and no wOverride,
@@ -16105,6 +16272,8 @@ async function sbPullData(){
   toast('☁️ Data loaded from cloud');
   // Backfill weights for items linked to verified products but w=0
   setTimeout(sbBackfillLinkedWeights, 1500);
+  // Load verified product IDs into cache for badge rendering
+  _loadVerifiedProductIds();
   if(migrated.profile?.photo){
     try{ localStorage.setItem('basecamp_profile_photo', migrated.profile.photo); }catch(e){}
   }
