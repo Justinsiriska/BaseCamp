@@ -15264,14 +15264,14 @@ async function renderAdminPage(){
 
     <!-- PENDING PRODUCTS -->
     <div class="admin-section">
-      <div class="admin-section-title"><span>🆕</span> Pending Community Products <span class="admin-badge pending">${pending.length}</span></div>
+      <div class="admin-section-title" style="justify-content:space-between;display:flex;align-items:center;flex-wrap:wrap;gap:0.4rem;"><div style="display:flex;align-items:center;gap:0.5rem;"><span>🆕</span> Pending Community Products <span class="admin-badge pending">${pending.length}</span></div>${pending.length>0?`<button class="admin-approve-btn" onclick="adminApproveAllScraped()" style="font-size:0.5rem;padding:3px 14px;">✓ Approve all scraped</button>`:''}</div>
       ${pending.length===0
         ? '<div class="admin-empty">No pending products — all clear ✓</div>'
         : pending.map(p=>`
         <div class="admin-card" id="adm-prod-${p.id}" style="flex-direction:column;gap:0.6rem;">
           <div style="display:flex;align-items:flex-start;gap:0.8rem;">
             <div class="admin-card-info">
-              <div class="admin-card-name">${escH(p.name)}</div>
+              <div class="admin-card-name">${escH(p.name)}${p.url?` <a href="${escH(p.url)}" target="_blank" style="font-size:0.55rem;font-family:'Space Mono',monospace;color:var(--moss);text-decoration:none;margin-left:0.4rem;opacity:0.8;" title="View product page">↗</a>`:''}</div>
               <div class="admin-card-meta">${escH(p.brand||'—')} · ${p.category||'?'} · ${p.weight_g?p.weight_g+'g':'no weight'} · ${p.price||'no price'}</div>
             </div>
             <div class="admin-card-actions">
@@ -15640,6 +15640,20 @@ async function adminLookupDelete(id){
 function adminExpandEdit(id){
   const form = document.getElementById('adm-edit-form-'+id);
   if(form) form.style.display = form.style.display==='none' ? 'block' : 'none';
+}
+
+async function adminApproveAllScraped(){
+  if(!confirm('Approve all scraped/community products at once? This will mark all unverified products as verified.')) return;
+  await waitForSupabase();
+  const sb = sbClient();
+  const { data, error } = await sb.from('gear_products')
+    .update({ verified: true })
+    .eq('verified', false)
+    .in('source', ['scraped','community'])
+    .select('id');
+  if(error){ alert('Error: ' + error.message); return; }
+  alert(`✅ Approved ${data.length} products!`);
+  renderAdminPage();
 }
 
 async function adminApproveProduct(id){
