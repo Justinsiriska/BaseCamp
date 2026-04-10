@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v6.3 — Gear Organizer</title>
+<title>BaseCamp v6.4 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2393,7 +2393,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v6.3</div>
+      <div class="logo-sub">Gear Organizer · v6.4</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6115,12 +6115,12 @@ function renderCats(){
 
     const rows=items.map(item=>{
       const extraTag = (item.extra && /[0-9]/.test(item.extra)) ? `<span class="pack-item-extra">${escH(item.extra)}</span>` : '';
-      const buyBtn = item.productId ? `<button class="pack-item-buy-btn" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">🛒</button>` : '';
+      const buyBtn = ''; // cart removed — verified badge on item name handles product card
       return `<div class="pack-item-row" data-pack-cid="${cat.id}" data-pack-iid="${item.id}">
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
-          <span class="pack-item-name" ${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`style="cursor:pointer" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')"`:''}>${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?'<span class="pack-item-verified" title="Verified product — tap to view">✓</span>':''}</span>
+          <span class="pack-item-name">${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${buyBtn}${extraTag}
         </div>
@@ -6137,7 +6137,7 @@ function renderCats(){
       const packItem = items[0];
       const packName = packItem ? packItem.name : 'No pack added';
       const extraVol = packItem?.extra ? packItem.extra+'L' : '';
-      const packBuyBtn = packItem?.productId ? `<button class="pack-item-buy-btn" style="opacity:0.6;" title="View product" onclick="showProductCard('${packItem.productId}')">🛒</button>` : '';
+      const packBuyBtn = ''; // cart removed
       card.innerHTML=`
         <div class="pack-cat-banner">
           <div class="pack-cat-banner-left">
@@ -6305,9 +6305,9 @@ function renderCats(){
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
-          <span class="pack-item-name" ${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`style="cursor:pointer" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')"`:''}>${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?'<span class="pack-item-verified" title="Verified product — tap to view">✓</span>':''}</span>
+          <span class="pack-item-name">${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
-          ${item.productId?`<button class="pack-item-buy-btn" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">🛒</button>`:''}
+
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}" onclick="startWeightEdit(this,'uncategorised','${item.id}')">${dw(item.w)}</span>
@@ -8174,12 +8174,12 @@ function renderGearWall(){
           <div class="gw-drag-handle" title="Drag to add/remove from pack">⠿</div>
           <div class="gw-item-left">
             <div class="gw-item-dot" style="background:${cat.color}"></div>
-            <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId && (item._localVerified || _isProductVerified(item.productId)))?'<span class="gw-item-verified" title="Verified product — click to view">✓</span>':''}
+            <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId && (item._localVerified || _isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
             ${extraTag}
           </div>
           <div class="gw-item-right">
             <span class="gw-item-weight">${dw(item.w)}</span>
-            ${item.productId?`<button class="pack-item-buy-btn" style="opacity:0.7;" onclick="event.stopPropagation();showProductCard('${item.productId}')">🛒</button>`:hasLink?`<span class="gw-link-indicator" title="Has product link" style="font-size:0.7rem;cursor:pointer;" onclick="event.stopPropagation();window.open('${escH(item.link)}','_blank')">🔗</span>`:''}
+            ${(!item.productId && hasLink)?`<span class="gw-link-indicator" title="Has product link" style="font-size:0.7rem;cursor:pointer;" onclick="event.stopPropagation();window.open('${escH(item.link)}','_blank')">🔗</span>`:''}
             <button class="gw-item-edit-btn" title="Edit item"
               style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
             <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
