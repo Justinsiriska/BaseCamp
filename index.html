@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v5.9 — Gear Organizer</title>
+<title>BaseCamp v6.0 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -276,19 +276,17 @@ html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-co
 html.dark .gw-add-modal{background:#0f1a0f;border-color:var(--dm-border);}
 .gw-add-modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;}
 .gw-add-modal-title{font-family:'Space Mono',monospace;font-size:0.55rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);}
-/* Dropdown inside modal flows inline */
-.gw-add-modal .gw-unified-name-wrap{position:relative;}
-.gw-add-modal .gw-product-results{
-  position:absolute;top:100%;left:0;right:0;
-  z-index:100;
+/* Sibling results panel — floats to the right of the add modal */
+.gw-add-results-panel{
+  position:fixed;
+  z-index:2001;
   background:var(--paper);
   border:1.5px solid var(--lichen);
-  border-top:none;
-  border-radius:0 0 10px 10px;
-  max-height:200px;overflow-y:auto;
-  box-shadow:0 6px 20px rgba(45,74,45,0.13);
+  border-radius:12px;
+  overflow-y:auto;
+  box-shadow:0 8px 24px rgba(45,74,45,0.18);
 }
-html.dark .gw-add-modal .gw-product-results{background:#0f1a0f;border-color:var(--dm-border);}
+html.dark .gw-add-results-panel{background:#0f1a0f;border-color:var(--dm-border);}
 
 /* ── Find exact product overlay ── */
 .find-exact-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;}
@@ -2395,7 +2393,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v5.9</div>
+      <div class="logo-sub">Gear Organizer · v6.0</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8389,8 +8387,8 @@ function openAddItemModal(catId){
       <div class="gw-unified-name-wrap">
         <input class="gw-field-inp gw-unified-name-inp" id="gam-name-${iid}" type="text"
           placeholder="Item name…" autocomplete="new-password"
-          oninput="gearUnifiedSearch('${iid}',this.value)"/>
-        <div class="gw-product-results" id="gw-results-${iid}" style="display:none"></div>
+          oninput="gearUnifiedSearch('${iid}',this.value)"
+          onblur="setTimeout(()=>{const p=document.getElementById('gw-results-${iid}');if(p&&!p.matches(':hover'))p.style.display='none';},200)"/>
       </div>
       <div class="gw-field">
         <span class="gw-field-lbl">Weight</span>
@@ -8408,8 +8406,34 @@ function openAddItemModal(catId){
       </div>
     </div>`;
 
+  // Sibling results panel — sits next to modal, not inside it
+  const resultsPanel = document.createElement('div');
+  resultsPanel.id = `gw-results-${iid}`;
+  resultsPanel.className = 'gw-add-results-panel';
+  resultsPanel.style.display = 'none';
+  overlay.appendChild(resultsPanel);
+
   document.body.appendChild(overlay);
   requestAnimationFrame(()=>document.getElementById(`gam-name-${iid}`)?.focus());
+}
+
+function _positionAddResultsPanel(iid){
+  const modal  = document.getElementById(`gw-add-modal-${iid}`);
+  const panel  = document.getElementById(`gw-results-${iid}`);
+  if(!modal || !panel) return;
+  const r = modal.getBoundingClientRect();
+  const gap = 12;
+  const panelW = 260;
+  // Place to the right; if not enough room place to the left
+  const spaceRight = window.innerWidth - r.right - gap;
+  if(spaceRight >= panelW){
+    panel.style.left = (r.right + gap) + 'px';
+  } else {
+    panel.style.left = (r.left - gap - panelW) + 'px';
+  }
+  panel.style.top       = r.top + 'px';
+  panel.style.width     = panelW + 'px';
+  panel.style.maxHeight = r.height + 'px';
 }
 
 function saveAddItemModal(catId, iid, activePack){
@@ -15122,6 +15146,11 @@ function gearUnifiedSearch(iid, val){
       }
     }
     resultsEl.style.display = 'block';
+    // Position sibling panel if in add modal context
+    if(typeof _positionAddResultsPanel === 'function'){
+      const _iid = resultsEl.id.replace('gw-results-','');
+      _positionAddResultsPanel(_iid);
+    }
   }, 280);
 }
 
