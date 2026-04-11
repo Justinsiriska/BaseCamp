@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v7.0 — Gear Organizer</title>
+<title>BaseCamp v7.2 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -263,6 +263,18 @@ html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-co
 .gw-verified-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.45rem;font-weight:700;margin-left:4px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
 .gw-item-verified{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.4rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;line-height:1;}
 .pack-item-verified{display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.38rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
+
+/* ── Gear wall header Add Item button ── */
+.gw-add-item-btn{
+  font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:800;
+  background:var(--forest);color:var(--cream);
+  border:none;border-radius:20px;
+  padding:0.35rem 0.9rem;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;
+  transition:opacity 0.15s;
+}
+.gw-add-item-btn:hover{opacity:0.85;}
+html.dark .gw-add-item-btn{background:#3a6830;color:#d4e8c8;}
 
 /* ── Find product button (modal + drawer) ── */
 .gw-find-product-btn{
@@ -2406,7 +2418,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v7.0</div>
+      <div class="logo-sub">Gear Organizer · v7.2</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2583,11 +2595,12 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <!-- COL 3 — Gear Wall -->
     <div class="gear-wall" style="margin-left:1.5rem;">
       <div class="gw-panel">
-        <div class="gw-hd">
+        <div class="gw-hd" style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div class="gw-title">🪝 Gear Wall</div>
             <div class="gw-subtitle">Everything you own · drag in/out of your pack</div>
           </div>
+          <button class="gw-add-item-btn" onclick="gwPromptCategory()">＋ Add Item</button>
         </div>
         <div class="gw-body" id="gear-wall-body"><div class="gw-cat" data-cid="pack"><div class="gw-cat-hd" style="border-left-color: rgb(139, 115, 85);">
       <div class="gw-cat-label">
@@ -8370,6 +8383,34 @@ function renderGearWall(){
 
 
 // Handle dropping an item into a gear wall category (changes gwCatId)
+function gwPromptCategory(){
+  // If only one cat, go straight to modal
+  const gwCats = CATS.filter(c=>c.onGearWall!==false);
+  if(gwCats.length === 1){ openAddItemModal(gwCats[0].id); return; }
+
+  // Show a small popover to pick a category
+  document.getElementById('gw-cat-picker')?.remove();
+  const picker = document.createElement('div');
+  picker.id = 'gw-cat-picker';
+  picker.style.cssText = 'position:fixed;inset:0;z-index:1999;display:flex;align-items:center;justify-content:center;';
+  picker.addEventListener('click', e=>{ if(e.target===picker) picker.remove(); });
+
+  picker.innerHTML = `<div style="background:var(--cream);border:1.5px solid var(--lichen);border-radius:14px;padding:1rem 1.25rem;width:min(320px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <div style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);margin-bottom:0.7rem;">Add to which category?</div>
+    <div style="display:flex;flex-direction:column;gap:0.35rem;">
+      ${gwCats.map(cat=>`
+        <button onclick="document.getElementById('gw-cat-picker').remove();openAddItemModal('${cat.id}')"
+          style="text-align:left;background:transparent;border:1px solid rgba(184,201,163,0.4);border-radius:8px;padding:0.45rem 0.7rem;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:700;color:var(--bark);display:flex;align-items:center;gap:0.5rem;transition:background 0.12s;"
+          onmouseover="this.style.background='rgba(184,201,163,0.15)'" onmouseout="this.style.background='transparent'">
+          <span style="width:10px;height:10px;border-radius:50%;background:${cat.color};flex-shrink:0;display:inline-block;"></span>
+          ${escH(cat.name)}
+          <span style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-left:auto;">${cat.items.length} items</span>
+        </button>`).join('')}
+    </div>
+  </div>`;
+  document.body.appendChild(picker);
+}
+
 function gwInlineAdd(catId){
   openAddItemModal(catId);
 }
@@ -15101,8 +15142,8 @@ function openFindExactFlow(iid){
         <div class="find-exact-label" style="margin-bottom:0.4rem;">Scraped data <span style="opacity:0.5">(edit as needed)</span></div>
         <div class="gw-field" style="margin-bottom:0.3rem;">
           <span class="gw-field-lbl">Weight</span>
-          <input class="gw-field-inp mono" id="fex-weight-${iid}" type="number" min="0" placeholder="g" autocomplete="off"/>
-          <span style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);">g</span>
+          <input class="gw-field-inp mono" id="fex-weight-${iid}" type="number" min="0" placeholder="0" autocomplete="off" data-weight-unit="${U.v==='oz'?'oz':'g'}"/>
+          ${_weightUnitSel('fex-weight-'+iid, U.v==='oz'?'oz':'g')}
         </div>
         <div class="gw-field" style="margin-bottom:0.3rem;">
           <span class="gw-field-lbl">Price</span>
@@ -15175,7 +15216,7 @@ async function submitFindExact(iid, btn){
   const name   = document.getElementById(`fex-name-${iid}`)?.value.trim();
   const brand  = document.getElementById(`fex-brand-${iid}`)?.value.trim();
   const url    = document.getElementById(`fex-url-${iid}`)?.value.trim();
-  const weight = parseFloat(document.getElementById(`fex-weight-${iid}`)?.value||'') || null;
+  const weight = getWeightInGrams(document.getElementById(`fex-weight-${iid}`)) || null;
   const price  = document.getElementById(`fex-price-${iid}`)?.value.trim() || null;
   const imgUrl = document.getElementById(`fex-img-${iid}`)?.value.trim() || null;
 
