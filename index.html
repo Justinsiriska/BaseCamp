@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v7.2 — Gear Organizer</title>
+<title>BaseCamp v7.3 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2418,7 +2418,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v7.2</div>
+      <div class="logo-sub">Gear Organizer · v7.3</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -15354,8 +15354,9 @@ async function gearDrawerSelect(iid, productId){
   if(isModal){
     await waitForSupabase();
     const sb = sbClient();
-    const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
-    if(!p) return;
+    const { data: products } = await sb.from('gear_products').select('*').eq('id', productId);
+    const p = products?.[0];
+    if(!p){ toast('Product not found — it may have been removed.'); return; }
     // Fill modal name
     const nameInp = document.getElementById(`gam-name-${iid}`);
     if(nameInp) nameInp.value = p.name;
@@ -15439,8 +15440,9 @@ async function gearDrawerSelect(iid, productId){
   try {
     await waitForSupabase();
     const sb = sbClient();
-    const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
-    if(!p) return;
+    const { data: products } = await sb.from('gear_products').select('*').eq('id', productId);
+    const p = products?.[0];
+    if(!p){ toast('Product not found — it may have been removed.'); return; }
     // Link product to item
     item.productId = productId;
     // Autofill: weight and price always; name only if empty
@@ -15652,8 +15654,9 @@ async function showProductCard(productId, itemIid){
   try {
     await waitForSupabase();
     const sb = sbClient();
-    const { data: p } = await sb.from('gear_products').select('*').eq('id', productId).single();
-    if(!p) return;
+    const { data: products } = await sb.from('gear_products').select('*').eq('id', productId);
+    const p = products?.[0];
+    if(!p){ toast('Product not found — it may have been removed.'); return; }
     // Get approved custom fields
     const { data: fieldDefs } = await sb.from('gear_product_field_defs').select('*').eq('status','approved');
     const defs = fieldDefs || [];
@@ -16699,8 +16702,8 @@ async function sbPullData(){
   toast('☁️ Data loaded from cloud');
   // Backfill weights for items linked to verified products but w=0
   setTimeout(sbBackfillLinkedWeights, 1500);
-  // Load verified product IDs into cache for badge rendering
-  _loadVerifiedProductIds();
+  // Load verified product IDs into cache for badge rendering, then re-render so badges appear
+  _loadVerifiedProductIds().then(()=>renderAll());
   if(migrated.profile?.photo){
     try{ localStorage.setItem('basecamp_profile_photo', migrated.profile.photo); }catch(e){}
   }
