@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v6.6 — Gear Organizer</title>
+<title>BaseCamp v6.8 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2406,7 +2406,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v6.6</div>
+      <div class="logo-sub">Gear Organizer · v6.8</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -15248,13 +15248,14 @@ async function gearDrawerSelect(iid, productId){
         setTimeout(()=>{
           const volInp = modal2.querySelector('.gw-field-val-inp[data-field-key="volume"]');
           if(volInp){
-            volInp.value = Math.round(volMl);
-            // Try to set unit selector to match
+            // Set unit selector first, then value in that unit
             const unitSel = volInp.nextElementSibling;
+            const matchUnit = rawUnit === 'l' ? 'L' : rawUnit === 'floz' ? 'fl oz' : 'ml';
             if(unitSel?.tagName === 'SELECT'){
-              const matchUnit = rawUnit === 'l' ? 'L' : rawUnit === 'ml' ? 'ml' : 'fl oz';
               [...unitSel.options].forEach(o=>{ if(o.value===matchUnit||o.text===matchUnit) unitSel.value=o.value; });
             }
+            // Store display value in the selected unit (not converted to ml)
+            volInp.value = rawVal;
           }
         }, 50);
       }, 80);
@@ -16091,10 +16092,15 @@ async function adminApproveAllScraped(){
     .select('id');
   if(error){ alert('Error: ' + error.message); return; }
   alert(`✅ Approved ${data.length} products!`);
+  // Refresh verified cache so badges appear immediately
+  await _loadVerifiedProductIds();
   renderAdminPage();
+  renderAll();
 }
 
 async function adminApproveProduct(id){
+  // Add to local verified cache immediately
+  _verifiedProductIds.add(id);
   const sb = sbClient();
   // Read edited values from form if expanded
   const name  = document.getElementById('adm-ep-name-'+id)?.value.trim();
@@ -16129,6 +16135,7 @@ async function adminApproveProduct(id){
 
   document.getElementById('adm-prod-'+id)?.remove();
   toast('✅ Product approved & saved');
+  renderAll(); // refresh gear wall & pack badges immediately
 }
 
 async function adminBackfillProductWeight(productId, weight_g){
