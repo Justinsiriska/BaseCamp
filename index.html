@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v6.8 — Gear Organizer</title>
+<title>BaseCamp v7.0 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2406,7 +2406,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v6.8</div>
+      <div class="logo-sub">Gear Organizer · v7.0</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8392,7 +8392,7 @@ function openAddItemModal(catId){
   overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
 
   overlay.innerHTML = `
-    <div class="gw-add-modal" id="gw-add-modal-${iid}">
+    <div class="gw-add-modal" id="gw-add-modal-${iid}" data-catid="${catId}" autocomplete="off">
       <div class="gw-add-modal-hd">
         <span class="gw-add-modal-title">Add to ${escH(cat.name)}</span>
         <button class="gw-cancel-btn" style="padding:2px 8px;" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕</button>
@@ -8407,13 +8407,13 @@ function openAddItemModal(catId){
       </button>
       <div class="gw-field">
         <span class="gw-field-lbl">Weight</span>
-        <input class="gw-field-inp mono" id="gam-w-${iid}" type="number" min="0" value="" placeholder="0" data-weight-unit="${wUnit}"/>
+        <input class="gw-field-inp mono" id="gam-w-${iid}" type="number" min="0" value="" placeholder="0" data-weight-unit="${wUnit}" autocomplete="off"/>
         ${_weightUnitSel('gam-w-'+iid, wUnit)}
       </div>
       ${extraLabel ? `
       <div class="gw-field">
         <span class="gw-field-lbl">${escH(extraLabel)}</span>
-        <input class="gw-field-inp mono" id="gam-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
+        <input class="gw-field-inp mono" id="gam-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off"/>
       </div>` : ''}
       ${buildDrawerFieldsSection({id:'modal-'+iid, fields:{}})}
       <div class="gw-confirm-row" style="margin-top:0.6rem;">
@@ -15060,90 +15060,198 @@ async function gearProductSubmitEdit(productId, field, oldVal, newVal){
 }
 
 // ── "Find exact product" overlay flow ──────────────────────────────────────
+// ── Find Exact Product — 2-step flow ────────────────────────────────────────
+// Step 1: collect name/brand/URL, optionally scrape
+// Step 2: full editable form pre-filled from scrape → saves item to GW + DB
 function openFindExactFlow(iid){
-  // Close results dropdown
   const resultsEl = document.getElementById(`gw-results-${iid}`);
-  if(resultsEl) resultsEl.style.display='none';
+  if(resultsEl) resultsEl.style.display = 'none';
 
-  const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
-  const itemName = item?.name || '';
+  // Grab any name already typed in the add modal or inline drawer
+  const existingName = document.getElementById(`gam-name-${iid}`)?.value.trim()
+    || CATS.flatMap(c=>c.items).find(i=>i.id===iid)?.name || '';
 
+  document.getElementById('find-exact-overlay')?.remove();
   const overlay = document.createElement('div');
+  overlay.id = 'find-exact-overlay';
   overlay.className = 'find-exact-overlay';
   overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
 
   overlay.innerHTML = `
-    <div class="find-exact-modal">
+    <div class="find-exact-modal" id="fex-modal-${iid}">
       <h3>Find your exact product</h3>
-      <p>Help us add it to the database so everyone can benefit.</p>
+      <p>Paste a link to the product page and we'll fill in the details automatically.</p>
       <div class="find-exact-row">
         <div class="find-exact-label">Product name</div>
-        <input class="gw-field-inp" id="fex-name-${iid}" type="text" value="${escH(itemName)}" placeholder="e.g. MSR PocketRocket 2" autocomplete="off"/>
+        <input class="gw-field-inp" id="fex-name-${iid}" type="text" value="${escH(existingName)}" placeholder="e.g. MSR PocketRocket 2" autocomplete="off"/>
       </div>
       <div class="find-exact-row">
         <div class="find-exact-label">Brand</div>
         <input class="gw-field-inp" id="fex-brand-${iid}" type="text" placeholder="e.g. MSR" autocomplete="off"/>
       </div>
       <div class="find-exact-row">
-        <div class="find-exact-label">Product URL <span style="opacity:0.5;font-size:0.9em">(optional)</span></div>
-        <input class="gw-field-inp" id="fex-url-${iid}" type="text" inputmode="url" placeholder="https://..." autocomplete="off"/>
+        <div class="find-exact-label">Product URL <span style="opacity:0.5">(paste to auto-fill data)</span></div>
+        <div style="display:flex;gap:0.4rem;">
+          <input class="gw-field-inp" id="fex-url-${iid}" type="text" inputmode="url" placeholder="https://..." autocomplete="off" style="flex:1;"/>
+          <button class="gw-fetch-btn" onclick="fexScrapeUrl('${iid}',this)" style="white-space:nowrap;">Fetch data</button>
+        </div>
       </div>
-      <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
-        <button class="gw-cancel-btn" onclick="this.closest('.find-exact-overlay').remove()">Cancel</button>
-        <button class="gw-confirm-btn" onclick="submitFindExact('${iid}',this)">Submit ✓</button>
+      <div id="fex-scraped-${iid}" style="display:block;">
+        <div style="border-top:1px solid rgba(184,201,163,0.3);margin:0.6rem 0 0.5rem;"></div>
+        <div class="find-exact-label" style="margin-bottom:0.4rem;">Scraped data <span style="opacity:0.5">(edit as needed)</span></div>
+        <div class="gw-field" style="margin-bottom:0.3rem;">
+          <span class="gw-field-lbl">Weight</span>
+          <input class="gw-field-inp mono" id="fex-weight-${iid}" type="number" min="0" placeholder="g" autocomplete="off"/>
+          <span style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);">g</span>
+        </div>
+        <div class="gw-field" style="margin-bottom:0.3rem;">
+          <span class="gw-field-lbl">Price</span>
+          <input class="gw-field-inp mono" id="fex-price-${iid}" type="text" placeholder="e.g. 49.95" autocomplete="off"/>
+        </div>
+        <div class="gw-field" style="margin-bottom:0.3rem;">
+          <span class="gw-field-lbl">Image URL</span>
+          <input class="gw-field-inp" id="fex-img-${iid}" type="text" placeholder="https://..." autocomplete="off"/>
+        </div>
+      </div>
+      <div id="fex-scraping-${iid}" style="display:none;font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);padding:0.4rem 0;">
+        Fetching product data…
+      </div>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.8rem;">
+        <button class="gw-cancel-btn" onclick="document.getElementById('find-exact-overlay').remove()">Cancel</button>
+        <button class="gw-confirm-btn" id="fex-submit-${iid}" onclick="submitFindExact('${iid}',this)">Add to my gear ✓</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
 }
 
-async function submitFindExact(iid, btn){
-  const modal  = btn.closest('.find-exact-modal');
-  const name   = modal.querySelector(`#fex-name-${iid}`)?.value.trim();
-  const brand  = modal.querySelector(`#fex-brand-${iid}`)?.value.trim();
-  const url    = modal.querySelector(`#fex-url-${iid}`)?.value.trim();
-  if(!name){ toast('Please enter a product name'); return; }
+async function fexScrapeUrl(iid, btn){
+  const url = document.getElementById(`fex-url-${iid}`)?.value.trim();
+  if(!url){ toast('Paste a product URL first'); return; }
 
-  btn.disabled = true;
-  btn.textContent = '…';
+  const scrapedEl = document.getElementById(`fex-scraped-${iid}`);
+  const scrapingEl = document.getElementById(`fex-scraping-${iid}`);
+  btn.disabled = true; btn.textContent = '…';
+  scrapingEl.style.display = 'block';
+  scrapedEl.style.display = 'none';
+
+  try {
+    let html = null;
+    for(const proxy of [`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`]){
+      try{ const r = await fetch(proxy,{signal:AbortSignal.timeout(8000)}); if(r.ok){html=await r.text();break;} }catch(_){}
+    }
+    if(!html) throw new Error('Could not reach page');
+
+    const doc = new DOMParser().parseFromString(html,'text/html');
+    const jsonld = _scrapeJsonLd(doc);
+    const og = _scrapeOgMeta(doc);
+    const specs = _scrapeSpecTable(doc);
+
+    const name    = jsonld?.name || og?.name;
+    const brand   = jsonld?.brand || og?.brand;
+    const weight  = jsonld?.weight_g || og?.weight_g || specs?.weight_g;
+    const price   = jsonld?.price_usd || og?.price_usd || specs?.price_usd;
+    const imgUrl  = jsonld?.image_url || og?.image_url;
+
+    if(name && !document.getElementById(`fex-name-${iid}`).value.trim())
+      document.getElementById(`fex-name-${iid}`).value = name;
+    if(brand && !document.getElementById(`fex-brand-${iid}`).value.trim())
+      document.getElementById(`fex-brand-${iid}`).value = brand;
+    if(weight) document.getElementById(`fex-weight-${iid}`).value = weight;
+    if(price)  document.getElementById(`fex-price-${iid}`).value = price;
+    if(imgUrl) document.getElementById(`fex-img-${iid}`).value = imgUrl;
+
+    scrapedEl.style.display = 'block';
+    toast(weight ? '✓ Data fetched!' : '⚠️ Fetched page but no weight found — enter manually');
+  } catch(e){
+    toast('Could not fetch page — enter data manually');
+    scrapedEl.style.display = 'block'; // show manual fields anyway
+  } finally {
+    scrapingEl.style.display = 'none';
+    btn.disabled = false; btn.textContent = 'Fetch data';
+  }
+}
+
+async function submitFindExact(iid, btn){
+  const name   = document.getElementById(`fex-name-${iid}`)?.value.trim();
+  const brand  = document.getElementById(`fex-brand-${iid}`)?.value.trim();
+  const url    = document.getElementById(`fex-url-${iid}`)?.value.trim();
+  const weight = parseFloat(document.getElementById(`fex-weight-${iid}`)?.value||'') || null;
+  const price  = document.getElementById(`fex-price-${iid}`)?.value.trim() || null;
+  const imgUrl = document.getElementById(`fex-img-${iid}`)?.value.trim() || null;
+
+  if(!name){ toast('Please enter a product name'); return; }
+  btn.disabled = true; btn.textContent = '…';
 
   try {
     await waitForSupabase();
     const sb = sbClient();
 
-    // Insert as community product (unverified in DB, but locally linked)
+    // Insert community product
     const { data: inserted, error } = await sb.from('gear_products')
-      .insert([{ name, brand: brand||null, url: url||null, source:'community', verified:false }])
-      .select('id')
-      .single();
-
+      .insert([{ name, brand:brand||null, url:url||null, image_url:imgUrl||null,
+                 weight_g:weight||null, price:price||null, source:'community', verified:false }])
+      .select('id').single();
     if(error) throw error;
 
-    // Link item to this pending product — locally it looks verified immediately
-    const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
-    if(item){
-      item.productId = inserted.id;
-      item._localVerified = true; // visual-only flag
-      scheduleSave();
-      renderAll();
+    const productId = inserted.id;
+    const isModal = !!document.getElementById(`gam-name-${iid}`);
+
+    if(isModal){
+      // Add modal context — create the item on the gear wall now
+      const activePill = document.querySelector('.s-pill.active');
+      const activePack = activePill?.dataset?.s || season;
+      const wInp = document.getElementById(`gam-w-${iid}`);
+      const extraInp = document.getElementById(`gam-extra-${iid}`);
+      // Read catId from the modal header data attribute
+      const modal = document.getElementById(`gw-add-modal-${iid}`);
+      const catId = modal?.dataset?.catid;
+      const cat = catId ? CATS.find(c=>c.id===catId) : null;
+
+      // Collect any fields already entered in the add modal
+      const customFields = {};
+      modal?.querySelectorAll('.gw-field-val-inp').forEach(inp=>{
+        const val = inp.value.trim();
+        if(val) customFields[inp.dataset.fieldKey] = isNaN(val)?val:Number(val);
+      });
+
+      const newItem = {
+        id: iid, name,
+        w: weight || (getWeightInGrams(wInp)||0),
+        extra: extraInp?.value.trim()||'',
+        link: url||'', s:[activePack], gwCatId: catId||'gear',
+        productId, _localVerified: true, fields: customFields
+      };
+      if(cat){ cat.items.push(newItem); gwCollapsed[catId]=false; }
+      document.getElementById('gw-add-modal-overlay')?.remove();
+      scheduleSave(); renderGearWall();
+    } else {
+      // Inline drawer context — item already exists, just link it
+      const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+      if(item){
+        item.productId = productId;
+        item._localVerified = true;
+        if(weight && !item.w) item.w = weight;
+        if(name && !item.name) item.name = name;
+        scheduleSave(); renderAll();
+      }
     }
 
-    // Show thank-you screen
-    modal.innerHTML = `
+    // Thank-you screen
+    document.getElementById(`fex-modal-${iid}`).innerHTML = `
       <div class="find-exact-thankyou">
         <div class="fet-icon">🙌</div>
         <h3>Thank you!</h3>
         <p style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);margin-top:0.4rem;line-height:1.6;">
-          We've added <strong>${escH(name)}</strong> to our database.<br>
-          Once verified by our team it will show as a verified product for all users.
+          <strong>${escH(name)}</strong> has been added to your gear and submitted to our database.<br>
+          Once our team verifies it, it'll show as verified for everyone.
         </p>
-        <button class="gw-confirm-btn" style="margin-top:0.8rem;" onclick="this.closest('.find-exact-overlay').remove()">Done</button>
+        <button class="gw-confirm-btn" style="margin-top:0.8rem;" onclick="document.getElementById('find-exact-overlay').remove()">Done</button>
       </div>`;
 
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'Submit ✓';
-    toast('Error submitting — please try again');
-    console.warn('[FindExact] error:', e);
+  } catch(e){
+    btn.disabled = false; btn.textContent = 'Add to my gear ✓';
+    toast('Error — please try again');
+    console.warn('[FindExact]', e);
   }
 }
 
