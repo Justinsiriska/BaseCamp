@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v6.4 — Gear Organizer</title>
+<title>BaseCamp v6.6 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -263,6 +263,19 @@ html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-co
 .gw-verified-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.45rem;font-weight:700;margin-left:4px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
 .gw-item-verified{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.4rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;line-height:1;}
 .pack-item-verified{display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.38rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
+
+/* ── Find product button (modal + drawer) ── */
+.gw-find-product-btn{
+  display:block;width:100%;text-align:left;
+  font-family:'Space Mono',monospace;font-size:0.5rem;
+  color:var(--moss);background:transparent;
+  border:1px dashed rgba(74,103,65,0.35);border-radius:8px;
+  padding:5px 10px;cursor:pointer;margin-bottom:0.5rem;
+  transition:all 0.15s;
+}
+.gw-find-product-btn:hover{background:rgba(74,103,65,0.08);border-color:var(--moss);}
+html.dark .gw-find-product-btn{color:#7abf6a;border-color:rgba(74,143,68,0.3);}
+html.dark .gw-find-product-btn:hover{background:rgba(30,50,22,0.6);}
 
 /* ── Add item modal ── */
 .gw-add-modal{
@@ -2393,7 +2406,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v6.4</div>
+      <div class="logo-sub">Gear Organizer · v6.6</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8387,9 +8400,11 @@ function openAddItemModal(catId){
       <div class="gw-unified-name-wrap">
         <input class="gw-field-inp gw-unified-name-inp" id="gam-name-${iid}" type="text"
           placeholder="Item name…" autocomplete="new-password"
-          oninput="gearUnifiedSearch('${iid}',this.value)"
-          onblur="setTimeout(()=>{const p=document.getElementById('gw-results-${iid}');if(p&&!p.matches(':hover'))p.style.display='none';},200)"/>
+          oninput="gearUnifiedSearch('${iid}',this.value)"/>
       </div>
+      <button class="gw-find-product-btn" onclick="openFindExactFlow('${iid}')">
+        + Want to find your exact product?
+      </button>
       <div class="gw-field">
         <span class="gw-field-lbl">Weight</span>
         <input class="gw-field-inp mono" id="gam-w-${iid}" type="number" min="0" value="" placeholder="0" data-weight-unit="${wUnit}"/>
@@ -15197,7 +15212,16 @@ async function gearDrawerSelect(iid, productId){
     if(nameInp) nameInp.value = p.name;
     // Fill weight if present
     const wInp = document.getElementById(`gam-w-${iid}`);
-    if(wInp && p.weight_g) wInp.value = U.v==='oz' ? (p.weight_g/28.3495).toFixed(1) : p.weight_g;
+    if(wInp){
+      if(p.weight_g){
+        wInp.value = U.v==='oz' ? (p.weight_g/28.3495).toFixed(1) : p.weight_g;
+        wInp.style.borderColor = '';
+      } else {
+        // No weight in DB — leave blank but hint the user
+        wInp.placeholder = 'Enter weight manually';
+        wInp.style.borderColor = 'rgba(184,201,163,0.6)';
+      }
+    }
     // Store link for when modal saves
     window._pendingLink = window._pendingLink || {};
     window._pendingLink[iid] = productId;
@@ -15401,6 +15425,10 @@ function buildNewItemDrawer(item, cat, srcCatId){
     </div>` : ''}
     ${buildDrawerFieldsSection(item)}
     <hr class="gw-drawer-divider"/>
+    ${(!item.productId || !(item._localVerified || _isProductVerified(item.productId))) ? `
+    <button class="gw-find-product-btn" onclick="openFindExactFlow('${item.id}')">
+      + Find exact product in database
+    </button>` : ''}
     <div class="gw-drawer-link-row" ${item.productId?'':'style="display:none"'} id="gw-link-row-${item.id}">
       <input class="gw-drawer-url gw-edit-link" type="text" inputmode="url" autocomplete="new-password"
         placeholder="Paste product URL…" value="${escH(item.link||'')}"/>
