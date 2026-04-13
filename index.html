@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.50 — Gear Organizer</title>
+<title>BaseCamp v8.53 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1011,10 +1011,11 @@ overflow:hidden;}
 .thm-lbl{font-family:'Nunito',sans-serif;font-size:0.65rem;color:var(--bark);flex:1;}
 .thm-toggle-group{display:flex;gap:3px;}
 .thm-tog{font-family:'Nunito',sans-serif;font-size:0.55rem;font-weight:700;
-  padding:0.22rem 0.55rem;border-radius:14px;cursor:pointer;transition:all 0.12s;
-  border:1.5px solid rgba(184,201,163,0.45);background:transparent;color:var(--stone);white-space:nowrap;}
-.thm-tog:hover{background:rgba(184,201,163,0.15);}
-.thm-tog.on{background:var(--forest);color:#fff;border-color:var(--forest);}
+  padding:0.28rem 0.7rem;border-radius:14px;cursor:pointer;transition:all 0.15s;
+  border:1.5px solid rgba(184,201,163,0.45);background:rgba(255,255,255,0.5);
+  color:var(--stone);white-space:nowrap;opacity:0.65;}
+.thm-tog:hover{background:rgba(184,201,163,0.2);opacity:1;}
+.thm-tog.on{background:#2d5a27!important;color:#fff!important;border-color:#2d5a27!important;opacity:1!important;box-shadow:0 2px 8px rgba(45,90,39,0.3);}
 .thermal-title{font-family:'Playfair Display',serif;font-size:0.82rem;font-style:italic;margin-bottom:0.35rem;opacity:0.88;}
 .thermal-val{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700;}
 .thermal-sub{font-size:0.65rem;opacity:0.68;margin-top:2px;}
@@ -2504,7 +2505,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.50</div>
+      <div class="logo-sub">Gear Organizer · v8.53</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6309,7 +6310,7 @@ function renderCats(){
     card.dataset.cid=cat.id;
 
     const rows=items.map(item=>{
-      const extraTag = (item.extra && /[0-9]/.test(item.extra)) ? `<span class="pack-item-extra">${escH(item.extra)}</span>` : '';
+      const extraTag = '';  // extra (temp rating) now rendered via renderItemFieldPills
       const buyBtn = ''; // cart removed — verified badge on item name handles product card
       return `<div class="pack-item-row" data-pack-cid="${cat.id}" data-pack-iid="${item.id}">
         <div class="pack-item-left">
@@ -8593,7 +8594,7 @@ function renderGearWall(){
         const sdots=PACKS.slice(0,6).map(p=>`
           <span class="gw-sdot${item.s.includes(p.id)?' on':''}" data-ss="${p.id}" title="${p.name}"></span>`).join('');
 
-        const extraTag=(item.extra&&/[0-9]/.test(item.extra))?`<span class="gw-item-extra">${item.extra}</span>`:''; 
+        const extraTag='';  // extra (temp rating) now rendered via renderItemFieldPills
         const hasLink=item.link&&item.link.trim();
 
         // CHIP — drag handle on left, click anywhere else to expand drawer
@@ -9694,6 +9695,12 @@ function loadState(){
 
     _stateLoaded = true;
     window.CUSTOM_FIELD_DEFS = mergeFieldDefs(d.customFieldDefs||[]);
+    // Migrate: fix stale sleep extraLabel from old "Temp / R-Value" label
+    CATS.forEach(cat=>{
+      if(cat.id==='sleep' && cat.extraLabel && cat.extraLabel.includes('R-')){
+        cat.extraLabel = 'Temp Rating';
+      }
+    });
     // Migrate: move fields.temp into item.extra for sleep items (one-time)
     CATS.forEach(cat=>{
       cat.items.forEach(item=>{
@@ -15476,9 +15483,16 @@ function getFieldDefs(){const defs=window.CUSTOM_FIELD_DEFS||[...PRESET_FIELDS];
 function mergeFieldDefs(saved){const merged=[...PRESET_FIELDS];(saved||[]).forEach(def=>{if(!def.preset&&!merged.find(d=>d.key===def.key))merged.push(def);});return merged;}
 function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>d.key===def.key)){defs.push(def);window.CUSTOM_FIELD_DEFS=defs;scheduleSave();}}
 function renderItemFieldPills(item){
-  if(!item.fields||!Object.keys(item.fields).length)return'';
+  let pills = '';
+  // Render item.extra (temp rating for sleep items) as a chip
+  if(item.extra && item.extra.trim() !== '' && /[0-9]/.test(item.extra)){
+    const unit = item.extra_unit || '°C';
+    const icon = '🌡️';
+    pills += `<span class="item-field-pill" title="Temp Rating: ${escH(item.extra)}${escH(unit)}"><span class="item-field-pill-icon">${icon}</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
+  }
+  if(!item.fields||!Object.keys(item.fields).length)return pills;
   const defs=getFieldDefs();
-  return Object.entries(item.fields).filter(([key])=>!key.endsWith('_unit')).map(([key,val])=>{
+  const result = Object.entries(item.fields).filter(([key])=>!key.endsWith('_unit')).map(([key,val])=>{
     if(val===''||val===null||val===undefined)return'';
     const def=defs.find(d=>d.key===key)||{icon:'🏷️',label:key,unit:''};
     // Get stored display unit; convert base value to display unit
@@ -15494,6 +15508,7 @@ function renderItemFieldPills(item){
     const displayUnit = key==='rvalue' ? '' : escH(storedUnit);
     return`<span class="item-field-pill" title="${escH(def.label)}: ${displayVal}${storedUnit}"><span class="item-field-pill-icon">${def.icon}</span><span class="item-field-pill-val">${escH(String(displayVal))}</span>${displayUnit?`<span class="item-field-pill-unit">${displayUnit}</span>`:''}</span>`;
   }).join('');
+  return pills + result;
 }
 function buildDrawerFieldsSection(item){
   const defs=getFieldDefs();const itemFields=item.fields||{};
