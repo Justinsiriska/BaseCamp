@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.39 — Gear Organizer</title>
+<title>BaseCamp v8.40 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1514,7 +1514,7 @@ html.dark .trip-mini-bar-label{color:#a8d89a;}
 /* Person columns */
 .trip-columns{display:flex;gap:1rem;align-items:stretch;overflow-x:auto;padding-bottom:0.5rem;max-width:100%;box-sizing:border-box;}
 .trip-col{
-  flex:1;min-width:240px;
+  flex:1;min-width:200px;
   background:rgba(250,247,242,0.7);border:2px solid rgba(184,201,163,0.45);
   border-radius:16px;overflow:visible;
   backdrop-filter:blur(6px);display:flex;flex-direction:column;
@@ -1528,7 +1528,7 @@ html.dark .trip-col{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.
   height:110px;position:relative;
 }
 html.dark .trip-col-header{background:rgba(20,38,15,0.6);border-bottom-color:rgba(60,95,45,0.4);}
-.trip-col-header-right{display:flex;flex-direction:column;justify-content:center;gap:0.25rem;flex:1;min-width:0;padding:0.6rem 0.8rem;}
+.trip-col-header-right{display:flex;flex-direction:column;justify-content:center;gap:0.25rem;flex:1;min-width:0;padding:0.6rem 0.4rem 0.6rem 0.8rem;overflow:hidden;}
 .trip-col-name{
   font-family:'Playfair Display',serif;font-size:clamp(0.7rem,2.5vw,1.05rem);font-weight:700;
   color:var(--forest);display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap;
@@ -2316,7 +2316,7 @@ html.dark .pack-cat-banner-meta{color:#a08050;}
 html.dark .pack-cat-banner-w{background:rgba(139,115,85,0.2);color:#c4a070;}
 
 /* ── Mini donut in trip profile header ── */
-.trip-col-mini-donut{position:absolute;top:50%;right:0.6rem;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
+.trip-col-mini-donut{display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0.4rem;}
 
 /* ── Food item popup ── */
 .food-item-popup{position:fixed;z-index:9999;background:var(--paper);border:1.5px solid rgba(184,201,163,0.5);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,0.13);padding:0.65rem 0.85rem;min-width:170px;font-family:'Space Mono',monospace;}
@@ -2479,7 +2479,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.39</div>
+      <div class="logo-sub">Gear Organizer · v8.40</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -14009,23 +14009,43 @@ function renderTripsPage(){
       members.forEach(mem=>{const b=document.getElementById('col-body-'+mem.id);if(b){b.innerHTML='';renderMemberFood(b,mem,trip,members);}});
     });
 
-    // ── Mini donut injection (runs after innerHTML is set) ──
+    // ── Mini donut injection — responsive: full donut if space, icon+popover if not ──
     const _miniDonutWrap = col.querySelector('.trip-col-mini-donut');
     if(_miniDonutWrap){
+      // Build segments
+      let _segs, _tot;
       if(tripMode==='gear'){
         const _gSegs = m.cats ? m.cats.map(cat=>({
           color: cat.color||'#999',
           value: cat.items ? cat.items.filter(i=> m.isMe ? (i.s&&i.s.includes(trip.packId||'default')) : (i.s&&i.s.length>0)).reduce((s,i)=>s+(i.w||0),0) : 0
         })).filter(s=>s.value>0) : [];
-        _miniDonutWrap.appendChild(_buildMiniDonut(_gSegs, gearW||1, 90));
+        _segs=_gSegs; _tot=gearW||1;
       } else {
         const _fColors={breakfast:'#c87941',lunch:'#4a8fa8',dinner:'#4a6741',snacks:'#c85a2a',drinks:'#7ba7bc'};
         const _mFood = m.isMe ? FOOD_ITEMS.filter(i=>i.s&&i.s.includes(trip.packId||foodSeason)) : (m.food||[]);
         const _fCatMap={};
         _mFood.forEach(i=>{ _fCatMap[i.catId]=(_fCatMap[i.catId]||0)+(i.w_total||0); });
-        const _fSegs=Object.entries(_fCatMap).map(([cat,w])=>({color:_fColors[cat]||'#8b8b8b',value:w}));
-        const _fTotal=_mFood.reduce((s,i)=>s+(i.w_total||0),0);
-        _miniDonutWrap.appendChild(_buildMiniDonut(_fSegs, _fTotal||1, 90));
+        _segs=Object.entries(_fCatMap).map(([cat,w])=>({color:_fColors[cat]||'#8b8b8b',value:w}));
+        _tot=_mFood.reduce((s,i)=>s+(i.w_total||0),0)||1;
+      }
+
+      // Responsive: measure available width per card
+      const _colsEl = col.parentElement;
+      const _availW = _colsEl ? _colsEl.offsetWidth : window.innerWidth;
+      const _nCols = members.length + 1; // +1 for shared col
+      const _cardW = _availW / _nCols;
+      const _showFull = _cardW >= 280; // enough room for donut inline
+
+      if(_showFull){
+        _miniDonutWrap.appendChild(_buildMiniDonut(_segs, _tot, 90));
+        _miniDonutWrap.title = 'Weight breakdown';
+      } else {
+        // Compact icon mode — show small ring, click for popover
+        const _icon = _buildMiniDonut(_segs, _tot, 32);
+        _miniDonutWrap.appendChild(_icon);
+        _miniDonutWrap.title = 'Click for breakdown';
+        _miniDonutWrap.style.cssText += 'cursor:pointer;';
+        _miniDonutWrap.onclick = e => { e.stopPropagation(); _showDonutPopover(_miniDonutWrap, _segs, _tot); };
       }
     }
   });
