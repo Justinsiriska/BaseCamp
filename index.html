@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.31 — Gear Organizer</title>
+<title>BaseCamp v8.33 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.31</div>
+      <div class="logo-sub">Gear Organizer · v8.33</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5738,6 +5738,18 @@ function _buildFollowersPanel(){
   return panel;
 }
 
+function renderPubUsers(){
+  // Re-render only the pub users panel without losing search input focus
+  const existingPanel = document.querySelector('.pub-panel');
+  if(!existingPanel) return;
+  const newPanel = _buildPublicUsersPanel();
+  // Preserve search query in new input
+  existingPanel.replaceWith(newPanel);
+  // Restore focus to search input
+  const inp = newPanel.querySelector('.pub-search');
+  if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+}
+
 function _buildPublicUsersPanel(){
   const panel = document.createElement('div');
   panel.className = 'pub-panel';
@@ -6207,7 +6219,7 @@ function renderCats(){
           <div class="g-dot" style="background:${cat.color}"></div>
           <span class="pack-item-name">${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
-          ${buyBtn}${extraTag}
+          ${buyBtn}${extraTag}${renderItemFieldPills(item)}
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}"
@@ -6392,7 +6404,7 @@ function renderCats(){
           <div class="g-dot" style="background:#8b8b8b"></div>
           <span class="pack-item-name">${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
-
+          ${renderItemFieldPills(item)}
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}" onclick="startWeightEdit(this,'uncategorised','${item.id}')">${dw(item.w)}</span>
@@ -7579,98 +7591,117 @@ function renderChart(){
 }
 
 function _renderCategoryChart(ctx){
-  const gearTot = total();
   const foodIncluded = document.getElementById('include-food-toggle')?.checked;
   const foodW = foodIncluded ? FOOD_ITEMS.filter(i=>i.s.includes(season)).reduce((s,i)=>s+(i.w_total||0),0) : 0;
-  const tot = gearTot + foodW;
   const packCats = CATS.filter(c=>catInPack(c));
-  const data = [...packCats.map(c => cw(c)), ...(foodW>0?[foodW]:[])];
-  const colors = [...packCats.map(c => c.color), ...(foodW>0?['#c8963a']:[])];
-  const names = [...packCats.map(c => c.name), ...(foodW>0?['Food Bag']:[])];
+
+  // Build flat item list ordered by category
+  const segments = [];
+  packCats.forEach(cat=>{
+    const items = sItems(cat).filter(i=>i.w>0);
+    items.forEach((item,j)=>{
+      // Shade each item within its category: slightly vary brightness
+      const shade = items.length===1 ? 0 : j/(items.length-1);
+      segments.push({
+        name: item.name,
+        w: item.w,
+        catName: cat.name,
+        catColor: cat.color,
+        color: _blendColor(cat.color, '#f5f0e8', shade * 0.4),
+        catId: cat.id,
+        isFirst: j===0,
+        isLast: j===items.length-1,
+      });
+    });
+  });
+  if(foodW>0) segments.push({name:'Food Bag',w:foodW,catName:'Food',catColor:'#c8963a',color:'#c8963a',isFirst:true,isLast:true});
+
+  const tot = segments.reduce((s,seg)=>s+seg.w,0) + (foodW>0?0:0);
+  const grandTot = total() + foodW;
+
+  // Border: thicker between categories, thin between items in same cat
+  const borders = segments.map((seg,i)=>{
+    const next = segments[i+1];
+    if(!next || next.catId !== seg.catId) return 'rgba(250,247,242,0.9)';
+    return _blendColor(seg.catColor,'#faf7f2',0.3);
+  });
+  const borderWidths = segments.map((seg,i)=>{
+    const next = segments[i+1];
+    return (!next || next.catId !== seg.catId) ? 3 : 1;
+  });
 
   wChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: names,
+      labels: segments.map(s=>s.name),
       datasets:[{
-        data,
-        backgroundColor: colors,
-        borderColor: 'rgba(250,247,242,0.9)',
-        borderWidth: 3,
-        hoverOffset: 14,
+        data: segments.map(s=>s.w),
+        backgroundColor: segments.map(s=>s.color),
+        borderColor: borders,
+        borderWidth: borderWidths,
+        hoverOffset: 10,
       }]
     },
     options:{
-      cutout: '60%',
+      cutout: '58%',
       responsive: true,
       maintainAspectRatio: false,
       animation:{ duration: 350, easing:'easeOutQuart' },
-      onClick(e, elements){
-        if(!elements.length) return;
-        const idx = elements[0].index;
-        activeChartCat = packCats[idx]?.id;
-        renderChart();
-        renderChartLabel();
-      },
       plugins:{
         legend:{ display: false },
-        tooltip:{ callbacks:{ label: ctx => ` ${dw(ctx.raw)} (${Math.round(ctx.raw/tot*100)}%)` }}
+        tooltip:{ callbacks:{ label: c => ` ${c.label}: ${dw(c.raw)} (${grandTot>0?Math.round(c.raw/grandTot*100):0}%)` }}
       }
     },
     plugins:[{
-      id:'catLabels',
+      id:'itemLabels',
       afterDraw(chart){
-        const {ctx:c, chartArea:{top,bottom,left,right}} = chart;
+        const {ctx:c2, chartArea:{top,bottom,left,right}} = chart;
         const cx=(left+right)/2, cy=(top+bottom)/2;
         const meta = chart.getDatasetMeta(0);
         meta.data.forEach((arc,i)=>{
-          const val = data[i];
-          if(!val || tot===0 || val/tot < 0.04) return;
-          const angle = (arc.startAngle + arc.endAngle) / 2;
-          const r = (arc.outerRadius + arc.innerRadius) / 2;
-          const x = cx + Math.cos(angle)*r;
-          const y = cy + Math.sin(angle)*r;
-          const short = names[i].split(' ')[0];
-          const pct = Math.round(val/tot*100);
-          c.save();
-          c.textAlign='center'; c.textBaseline='middle';
-          c.font='bold 8.5px Nunito,sans-serif';
-          c.fillStyle='rgba(255,255,255,0.96)';
-          c.fillText(short, x, y-5);
-          c.font='7.5px Space Mono,monospace';
-          c.fillStyle='rgba(255,255,255,0.82)';
-          c.fillText(pct+'%', x, y+6);
-          c.restore();
+          const seg = segments[i];
+          if(!seg.w || grandTot===0 || seg.w/grandTot < 0.05) return;
+          const angle=(arc.startAngle+arc.endAngle)/2;
+          const r=(arc.outerRadius+arc.innerRadius)/2;
+          const x=cx+Math.cos(angle)*r;
+          const y=cy+Math.sin(angle)*r;
+          let name=seg.name;
+          if(name.length>9) name=name.slice(0,8)+'…';
+          c2.save();
+          c2.textAlign='center'; c2.textBaseline='middle';
+          c2.font='bold 7.5px Nunito,sans-serif';
+          c2.fillStyle='rgba(255,255,255,0.95)';
+          c2.fillText(name,x,y-4);
+          c2.font='6.5px Space Mono,monospace';
+          c2.fillStyle='rgba(255,255,255,0.8)';
+          c2.fillText(dw(seg.w),x,y+5);
+          c2.restore();
         });
-        // Centre label — fit both lines snugly inside the inner circle
-        c.save();
-        c.textAlign='center'; c.textBaseline='middle';
-        const innerR = meta.data[0] ? meta.data[0].innerRadius : 60;
-        const maxW = innerR * 1.72; // usable width = 86% of diameter
-        const weightStr = dw(tot);
-        // Size down weight text until it fits
-        let fsize = Math.floor(innerR * 0.62);
-        c.font = `900 ${fsize}px Nunito,sans-serif`;
-        while(c.measureText(weightStr).width > maxW && fsize > 10){
-          fsize--;
-          c.font = `900 ${fsize}px Nunito,sans-serif`;
-        }
-        const lblSize = Math.max(9, Math.floor(fsize * 0.38));
-        // Total vertical height of both lines + gap
-        const gap = Math.floor(fsize * 0.18);
-        const totalH = fsize + gap + lblSize;
-        const topY = cy - totalH / 2 + fsize / 2;
-        const botY = topY + fsize / 2 + gap + lblSize / 2;
-        c.fillStyle='rgba(61,43,26,0.92)';
-        c.fillText(weightStr, cx, topY);
-        c.font=`700 ${lblSize}px Space Mono,monospace`;
-        c.fillStyle='rgba(139,115,85,0.85)';
-        c.fillText('total weight', cx, botY);
-        c.restore();
+        // Centre total label
+        c2.save();
+        c2.textAlign='center'; c2.textBaseline='middle';
+        const innerR = meta.data[0]?meta.data[0].innerRadius:60;
+        const maxW = innerR*1.72;
+        const weightStr = dw(grandTot);
+        let fsize=Math.floor(innerR*0.62);
+        c2.font=`900 ${fsize}px Nunito,sans-serif`;
+        while(c2.measureText(weightStr).width>maxW&&fsize>10){fsize--;c2.font=`900 ${fsize}px Nunito,sans-serif`;}
+        const lblSize=Math.max(9,Math.floor(fsize*0.38));
+        const gap=Math.floor(fsize*0.18);
+        const totalH=fsize+gap+lblSize;
+        const topY=cy-totalH/2+fsize/2;
+        const botY=topY+fsize/2+gap+lblSize/2;
+        c2.fillStyle='rgba(61,43,26,0.92)';
+        c2.fillText(weightStr,cx,topY);
+        c2.font=`700 ${lblSize}px Space Mono,monospace`;
+        c2.fillStyle='rgba(139,115,85,0.85)';
+        c2.fillText('total weight',cx,botY);
+        c2.restore();
       }
     }]
   });
 }
+
 
 function _renderDrillChart(ctx, catId){
   const cat = CATS.find(c => c.id===catId);
@@ -7806,10 +7837,19 @@ function renderThermal(){
 }
 function renderLegend(){
   const tot=total();
-  document.getElementById('leg-list').innerHTML=CATS.filter(c=>catInPack(c)).map(cat=>{
-    const w=cw(cat);const pct=tot>0?Math.round(w/tot*100):0;
-    return `<div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:${cat.color}"></div><span>${cat.name}</span></div><span class="leg-pct">${dw(w)} · ${pct}%</span></div>`;
-  }).join('');
+  const packCats=CATS.filter(c=>catInPack(c));
+  let html='';
+  packCats.forEach(cat=>{
+    const items=sItems(cat).filter(i=>i.w>0);
+    if(!items.length) return;
+    // Category header in legend
+    html+=`<div class="leg-row" style="margin-top:3px;"><div class="leg-l"><div class="leg-dot" style="background:${cat.color};width:8px;height:8px;"></div><span style="font-size:0.52rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;opacity:.7;">${cat.name}</span></div><span class="leg-pct" style="font-size:0.5rem;">${dw(cw(cat))}</span></div>`;
+    items.forEach(item=>{
+      const pct=tot>0?Math.round(item.w/tot*100):0;
+      html+=`<div class="leg-row" style="padding-left:10px;"><div class="leg-l"><div class="leg-dot" style="background:${cat.color};opacity:0.5;width:5px;height:5px;"></div><span style="font-size:0.6rem;">${escH(item.name)}</span></div><span class="leg-pct">${dw(item.w)} · ${pct}%</span></div>`;
+    });
+  });
+  document.getElementById('leg-list').innerHTML=html;
 }
 
 // ============================================================
@@ -14695,6 +14735,8 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   // Full render with whatever data we have (local + cloud if signed in)
   renderAll();
   renderCrewPage();
+  // Load public users even when not signed in so Discover Hikers works
+  if(!_sbUser) sbLoadPublicUsers().then(()=>renderPubUsers());
   renderTripsPage();
 
   // Land on My Kit by default
