@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.45 — Gear Organizer</title>
+<title>BaseCamp v8.46 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2478,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.45</div>
+      <div class="logo-sub">Gear Organizer · v8.46</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9628,10 +9628,16 @@ function renderFoodPills(){
     const w=FOOD_ITEMS.filter(i=>i.s.includes(p.id)).reduce((s,i)=>s+(i.w_total||0),0);
     const btn=document.createElement('button');
     btn.className='s-pill'+(p.id===foodSeason?' active':'');
-    btn.innerHTML=`${p.icon} <span class="s-pill-name">${escH(p.name)}</span><span class="s-pill-weight">${dw(w)}</span>`;
-    btn.onclick=()=>{foodSeason=p.id;season=p.id;renderFoodPage();scheduleSave();};
+    btn.innerHTML=`${p.icon} <span class="s-pill-name">${escH(p.name)}</span><span class="s-pill-weight">${dw(w)}</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('${p.id}',this.closest('.s-pill'))">✏️</button>${visiblePacks.length>1?`<button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('${p.id}')">✕</button>`:''}`;
+    btn.addEventListener('click',()=>{foodSeason=p.id;season=p.id;renderFoodPage();scheduleSave();});
     bar.appendChild(btn);
   });
+
+  const addBtn=document.createElement('button');
+  addBtn.className='add-pack-btn';
+  addBtn.textContent='+ New Pack';
+  addBtn.onclick=()=>addPackConfig();
+  bar.appendChild(addBtn);
 
   if(overflow.length){
     const hasActive=overflow.some(p=>p.id===foodSeason);
