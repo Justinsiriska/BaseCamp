@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.42 — Gear Organizer</title>
+<title>BaseCamp v8.43 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2478,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.42</div>
+      <div class="logo-sub">Gear Organizer · v8.43</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4337,6 +4337,47 @@ const PACKS=[
 function packWeight(packId){
   return CATS.reduce((sum,cat)=>sum+cat.items.filter(i=>i.s.includes(packId)).reduce((s,i)=>s+(parseFloat(i.w)||0),0),0);
 }
+function _applyPackItemNamePriority(){
+  document.querySelectorAll('.pack-item-row').forEach(row=>{
+    const nameEl = row.querySelector('.pack-item-name');
+    const pillsEl = row.querySelector('.pack-item-name-pills');
+    if(!nameEl) return;
+
+    // Measure name's natural (unconstrained) width
+    nameEl.style.flex = '0 0 auto';
+    nameEl.style.maxWidth = 'none';
+    nameEl.style.overflow = 'visible';
+    nameEl.style.whiteSpace = 'nowrap';
+    const naturalW = nameEl.scrollWidth;
+    nameEl.style.overflow = '';
+    nameEl.style.whiteSpace = '';
+    nameEl.style.flex = '';
+    nameEl.style.maxWidth = '';
+
+    const rowW = row.offsetWidth;
+    const halfRow = rowW * 0.5;
+
+    // Ensure first word always visible — measure first word
+    const firstWord = nameEl.textContent.trim().split(/\s+/)[0] || '';
+    const tmp = document.createElement('span');
+    tmp.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:'+getComputedStyle(nameEl).font;
+    tmp.textContent = firstWord;
+    document.body.appendChild(tmp);
+    const firstWordW = tmp.offsetWidth + 16; // +16 for padding
+    document.body.removeChild(tmp);
+
+    nameEl.style.minWidth = Math.min(firstWordW, halfRow * 0.95) + 'px';
+
+    if(naturalW > halfRow){
+      row.classList.add('name-long');
+      row.classList.remove('name-short');
+    } else {
+      row.classList.add('name-short');
+      row.classList.remove('name-long');
+    }
+  });
+}
+
 function renderPackPills(){
   const row=document.getElementById('season-pills-row');
   if(!row) return;
@@ -6079,6 +6120,7 @@ function renderAll(){
   renderGearWall();
   renderChartLabel();
   renderTripsPage();
+  requestAnimationFrame(_applyPackItemNamePriority);
   renderCrewPage();
   document.getElementById('total-disp').textContent=dw(total());
   // Save on any renderAll that happens after state is loaded — catches drag/drop,
@@ -6110,7 +6152,7 @@ function renderCats(){
           <div class="g-dot" style="background:${cat.color}"></div>
           <span class="pack-item-name">${escH(item.name)}${item.productId?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
-          ${buyBtn}${extraTag}${renderItemFieldPills(item)}
+          ${buyBtn}${extraTag}<span class="pack-item-name-pills">${renderItemFieldPills(item)}</span>
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}"
