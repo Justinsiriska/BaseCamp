@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.28 — Gear Organizer</title>
+<title>BaseCamp v8.29 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.28</div>
+      <div class="logo-sub">Gear Organizer · v8.29</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -17044,9 +17044,16 @@ function authUpdateUI(user){
     btn.style.background = 'rgba(255,255,255,0.08)';
     btn.style.borderColor = 'rgba(184,201,163,0.35)';
     btn.style.color = 'var(--lichen)';
+    btn.style.cssText = '';
+    // Clear profile display so stale photo/name don't show when logged out
+    MY_PROFILE.name = '';
+    MY_PROFILE.bio = '';
+    MY_PROFILE.avatarDataUrl = '';
+    MY_PROFILE._userUploadedPhoto = null;
     TRIPS.splice(0, TRIPS.length, ...TRIPS.filter(t=>!t._shared));
     if(_realtimeChannel){ _realtimeChannel.unsubscribe(); _realtimeChannel=null; }
     renderTripsPage();
+    renderCrewPage();
   }
 }
 
