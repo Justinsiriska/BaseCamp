@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.19 — Gear Organizer</title>
+<title>BaseCamp v8.20 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.19</div>
+      <div class="logo-sub">Gear Organizer · v8.20</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -15846,14 +15846,7 @@ function buildNewItemDrawer(item, cat, srcCatId){
         value="${escH(item.extra||'')}"
         data-field-unit="${escH(item.extra_unit||'°C')}"
         placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off"/>
-      ${cat.id==='sleep' ? (() => {
-        const d={key:'temp',unitOptions:['°C','°F'],unit:'°C'};
-        const active=item.extra_unit||'°C';
-        return '<div class="weight-unit-sel" id="fus-extra-inp-'+item.id+'" data-field-key="temp">'+
-          ['°C','°F'].map(u=>'<button type="button" onclick="fieldUnitSwitch('extra-inp-'+item.id+'','temp',this)" class="'+(u===active?'active':'')+'">'+(u==='°C'?'°C':'°F')+'</button>').join('')+
-          '</div>';
-      })() : ''}
-    </div>` : ''}
+        ${cat.id==='sleep' ? _fieldUnitSel('extra-inp-'+item.id, {key:'temp',unitOptions:['°C','°F'],unit:'°C'}, item.extra_unit||'°C') : ''}    </div>` : ''}
     ${buildDrawerFieldsSection(item)}
     <hr class="gw-drawer-divider"/>
     ${(!item.productId || !(item._localVerified || _isProductVerified(item.productId))) ? `
