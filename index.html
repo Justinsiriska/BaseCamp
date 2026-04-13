@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.12 — Gear Organizer</title>
+<title>BaseCamp v8.14 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -262,6 +262,22 @@ html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-co
 /* ── Verified product badge ── */
 .gw-verified-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.45rem;font-weight:700;margin-left:4px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
 .gw-item-verified{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.4rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;line-height:1;}
+.item-field-pill{
+  display:inline-flex;align-items:center;gap:3px;
+  font-family:'Space Mono',monospace;font-size:0.48rem;
+  background:rgba(74,103,65,0.1);color:var(--forest);
+  border:1px solid rgba(74,103,65,0.3);border-radius:20px;
+  padding:2px 7px;white-space:nowrap;flex-shrink:0;
+}
+.item-field-pill-icon{font-size:0.55rem;}
+.item-field-pill-val{font-weight:700;color:var(--bark);}
+.item-field-pill-unit{opacity:0.7;font-size:0.42rem;}
+html.dark .item-field-pill{background:rgba(30,55,22,0.6);color:#8adf7a;border-color:rgba(74,143,68,0.3);}
+html.dark .item-field-pill-val{color:#c8e8b0;}
+.gw-item-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;}
+html.dark .item-field-pill{background:rgba(30,50,22,0.6);color:#8ad878;border-color:rgba(74,143,68,0.3);}
+.item-field-pill-val{font-weight:700;}
+.item-field-pill-unit{opacity:0.7;font-size:0.35rem;}
 .pack-item-verified{display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.38rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
 
 /* ── Gear wall header Add Item button ── */
@@ -2456,7 +2472,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.12</div>
+      <div class="logo-sub">Gear Organizer · v8.14</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2995,11 +3011,13 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     </div>
     <!-- COL 2 — My Food Bag -->
     <div class="p1-left" id="food-bag-col">
-      <div class="my-packs-title">
-        <div>Food Bag<span class="my-packs-title-sub">by pack configuration</span></div>
+      <div class="pack-header">
+        <div class="pack-header-top">
+          <span class="pack-header-title">My Food Bags</span>
+        </div>
       </div>
       <div class="season-bar" id="food-config-bar">
-        <div class="season-bar-top"><span class="season-lbl">Pack Configurations</span></div>
+
         <div class="season-pills" id="food-season-pills"></div>
       </div>
       <div id="food-cats"></div>
@@ -8238,10 +8256,13 @@ function renderGearWall(){
         chip.title=inSeason?`In your ${season} pack`:`Not in ${season} · click ⊕ to add`;
         chip.innerHTML=`
           <div class="gw-drag-handle" title="Drag to add/remove from pack">⠿</div>
-          <div class="gw-item-left">
+          <div class="gw-item-left" style="${renderItemFieldPills(item)?'flex-direction:column;align-items:flex-start;gap:1px':''}">
+            <div style="display:flex;align-items:center;gap:4px;">
             <div class="gw-item-dot" style="background:${cat.color}"></div>
             <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId && (item._localVerified || _isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
-            ${extraTag}
+            ${extraTag}</div>
+            </div>
+            ${renderItemFieldPills(item)?`<div class="gw-item-pills">${renderItemFieldPills(item)}</div>`:''}
           </div>
           <div class="gw-item-right">
             <span class="gw-item-weight" ${item.wOverride!=null?'title="Custom weight — differs from product spec" style="text-decoration:underline dotted;cursor:help;"':''}>${dw(item.w)}${item.wOverride!=null?'<span style="font-size:0.55em;opacity:0.6;margin-left:2px;">✏</span>':''}</span>
@@ -15076,8 +15097,12 @@ function renderItemFieldPills(item){
   const defs=getFieldDefs();
   return Object.entries(item.fields).map(([key,val])=>{
     if(val===''||val===null||val===undefined)return'';
-    const def=defs.find(d=>d.key===key)||{icon:'🏷️',label:key};
-    return`<span class="item-field-pill" title="${escH(def.label)}"><span class="pill-icon">${def.icon}</span>${escH(String(val))}</span>`;
+    const def=defs.find(d=>d.key===key)||{icon:'🏷️',label:key,unit:''};
+    // Get the stored unit for this field if it exists
+    const unit = item.fields[key+'_unit'] || def.unit || '';
+    const displayVal = escH(String(val));
+    const displayUnit = escH(String(unit));
+    return`<span class="item-field-pill" title="${escH(def.label)}: ${displayVal}${displayUnit}"><span class="item-field-pill-icon">${def.icon}</span><span class="item-field-pill-val">${displayVal}</span>${displayUnit?`<span class="item-field-pill-unit">${displayUnit}</span>`:''}</span>`;
   }).join('');
 }
 function buildDrawerFieldsSection(item){
