@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.1 — Gear Organizer</title>
+<title>BaseCamp v8.11 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -686,12 +686,12 @@ html.dark .gw-item.in-season .gw-toggle-btn{color:#e07858;}
 .p1-left > *{position:relative;z-index:1;}
 
 /* My Packs title */
-.pack-header{margin-bottom:1rem;}
+.pack-header{margin-bottom:0.4rem;}
 .pack-header-top{
   display:flex;align-items:baseline;gap:0.55rem;
-  padding:0.65rem 0.25rem 0.45rem;
+  padding:0.2rem 0.25rem 0.3rem;
   border-bottom:2px solid var(--lichen);
-  margin-bottom:0.5rem;
+  margin-bottom:0.35rem;
 }
 .pack-header-title{
   font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:700;
@@ -713,10 +713,10 @@ html.dark .pack-header-title{color:#a8d89a;}
 .season-lbl{font-family:'Space Mono',monospace;font-size:0.5rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);flex-shrink:0;}
 .season-pills{display:flex;gap:0.25rem;flex-wrap:wrap;align-items:center;}
 .s-pill{
-  display:flex;align-items:center;gap:0.18rem;
+  display:flex;align-items:center;gap:0.12rem;
   background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;
-  padding:0.18rem 0.45rem;
-  font-family:'Nunito',sans-serif;font-weight:700;font-size:0.6rem;
+  padding:0.1rem 0.32rem;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:0.48rem;
   cursor:pointer;transition:all 0.18s;color:var(--stone);
   position:relative;letter-spacing:0.01em;white-space:nowrap;
 }
@@ -744,8 +744,8 @@ html.dark .pack-header-title{color:#a8d89a;}
 
 /* Add pack button — matches pill shape but dashed */
 .add-pack-btn{
-  background:none;border:2px dashed var(--lichen);border-radius:9px;
-  padding:0.26rem 0.55rem;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.62rem;
+  background:none;border:1.5px dashed var(--lichen);border-radius:9px;
+  padding:0.1rem 0.38rem;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.48rem;
   cursor:pointer;color:var(--stone);transition:all 0.2s;letter-spacing:0.01em;
 }
 .add-pack-btn:hover{border-color:var(--forest);color:var(--forest);background:rgba(45,74,45,0.05);}
@@ -2456,7 +2456,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.1</div>
+      <div class="logo-sub">Gear Organizer · v8.11</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2505,10 +2505,10 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="pack-header">
         <div class="pack-header-top">
           <span class="pack-header-title">My Packs</span>
-          <span class="pack-header-sub">Active Kit by Configuration</span>
+          
         </div>
         <div class="season-bar" id="pack-config-bar">
-          <div class="season-pills" id="season-pills-row"><button class="s-pill" data-s="winter">❄️ <span class="s-pill-name">Winter Alpine</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('winter',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('winter')">✕</button></button><button class="s-pill" data-s="shoulder">🍂 <span class="s-pill-name">Shoulder Season</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('shoulder',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('shoulder')">✕</button></button><button class="s-pill" data-s="summer">☀️ <span class="s-pill-name">Summer Fast</span><span class="s-pill-weight">2200g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('summer',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('summer')">✕</button></button><button class="s-pill" data-s="trip_1775578819306">🏕️ <span class="s-pill-name">test 62</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775578819306',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775578819306')">✕</button></button><button class="s-pill active" data-s="trip_1775604059558">🏕️ <span class="s-pill-name">Justin and Johnny white mountains</span><span class="s-pill-weight">2000g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775604059558',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775604059558')">✕</button></button><button class="add-pack-btn">+ New Config</button></div>
+          <div class="season-pills" id="season-pills-row"><button class="s-pill" data-s="winter">❄️ <span class="s-pill-name">Winter Alpine</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('winter',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('winter')">✕</button></button><button class="s-pill" data-s="shoulder">🍂 <span class="s-pill-name">Shoulder Season</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('shoulder',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('shoulder')">✕</button></button><button class="s-pill" data-s="summer">☀️ <span class="s-pill-name">Summer Fast</span><span class="s-pill-weight">2200g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('summer',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('summer')">✕</button></button><button class="s-pill" data-s="trip_1775578819306">🏕️ <span class="s-pill-name">test 62</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775578819306',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775578819306')">✕</button></button><button class="s-pill active" data-s="trip_1775604059558">🏕️ <span class="s-pill-name">Justin and Johnny white mountains</span><span class="s-pill-weight">2000g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775604059558',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775604059558')">✕</button></button><button class="add-pack-btn">+ New Pack</button></div>
           </div><!-- end season-pills/season-bar -->
       </div><!-- end pack-header -->
       <div id="cats"><div class="cat-card cc-pack " data-cid="pack">
