@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.46 — Gear Organizer</title>
+<title>BaseCamp v8.47 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2478,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.46</div>
+      <div class="logo-sub">Gear Organizer · v8.47</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4405,11 +4405,59 @@ function renderPackPills(){
 }
 
 function addPackConfig(){
-  const name=prompt('Pack configuration name:','New Pack');
-  if(!name||!name.trim()) return;
-  const id='pack_'+Date.now();
-  PACKS.push({id, name:name.trim(), icon:'🎒'});
-  setSeason(id, null);
+  // Remove any existing modal
+  document.getElementById('new-pack-modal-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'new-pack-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;';
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+
+  const EMOJIS = ['🎒','🏕️','☀️','❄️','🍂','🌿','🏔️','⛺','🌄','🥾','🧭','🪨','🌲','💧','🔥','⚡','🌙','🏞️','🗻','🌊','🦅','🐻','🦌','🌸','🍁'];
+  let selectedEmoji = '🎒';
+
+  overlay.innerHTML = `
+    <div style="background:var(--cream);border-radius:18px;padding:1.5rem 1.5rem 1.2rem;max-width:340px;width:calc(100vw - 2rem);box-shadow:0 16px 48px rgba(0,0,0,0.2);border:1.5px solid rgba(184,201,163,0.4);">
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--forest);margin-bottom:1rem;">New Pack</div>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.8rem;align-items:center;">
+        <button id="npm-emoji-btn" style="font-size:1.4rem;background:rgba(184,201,163,0.15);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;width:46px;height:46px;cursor:pointer;flex-shrink:0;">🎒</button>
+        <input id="npm-name" type="text" value="New Pack" placeholder="Pack name…"
+          style="flex:1;font-family:'Nunito',sans-serif;font-size:0.85rem;padding:0.5rem 0.7rem;border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;background:var(--paper);color:var(--bark);outline:none;"
+          autocomplete="off"/>
+      </div>
+      <div id="npm-emoji-grid" style="display:none;flex-wrap:wrap;gap:4px;margin-bottom:0.8rem;background:var(--paper);border:1.5px solid rgba(184,201,163,0.3);border-radius:10px;padding:0.5rem;">
+        ${EMOJIS.map(e=>`<button onclick="document.getElementById('npm-emoji-btn').textContent='${e}';this.closest('#npm-emoji-grid').style.display='none';" style="font-size:1.2rem;width:36px;height:36px;background:transparent;border:none;cursor:pointer;border-radius:6px;" onmouseover="this.style.background='rgba(184,201,163,0.2)'" onmouseout="this.style.background='transparent'">${e}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+        <button onclick="document.getElementById('new-pack-modal-overlay').remove()" style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;padding:0.4rem 1rem;border-radius:20px;border:1.5px solid rgba(184,201,163,0.5);background:transparent;cursor:pointer;color:var(--stone);">Cancel</button>
+        <button id="npm-confirm" style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:800;padding:0.4rem 1.2rem;border-radius:20px;border:none;background:var(--forest);color:#fff;cursor:pointer;">Create Pack</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  // Wire up emoji picker toggle
+  document.getElementById('npm-emoji-btn').onclick = ()=>{
+    const grid = document.getElementById('npm-emoji-grid');
+    grid.style.display = grid.style.display === 'none' ? 'flex' : 'none';
+  };
+
+  // Wire up confirm
+  document.getElementById('npm-confirm').onclick = ()=>{
+    const name = document.getElementById('npm-name').value.trim();
+    const icon = document.getElementById('npm-emoji-btn').textContent.trim();
+    if(!name) return;
+    const id = 'pack_'+Date.now();
+    PACKS.push({id, name, icon});
+    setSeason(id, null);
+    overlay.remove();
+  };
+
+  // Enter key submits
+  document.getElementById('npm-name').addEventListener('keydown', e=>{
+    if(e.key==='Enter') document.getElementById('npm-confirm').click();
+  });
+
+  setTimeout(()=>{ document.getElementById('npm-name')?.select(); }, 50);
 }
 function deletePackConfig(packId){
   if(PACKS.length<=1){ toast('⚠️ Need at least one pack config'); return; }
