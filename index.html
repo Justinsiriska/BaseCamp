@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v7.7 — Gear Organizer</title>
+<title>BaseCamp v7.9 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1183,7 +1183,7 @@ html.dark .food-cat-card.food-drop-target{border-color:var(--water)!important;}
 html.dark .food-unified-wrap{background:#0d180d;border-color:var(--dm-border);}
 
 /* Food category headers — thin, tinted */
-.food-cat-hd-new{display:flex;align-items:center;gap:6px;padding:5px 10px;border-left:3px solid transparent;cursor:default;}
+.food-cat-hd-new{display:flex;align-items:center;gap:6px;padding:5px 10px;border-left:3px solid transparent;cursor:default;border-radius:6px;margin:3px 4px 0;}
 .food-cat-icon-new{font-size:13px;flex-shrink:0;}
 .food-cat-name-new{font-family:'Space Mono',monospace;font-size:0.5rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);cursor:pointer;flex:1;}
 .food-cat-name-new:hover{color:var(--forest);}
@@ -2443,7 +2443,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v7.7</div>
+      <div class="logo-sub">Gear Organizer · v7.9</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9732,6 +9732,32 @@ function renderFoodBag(){
       <button class="food-add-chip" onclick="event.stopPropagation();foodQuickAddOpen('${cat.id}')">＋ Add</button>
       <button class="food-caret-btn" onclick="event.stopPropagation();foodCatCollapsed['${cat.id}']=!foodCatCollapsed['${cat.id}'];renderFoodBag()" 
         style="transform:rotate(${collapsed?'-90':'0'}deg)">${collapsed?'▸':'▾'}</button>`;
+    // Header is always a drop target (especially important when collapsed)
+    hd.addEventListener('dragover', e=>{ e.preventDefault(); hd.style.outline=`2px solid ${cat.color||'var(--moss)'}`; hd.style.borderRadius='6px'; });
+    hd.addEventListener('dragleave', ()=>{ hd.style.outline=''; });
+    hd.addEventListener('drop', e=>{
+      e.preventDefault(); hd.style.outline='';
+      // Auto-expand
+      if(foodCatCollapsed[cat.id]){ foodCatCollapsed[cat.id]=false; }
+      const fridgeId = e.dataTransfer.getData('fridgeId');
+      const moveIid = e.dataTransfer.getData('foodItemId');
+      const fromCat = e.dataTransfer.getData('foodFromCat');
+      if(fridgeId){
+        const existing = FOOD_ITEMS.find(i=>i.fridgeId===fridgeId && i.catId===cat.id && i.s.includes(foodSeason));
+        if(existing){
+          existing.qty=(existing.qty||1)+1;
+          existing.w_total=Math.round(existing.w_total/(existing.qty-1)*existing.qty);
+          existing.kcal_total=Math.round(existing.kcal_total/(existing.qty-1)*existing.qty);
+          renderFoodBag(); renderFoodBreakdown(); scheduleSave();
+          toast(`✅ ${existing.name} ×${existing.qty}`);
+        } else {
+          _foodDragTargetCat=cat.id; foodOpenServingModal(fridgeId);
+        }
+      } else if(moveIid && fromCat){
+        const item=FOOD_ITEMS.find(i=>i.id===moveIid);
+        if(item && item.catId!==cat.id){ item.catId=cat.id; renderFoodBag(); renderFoodBreakdown(); scheduleSave(); }
+      }
+    });
     wrap.appendChild(hd);
 
     if(!collapsed){
