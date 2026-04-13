@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.27 — Gear Organizer</title>
+<title>BaseCamp v8.28 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.27</div>
+      <div class="logo-sub">Gear Organizer · v8.28</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -16712,11 +16712,6 @@ async function sbInit(){
   }
 
   const stored = getStoredSession();
-  if(!stored?.user){
-    // No session — clear any stale localStorage so logged-out users see a clean state
-    localStorage.removeItem(SAVE_KEY);
-    _stateLoaded = false;
-  }
   if(stored?.user){
     _sbUser = stored.user;
     authUpdateUI(stored.user);
@@ -16924,6 +16919,7 @@ async function sbPushData(){
   let payload;
   if(CATS.length > 0){
     payload = getPayload();
+    payload.userId = _sbUser.id; // tag so cross-account stale detection works
   } else {
     try{
       const raw = localStorage.getItem(SAVE_KEY);
@@ -16962,8 +16958,20 @@ async function sbPullData(){
 
   const hasLocal = !!localStorage.getItem(SAVE_KEY);
   console.log(`[BaseCamp] sbPullData: hasLocal=${hasLocal}, _isDirty=${_isDirty}, CATS.length=${CATS.length}`);
-
+  // If stored data belongs to a different user, clear it before restoring cloud data
   if(hasLocal){
+    try {
+      const stored = JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
+      if(stored.userId && stored.userId !== _sbUser.id){
+        console.log('[BaseCamp] Clearing stale data from different user');
+        localStorage.removeItem(SAVE_KEY);
+        _stateLoaded = false;
+      }
+    } catch(e){}
+  }
+  const hasLocal2 = !!localStorage.getItem(SAVE_KEY);
+
+  if(hasLocal2){
     // Local gear data exists — only push to cloud if user made changes since last push
     // Don't blindly push on every startup as it can overwrite cloud with stale in-memory state
     if(_isDirty) await sbPushData();
