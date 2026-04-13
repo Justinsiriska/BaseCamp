@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.33 — Gear Organizer</title>
+<title>BaseCamp v8.36 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -140,7 +140,7 @@ header{background:var(--forest);padding:0 1.5rem;position:sticky;top:0;z-index:2
 .page.active{display:block;}
 
 /* PAGE 1 LAYOUT */
-.p1{width:100%;margin:0 auto;padding:1.5rem 1.5rem;display:grid;grid-template-columns:clamp(0px,240px,22%) minmax(0,1fr) minmax(320px,1.35fr);gap:0;align-items:start;}
+.p1{width:100%;margin:0 auto;padding:1.5rem 1.5rem;display:grid;grid-template-columns:clamp(0px,270px,22%) minmax(0,1fr) minmax(320px,1.08fr);gap:0;align-items:start;}
 
 /* Combined wrapper — breakdown + packs share one background card */
 .p1-combined{
@@ -173,7 +173,7 @@ html.dark .p1-breakdown{
   border-radius:22px;
   background:rgba(255,255,255,0.32);
   box-shadow:0 4px 28px rgba(45,74,45,0.09);
-  border:2px solid rgba(184,201,163,0.42);
+  border:2px solid rgba(184,201,163,0.42);border-left:none;border-top-left-radius:0;border-bottom-left-radius:0;
   padding:1.25rem 1.1rem 1.4rem;
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
@@ -239,6 +239,10 @@ html.dark .admin-card-name{color:#c8e8b0;}
 html.dark .admin-page-title{color:#a8d890;}
 .admin-page-sub{font-family:"Space Mono",monospace;font-size:0.48rem;color:var(--stone);margin-bottom:1.5rem;}
 .gw-drawer-divider{border:none;border-top:1.5px dashed var(--lichen);margin:0.5rem 0;}
+.gw-confirm-row{display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;align-items:center;}
+.gw-match-product-btn{font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:700;background:transparent;border:1.5px solid rgba(184,201,163,0.5);border-radius:20px;padding:0.22rem 0.65rem;cursor:pointer;color:var(--stone);white-space:nowrap;transition:all 0.15s;margin-left:auto;}
+.gw-match-product-btn:hover{background:rgba(184,201,163,0.12);border-color:var(--moss);color:var(--forest);}
+html.dark .gw-match-product-btn{border-color:rgba(55,85,40,0.5);color:#7aaf6a;}
 /* ── Unified name/search input ── */
 .gw-unified-name-wrap{position:relative;margin-bottom:0.4rem;}
 .gw-unified-name-inp{width:100%;font-size:0.82rem;}
@@ -258,7 +262,7 @@ html.dark .admin-page-title{color:#a8d890;}
 html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-color:var(--dm-border);}
 .gw-find-exact-btn{border-top:1px dashed rgba(184,201,163,0.3)!important;margin-top:0.1rem;}
 .gw-find-exact-btn:hover{background:rgba(74,103,65,0.08)!important;}
-.gw-drawer-link-row{display:flex;gap:0.4rem;align-items:center;margin-bottom:0.2rem;}
+.gw-drawer-link-row{display:none!important;}
 
 /* ── Verified product badge ── */
 .gw-verified-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.45rem;font-weight:700;margin-left:4px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
@@ -301,7 +305,8 @@ html.dark .gw-add-item-btn{background:#3a6830;color:#d4e8c8;}
   border:1px dashed rgba(74,103,65,0.35);border-radius:8px;
   padding:5px 10px;cursor:pointer;margin-bottom:0.5rem;
   transition:all 0.15s;
-}
+display:none!important;}
+.gw-find-product-btn{display:none!important;}
 .gw-find-product-btn:hover{background:rgba(74,103,65,0.08);border-color:var(--moss);}
 html.dark .gw-find-product-btn{color:#7abf6a;border-color:rgba(74,143,68,0.3);}
 html.dark .gw-find-product-btn:hover{background:rgba(30,50,22,0.6);}
@@ -689,7 +694,7 @@ html.dark .gw-item.in-season .gw-toggle-btn{color:#e07858;}
 .gw-empty{font-size:0.7rem;color:var(--stone);text-align:center;padding:0.5rem;font-style:italic;}
 
 /* PAGE 1 LAYOUT — left column is primary */
-.p1{width:100%;margin:0 auto;padding:1.5rem 1.5rem;display:grid;grid-template-columns:clamp(0px,240px,22%) minmax(0,1fr) minmax(320px,1.35fr);gap:0;align-items:start;}
+.p1{width:100%;margin:0 auto;padding:1.5rem 1.5rem;display:grid;grid-template-columns:clamp(0px,270px,22%) minmax(0,1fr) minmax(320px,1.08fr);gap:0;align-items:start;}
 .p1-left{
   position:relative;
 }
@@ -2473,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.33</div>
+      <div class="logo-sub">Gear Organizer · v8.36</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2528,122 +2533,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <div class="season-pills" id="season-pills-row"><button class="s-pill" data-s="winter">❄️ <span class="s-pill-name">Winter Alpine</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('winter',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('winter')">✕</button></button><button class="s-pill" data-s="shoulder">🍂 <span class="s-pill-name">Shoulder Season</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('shoulder',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('shoulder')">✕</button></button><button class="s-pill" data-s="summer">☀️ <span class="s-pill-name">Summer Fast</span><span class="s-pill-weight">2200g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('summer',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('summer')">✕</button></button><button class="s-pill" data-s="trip_1775578819306">🏕️ <span class="s-pill-name">test 62</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775578819306',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775578819306')">✕</button></button><button class="s-pill active" data-s="trip_1775604059558">🏕️ <span class="s-pill-name">Justin and Johnny white mountains</span><span class="s-pill-weight">2000g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775604059558',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775604059558')">✕</button></button><button class="add-pack-btn">+ New Pack</button></div>
           </div><!-- end season-pills/season-bar -->
       </div><!-- end pack-header -->
-      <div id="cats"><div class="cat-card cc-pack " data-cid="pack">
-        <div class="pack-cat-banner">
-          <div class="pack-cat-banner-left">
-            <span class="pack-cat-banner-icon">🎒</span>
-            <span class="pack-cat-banner-name" title="Click to edit" style="cursor:pointer" onclick="packItem &amp;&amp; startWeightEdit(document.querySelector('[data-iid=\" qprhk3n\"]'),="" 'pack',="" 'qprhk3n')"="">granite gear 60L</span>
-            <span class="pack-cat-banner-meta">60L</span>
-          </div>
-          <div class="pack-cat-banner-right">
-            <span class="pack-cat-banner-w" data-cid="pack">1200g</span>
-          </div>
-        </div>
-        </div><div class="cat-card cc-sleep collapsed" data-cid="sleep">
-        <div class="cat-drag-handle" data-cid="sleep">· · · · ·</div>
-        <div class="cat-head-wrap">
-          <div class="cat-head" onclick="toggleCat('sleep')">
-            <div class="cat-head-l">
-              
-              <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('sleep',this)">Sleep System</span>
-              <span class="cat-meta">(0)</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.3rem">
-              <button onclick="event.stopPropagation();addItemFromPack('sleep')" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>
-              <div class="cat-pill pill-sleep" data-cid="sleep">0g</div>
-              <button class="caret">▼</button>
-            </div>
-          </div>
-          <div class="cat-body">
-            <p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or click ＋ Add</p>
-          </div>
-        </div></div><div class="cat-card cc-cooking collapsed" data-cid="cooking">
-        <div class="cat-drag-handle" data-cid="cooking">· · · · ·</div>
-        <div class="cat-head-wrap">
-          <div class="cat-head" onclick="toggleCat('cooking')">
-            <div class="cat-head-l">
-              
-              <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('cooking',this)">Cooking &amp; Water</span>
-              <span class="cat-meta">(1)</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.3rem">
-              <button onclick="event.stopPropagation();addItemFromPack('cooking')" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>
-              <div class="cat-pill pill-cooking" data-cid="cooking">400g</div>
-              <button class="caret">▼</button>
-            </div>
-          </div>
-          <div class="cat-body">
-            <div class="pack-items-list"><div class="pack-item-row" data-pack-cid="cooking" data-pack-iid="arfgb9x">
-        <div class="pack-item-left">
-          <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
-          <div class="g-dot" style="background:#c85a2a"></div>
-          <input class="gi pack-item-name" type="text" value="MSR international" onchange="upd('cooking','arfgb9x','name',this.value)">
-          
-        </div>
-        <div class="pack-item-right">
-          <span class="item-weight-display" data-iid="arfgb9x" onclick="startWeightEdit(this,'cooking','arfgb9x')">400g</span>
-          <button class="del-btn" onclick="delItem('cooking','arfgb9x')">✕</button>
-        </div>
-      </div></div>
-          </div>
-        </div></div><div class="cat-card cc-clothes collapsed" data-cid="clothes">
-        <div class="cat-drag-handle" data-cid="clothes">· · · · ·</div>
-        <div class="cat-head-wrap">
-          <div class="cat-head" onclick="toggleCat('clothes')">
-            <div class="cat-head-l">
-              
-              <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('clothes',this)">Clothes</span>
-              <span class="cat-meta">(1)</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.3rem">
-              <button onclick="event.stopPropagation();addItemFromPack('clothes')" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>
-              <div class="cat-pill pill-clothes" data-cid="clothes">100g</div>
-              <button class="caret">▼</button>
-            </div>
-          </div>
-          <div class="cat-body">
-            <div class="pack-items-list"><div class="pack-item-row" data-pack-cid="clothes" data-pack-iid="2y7qk47">
-        <div class="pack-item-left">
-          <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
-          <div class="g-dot" style="background:#7ba7bc"></div>
-          <input class="gi pack-item-name" type="text" value="test" onchange="upd('clothes','2y7qk47','name',this.value)">
-          
-        </div>
-        <div class="pack-item-right">
-          <span class="item-weight-display" data-iid="2y7qk47" onclick="startWeightEdit(this,'clothes','2y7qk47')">100g</span>
-          <button class="del-btn" onclick="delItem('clothes','2y7qk47')">✕</button>
-        </div>
-      </div></div>
-          </div>
-        </div></div><div class="cat-card cc-general collapsed" data-cid="cat_1775651725603">
-        <div class="cat-drag-handle" data-cid="cat_1775651725603">· · · · ·</div>
-        <div class="cat-head-wrap">
-          <div class="cat-head" onclick="toggleCat('cat_1775651725603')">
-            <div class="cat-head-l">
-              <span class="gw-cat-icon">🔦</span>
-              <span class="cat-name cat-name-clickable" title="Click to rename or delete" onclick="event.stopPropagation();startCatInlineEdit('cat_1775651725603',this)">Electronics</span>
-              <span class="cat-meta">(0)</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.3rem">
-              <button onclick="event.stopPropagation();addItemFromPack('cat_1775651725603')" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;transition:opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button>
-              <div class="cat-pill pill-general" data-cid="cat_1775651725603">0g</div>
-              <button class="caret">▼</button>
-            </div>
-          </div>
-          <div class="cat-body">
-            <p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or click ＋ Add</p>
-          </div>
-        </div></div><div class="cat-card cc-uncategorised" data-cid="uncategorised" style="margin-bottom: 0.5rem; border: 1.5px dashed rgba(184, 201, 163, 0.4); background: rgba(184, 201, 163, 0.04);"><div style="font-family: &quot;Space Mono&quot;, monospace; font-size: 0.42rem; text-transform: uppercase; letter-spacing: 1px; color: var(--stone); opacity: 0.55; padding: 0.4rem 0.6rem 0.2rem; display: flex; align-items: center; justify-content: space-between;"><span>Uncategorised</span><button onclick="addItemFromPack('uncategorised')" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:Nunito,sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">＋ Add</button></div><div class="pack-items-list"><div class="pack-item-row" data-pack-cid="uncategorised" data-pack-iid="l0r80ey">
-        <div class="pack-item-left">
-          <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
-          <div class="g-dot" style="background:#8b8b8b"></div>
-          <input class="gi pack-item-name" type="text" value="sleeping bag" onchange="upd('uncategorised','l0r80ey','name',this.value)">
-        </div>
-        <div class="pack-item-right">
-          <span class="item-weight-display" data-iid="l0r80ey" onclick="startWeightEdit(this,'uncategorised','l0r80ey')">300g</span>
-          <button class="del-btn" onclick="delItem('uncategorised','l0r80ey')">✕</button>
-        </div>
-      </div></div></div></div>
+      <div id="cats">
       <div id="hidden-cats-bar"></div>
       <button class="add-cat-btn" onclick="catEditOpenNew()">＋ New Category</button>
     </div>
@@ -8570,9 +8460,7 @@ function openAddItemModal(catId){
           placeholder="Item name…" autocomplete="new-password"
           oninput="gearUnifiedSearch('${iid}',this.value)" autocomplete="off"/>
       </div>
-      <button class="gw-find-product-btn" onclick="openFindExactFlow('${iid}')">
-        + Want to find your exact product?
-      </button>
+
       <div class="gw-field">
         <span class="gw-field-lbl">Weight</span>
         <input class="gw-field-inp mono" id="gam-w-${iid}" type="number" min="0" value="" placeholder="0" data-weight-unit="${wUnit}" autocomplete="off"/>
@@ -15380,6 +15268,20 @@ function fexSelectProduct(iid, productId, name, brand, weight_g){
   // Store pending product selection so submitFindExact can link it directly instead of re-inserting
   window._fexDirectLink = window._fexDirectLink || {};
   window._fexDirectLink[iid] = productId;
+
+  // For inline drawer context: immediately link the item so the badge shows right away
+  // (user may close modal without hitting "Add to my gear")
+  const existingItem = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+  if(existingItem){
+    existingItem.productId = productId;
+    existingItem._localVerified = true;
+    existingItem.name = name || existingItem.name;
+    if(weight_g && !existingItem.w) existingItem.w = weight_g;
+    scheduleSave();
+    // Update the submit button text to reflect it's already linked
+    const submitBtn = document.getElementById(`fex-submit-${iid}`);
+    if(submitBtn) submitBtn.textContent = '✓ Linked — close';
+  }
 }
 
 function openFindExactFlow(iid){
@@ -15887,19 +15789,12 @@ function buildNewItemDrawer(item, cat, srcCatId){
         ${cat.id==='sleep' ? _fieldUnitSel('extra-inp-'+item.id, {key:'temp',unitOptions:['°C','°F'],unit:'°C'}, item.extra_unit||'°C') : ''}    </div>` : ''}
     ${buildDrawerFieldsSection(item)}
     <hr class="gw-drawer-divider"/>
-    ${!item.productId ? `
-    <button class="gw-find-product-btn" onclick="openFindExactFlow('${item.id}')">
-      + Find exact product in database
-    </button>` : ''}
-    <div class="gw-drawer-link-row" ${item.productId?'':'style="display:none"'} id="gw-link-row-${item.id}">
-      <input class="gw-drawer-url gw-edit-link" type="text" inputmode="url" autocomplete="new-password"
-        placeholder="Paste product URL…" value="${escH(item.link||'')}"/>
-      <button class="gw-fetch-btn" onclick="gwFetchFromDrawer('${srcCatId}','${item.id}',this)">Find all data</button>
-    </div>
-    ${hasLink?`<a class="gw-open-link" href="${escH(item.link)}" target="_blank">↗ Open product page</a>`:''}
     <div class="gw-confirm-row">
       <button class="gw-confirm-btn" onclick="saveDrawer('${srcCatId}','${item.id}',this)">✓ Save</button>
       <button class="gw-cancel-btn" onclick="discardDrawer('${srcCatId}','${item.id}')">✕ Discard</button>
+      <button class="gw-match-product-btn" onclick="event.stopPropagation();openFindExactFlow('${item.id}')" title="${item.productId?'Match with different product':'Match with real product'}">
+        ${item.productId?'⇄ Different product':'⊕ Match product'}
+      </button>
     </div>`;
 }
 
@@ -16023,6 +15918,11 @@ function _isProductVerified(productId){
   return _verifiedProductIds.has(productId);
 }
 async function _loadVerifiedProductIds(){
+  // Also ensure any item with a productId has _localVerified set
+  // (handles cases where linking happened without setting the flag)
+  CATS.flatMap(c=>c.items).forEach(i=>{
+    if(i.productId && !i._localVerified) i._localVerified = true;
+  });
   try {
     await waitForSupabase();
     const sb = sbClient();
