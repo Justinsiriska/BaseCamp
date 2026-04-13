@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v7.4 — Gear Organizer</title>
+<title>BaseCamp v7.5 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2418,7 +2418,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v7.4</div>
+      <div class="logo-sub">Gear Organizer · v7.5</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -15356,7 +15356,13 @@ async function gearDrawerSelect(iid, productId){
     const sb = sbClient();
     const { data: products } = await sb.from('gear_products').select('*').eq('id', productId);
     const p = products?.[0];
-    if(!p){ toast('Product not found — it may have been removed.'); return; }
+    if(!p){
+      toast('Product not found — it may have been removed.');
+      // Clean up the stale link from the item immediately
+      const staleItem = CATS.flatMap(c=>c.items).find(i=>i.productId===productId);
+      if(staleItem){ delete staleItem._localVerified; delete staleItem.productId; scheduleSave(); renderAll(); }
+      return;
+    }
     // Fill modal name
     const nameInp = document.getElementById(`gam-name-${iid}`);
     if(nameInp) nameInp.value = p.name;
@@ -15442,7 +15448,13 @@ async function gearDrawerSelect(iid, productId){
     const sb = sbClient();
     const { data: products } = await sb.from('gear_products').select('*').eq('id', productId);
     const p = products?.[0];
-    if(!p){ toast('Product not found — it may have been removed.'); return; }
+    if(!p){
+      toast('Product not found — it may have been removed.');
+      // Clean up the stale link from the item immediately
+      const staleItem = CATS.flatMap(c=>c.items).find(i=>i.productId===productId);
+      if(staleItem){ delete staleItem._localVerified; delete staleItem.productId; scheduleSave(); renderAll(); }
+      return;
+    }
     // Link product to item
     item.productId = productId;
     // Autofill: weight and price always; name only if empty
@@ -15656,7 +15668,13 @@ async function showProductCard(productId, itemIid){
     const sb = sbClient();
     const { data: products } = await sb.from('gear_products').select('*').eq('id', productId);
     const p = products?.[0];
-    if(!p){ toast('Product not found — it may have been removed.'); return; }
+    if(!p){
+      toast('Product not found — it may have been removed.');
+      // Clean up the stale link from the item immediately
+      const staleItem = CATS.flatMap(c=>c.items).find(i=>i.productId===productId);
+      if(staleItem){ delete staleItem._localVerified; delete staleItem.productId; scheduleSave(); renderAll(); }
+      return;
+    }
     // Get approved custom fields
     const { data: fieldDefs } = await sb.from('gear_product_field_defs').select('*').eq('status','approved');
     const defs = fieldDefs || [];
