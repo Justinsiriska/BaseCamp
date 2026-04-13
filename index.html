@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v7.3 — Gear Organizer</title>
+<title>BaseCamp v7.4 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2418,7 +2418,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v7.3</div>
+      <div class="logo-sub">Gear Organizer · v7.4</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8204,7 +8204,7 @@ function renderGearWall(){
             ${extraTag}
           </div>
           <div class="gw-item-right">
-            <span class="gw-item-weight">${dw(item.w)}</span>
+            <span class="gw-item-weight" ${item.wOverride!=null?'title="Custom weight — differs from product spec" style="text-decoration:underline dotted;cursor:help;"':''}>${dw(item.w)}${item.wOverride!=null?'<span style="font-size:0.55em;opacity:0.6;margin-left:2px;">✏</span>':''}</span>
             ${(!item.productId && hasLink)?`<span class="gw-link-indicator" title="Has product link" style="font-size:0.7rem;cursor:pointer;" onclick="event.stopPropagation();window.open('${escH(item.link)}','_blank')">🔗</span>`:''}
             <button class="gw-item-edit-btn" title="Edit item"
               style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
@@ -15567,7 +15567,7 @@ function buildNewItemDrawer(item, cat, srcCatId){
       <input class="gw-field-inp mono gw-edit-w" id="wInp-${item.id}" type="number" min="0"
         value="${wVal}" placeholder="0" data-weight-unit="${wUnit}"/>
       ${_weightUnitSel('wInp-'+item.id, wUnit)}
-      ${item.wOverride!=null?'<span class="gw-override-badge">📐 your weight</span>':''}
+      ${item.wOverride!=null?'<span class="gw-override-badge" title="You've entered a custom weight — differs from the product spec">✏︎ custom weight</span>':''}
     </div>
     ${extraLabel ? `
     <div class="gw-field">
@@ -15712,6 +15712,26 @@ async function _loadVerifiedProductIds(){
     const sb = sbClient();
     const { data } = await sb.from('gear_products').select('id').eq('verified', true);
     (data||[]).forEach(r => _verifiedProductIds.add(r.id));
+
+    // Clean up stale _localVerified flags — if the product no longer exists in DB,
+    // clear the flag so badge doesn't persist after deletion
+    const allProductIds = CATS.flatMap(c=>c.items)
+      .filter(i=>i._localVerified && i.productId)
+      .map(i=>i.productId);
+    if(allProductIds.length){
+      const { data: existing } = await sb.from('gear_products')
+        .select('id').in('id', [...new Set(allProductIds)]);
+      const existingIds = new Set((existing||[]).map(r=>r.id));
+      let changed = false;
+      CATS.flatMap(c=>c.items).forEach(i=>{
+        if(i._localVerified && i.productId && !existingIds.has(i.productId)){
+          delete i._localVerified;
+          delete i.productId;
+          changed = true;
+        }
+      });
+      if(changed) scheduleSave();
+    }
   } catch(e){}
 }
 
