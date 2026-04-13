@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.49 — Gear Organizer</title>
+<title>BaseCamp v8.50 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -241,6 +241,13 @@ html.dark .admin-card-name{color:#c8e8b0;}
 html.dark .admin-page-title{color:#a8d890;}
 .admin-page-sub{font-family:"Space Mono",monospace;font-size:0.48rem;color:var(--stone);margin-bottom:1.5rem;}
 .gw-drawer-divider{border:none;border-top:1.5px dashed var(--lichen);margin:0.5rem 0;}
+.gw-itemtype-row{align-items:flex-start;}
+.gw-itemtype-btns{display:flex;gap:0.35rem;flex-wrap:wrap;}
+.gw-itemtype-btn{font-family:'Nunito',sans-serif;font-size:0.58rem;font-weight:700;
+  padding:0.25rem 0.6rem;border-radius:20px;cursor:pointer;transition:all 0.15s;
+  border:1.5px solid rgba(184,201,163,0.5);background:transparent;color:var(--stone);}
+.gw-itemtype-btn:hover{background:rgba(184,201,163,0.15);border-color:var(--moss);}
+.gw-itemtype-btn.active{background:var(--forest);color:#fff;border-color:var(--forest);}
 .gw-confirm-row{display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;align-items:center;}
 .gw-match-product-btn{font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:700;background:transparent;border:1.5px solid rgba(184,201,163,0.5);border-radius:20px;padding:0.22rem 0.65rem;cursor:pointer;color:var(--stone);white-space:nowrap;transition:all 0.15s;margin-left:auto;}
 .gw-match-product-btn:hover{background:rgba(184,201,163,0.12);border-color:var(--moss);color:var(--forest);}
@@ -989,6 +996,25 @@ overflow:hidden;}
 .leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .leg-pct{font-family:'Space Mono',monospace;font-size:0.67rem;color:var(--stone);}
 .thermal-box{background:linear-gradient(135deg,var(--forest),var(--water));border-radius:11px;padding:0.85rem 1rem;color:white;margin-top:0.55rem;}
+.thermal-box{cursor:pointer;}
+.thm-modal{
+  background:var(--cream);border-radius:18px;padding:1.3rem 1.4rem 1.2rem;
+  max-width:380px;width:calc(100vw - 2rem);max-height:80vh;overflow-y:auto;
+  box-shadow:0 16px 48px rgba(0,0,0,0.22);border:1.5px solid rgba(184,201,163,0.4);
+}
+.thm-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--forest);margin-bottom:0.7rem;}
+.thm-gear-summary{font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);
+  background:rgba(184,201,163,0.1);border-radius:10px;padding:0.5rem 0.7rem;margin-bottom:0.8rem;line-height:1.8;}
+.thm-section-lbl{font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;
+  letter-spacing:1.2px;color:var(--stone);opacity:0.6;margin:0.65rem 0 0.3rem;}
+.thm-row{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.35rem;}
+.thm-lbl{font-family:'Nunito',sans-serif;font-size:0.65rem;color:var(--bark);flex:1;}
+.thm-toggle-group{display:flex;gap:3px;}
+.thm-tog{font-family:'Nunito',sans-serif;font-size:0.55rem;font-weight:700;
+  padding:0.22rem 0.55rem;border-radius:14px;cursor:pointer;transition:all 0.12s;
+  border:1.5px solid rgba(184,201,163,0.45);background:transparent;color:var(--stone);white-space:nowrap;}
+.thm-tog:hover{background:rgba(184,201,163,0.15);}
+.thm-tog.on{background:var(--forest);color:#fff;border-color:var(--forest);}
 .thermal-title{font-family:'Playfair Display',serif;font-size:0.82rem;font-style:italic;margin-bottom:0.35rem;opacity:0.88;}
 .thermal-val{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700;}
 .thermal-sub{font-size:0.65rem;opacity:0.68;margin-top:2px;}
@@ -2478,7 +2504,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.49</div>
+      <div class="logo-sub">Gear Organizer · v8.50</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2515,7 +2541,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <div class="stat"><div class="stat-val">2000g</div><div class="stat-lbl">Pack Weight</div></div>
     <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Items</div></div></div>
         <div class="legend-list" id="leg-list"><div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:#8b7355"></div><span>Pack</span></div><span class="leg-pct">1200g · 60%</span></div><div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:#4a6741"></div><span>Sleep System</span></div><span class="leg-pct">0g · 0%</span></div><div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:#c85a2a"></div><span>Cooking &amp; Water</span></div><span class="leg-pct">400g · 20%</span></div><div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:#7ba7bc"></div><span>Clothes</span></div><span class="leg-pct">100g · 5%</span></div><div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:#8b8b8b"></div><span>Uncategorised</span></div><span class="leg-pct">300g · 15%</span></div><div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:#4a8fa8"></div><span>Electronics</span></div><span class="leg-pct">0g · 0%</span></div></div>
-        <div class="thermal-box">
+        <div class="thermal-box" title="Click to refine thermal rating" style="cursor:pointer;">
           <div class="thermal-title">Thermal System Rating</div>
           <div class="thermal-val" id="thermal-val">—</div>
           <div class="thermal-sub" id="thermal-sub">No thermal data — add temp ratings to sleep items</div>
@@ -4613,6 +4639,19 @@ function _limitVal(str, max){ return typeof str==='string' ? str.slice(0,max) : 
 function _validateNum(val, min, max){ const n=parseFloat(val); if(isNaN(n)) return null; return Math.min(max,Math.max(min,n)); }
 
 function uid(){return Math.random().toString(36).slice(2,9);}
+
+function _setItemType(iid, type, btn){
+  const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+  if(!item) return;
+  // Toggle off if already set
+  item.itemType = item.itemType===type ? null : type;
+  // Update button states
+  const row = btn.closest('.gw-itemtype-btns');
+  if(row) row.querySelectorAll('.gw-itemtype-btn').forEach(b=>b.classList.remove('active'));
+  if(item.itemType) btn.classList.add('active');
+  scheduleSave();
+  renderThermal();
+}
 
 // ============================================================
 // DATA
@@ -7878,21 +7917,193 @@ function renderStats(){
   const titleEl = document.getElementById('chart-config-title');
   if(titleEl && activePack) titleEl.textContent = activePack.icon+' '+activePack.name;
 }
+// ── Thermal Rating System ─────────────────────────────────────────────────────
+function _getThermalRating(){
+  const sleep = CATS.find(c=>c.id==='sleep');
+  if(!sleep) return {level:0, temp:null, tempF:null, confidence:'none'};
+  const items = sItems(sleep);
+
+  // Find tagged items
+  const bags   = items.filter(i=>i.itemType==='bag');
+  const pads   = items.filter(i=>i.itemType==='pad');
+  const liners = items.filter(i=>i.itemType==='liner');
+
+  // Also try any sleep item with extra (temp rating) as fallback bag detection
+  const anyTempItem = items.find(i=>i.extra&&i.extra.trim()!=='');
+
+  // Get bag comfort temp in °C
+  let bagTempC = null;
+  const bagSrc = bags.find(i=>i.extra&&i.extra.trim()!=='') || anyTempItem;
+  if(bagSrc){
+    const raw = parseFloat(bagSrc.extra);
+    if(!isNaN(raw)){
+      bagTempC = (bagSrc.extra_unit==='°F') ? (raw-32)*5/9 : raw;
+    }
+  }
+
+  // Get pad R-value
+  let totalR = 0;
+  let hasPad = false;
+  // Tagged pads
+  pads.forEach(p=>{ const r=p.fields?.rvalue; if(r) { totalR+=parseFloat(r)||0; hasPad=true; }});
+  // Fallback: any sleep item with rvalue if no tagged pads
+  if(!hasPad){
+    items.forEach(i=>{ const r=i.fields?.rvalue; if(r){ totalR+=parseFloat(r)||0; hasPad=true; }});
+  }
+
+  // Level 0: no data
+  if(bagTempC===null && !hasPad) return {level:0, temp:null, tempF:null, confidence:'none'};
+
+  // Pad adjustment: baseline R=2, each R point = 2.5°C warmth
+  // No pad at all = -8°C penalty
+  let padAdj = hasPad ? (totalR - 2) * 2.5 : -8;
+
+  // Level 1: medium confidence — bag + pad only
+  if(bagTempC===null) return {level:1, temp:null, tempF:null, confidence:'low', note:'Add temp rating to sleeping bag'};
+
+  const level1Temp = Math.round(bagTempC + padAdj);
+
+  // Check for high-confidence inputs saved on this pack
+  const pack = PACKS.find(p=>p.id===season);
+  const ti = pack?._thermalInputs;
+  if(!ti || !ti._filled) return {
+    level:1, temp:level1Temp, tempF:Math.round(level1Temp*9/5+32),
+    confidence:'medium', bags, pads, liners, bagTempC, totalR, hasPad
+  };
+
+  // Level 2: high confidence
+  let adj = 0;
+  if(ti.shelter==='tent') adj+=5; else if(ti.shelter==='bivy') adj+=2;
+  if(ti.baseLayer) adj+=4;
+  if(ti.liner){
+    // Use liner's own temp rating if available
+    const linerTemp = liners.map(l=>l.extra?parseFloat(l.extra):null).find(t=>t!==null&&!isNaN(t));
+    adj += linerTemp!=null ? Math.abs(Math.min(0,linerTemp)) : 3;
+  }
+  if(ti.wind==='medium') adj-=3; else if(ti.wind==='high') adj-=8;
+  if(ti.humidity==='damp') adj-=2; else if(ti.humidity==='wet') adj-=4;
+  if(ti.coldSleeper) adj-=3; else if(ti.warmSleeper) adj+=3;
+  if(ti.bigMeal) adj+=2;
+
+  const level2Temp = Math.round(bagTempC + padAdj + adj);
+  return {
+    level:2, temp:level2Temp, tempF:Math.round(level2Temp*9/5+32),
+    confidence:'high', bags, pads, liners, bagTempC, totalR, hasPad, adj
+  };
+}
+
 function renderThermal(){
-  const sleep=CATS.find(c=>c.id==='sleep');
-  const ti=sItems(sleep).filter(i=>i.extra&&i.extra.trim());
-  let tempR=null,rVals=[];
-  ti.forEach(item=>{
-    const v=item.extra.trim();
-    if(/^r[\d.]+/i.test(v)){const r=parseFloat(v.replace(/[^0-9.]/g,''));if(!isNaN(r))rVals.push(r);}
-    const m=v.match(/(-?\d+)[°\s]*(C|F)?/i);
-    if(m){const t=parseInt(m[1]);if(tempR===null||t<tempR)tempR=t;}
+  const r = _getThermalRating();
+  const valEl = document.getElementById('thermal-val');
+  const subEl = document.getElementById('thermal-sub');
+  const boxEl = document.querySelector('.thermal-box');
+  if(!valEl||!subEl) return;
+
+  if(r.level===0){
+    valEl.textContent='—';
+    subEl.textContent='No thermal data — add temp ratings to sleep items';
+    if(boxEl){ boxEl.style.cursor='default'; boxEl.onclick=null; }
+    return;
+  }
+  if(r.level===1 && r.temp===null){
+    valEl.textContent='—';
+    subEl.textContent=r.note||'Add sleeping bag temp rating';
+    if(boxEl){ boxEl.style.cursor='default'; boxEl.onclick=null; }
+    return;
+  }
+
+  const badge = r.confidence==='high'
+    ? '<span style="font-size:0.42rem;font-family:Space Mono,monospace;background:rgba(74,143,65,0.15);color:var(--forest);border:1px solid rgba(74,143,65,0.3);border-radius:10px;padding:1px 5px;margin-left:4px;vertical-align:middle;">HIGH ✓</span>'
+    : '<span style="font-size:0.42rem;font-family:Space Mono,monospace;background:rgba(200,150,58,0.15);color:#8b6a20;border:1px solid rgba(200,150,58,0.3);border-radius:10px;padding:1px 5px;margin-left:4px;vertical-align:middle;">EST.</span>';
+
+  valEl.innerHTML = `${r.temp}°C / ${r.tempF}°F ${badge}`;
+  subEl.textContent = r.confidence==='high'
+    ? 'High confidence system rating'
+    : 'Estimated — click to refine';
+
+  if(boxEl){
+    boxEl.style.cursor='pointer';
+    boxEl.title='Click to refine thermal estimate';
+    boxEl.onclick = (e)=>{ e.stopPropagation(); _openThermalModal(r); };
+  }
+}
+
+function _openThermalModal(r){
+  document.getElementById('thermal-modal-overlay')?.remove();
+  const pack = PACKS.find(p=>p.id===season);
+  if(!pack) return;
+  if(!pack._thermalInputs) pack._thermalInputs = {};
+  const ti = pack._thermalInputs;
+
+  const ov = document.createElement('div');
+  ov.id='thermal-modal-overlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;';
+
+  // Build detected gear summary
+  const bagLine  = r.bags?.length ? r.bags.map(b=>`🛌 ${escH(b.name)} (${b.extra||'?'}°)`).join(', ') : '⚠️ No bag tagged';
+  const padLine  = r.pads?.length ? r.pads.map(p=>`🟦 ${escH(p.name)} R${p.fields?.rvalue||'?'}`).join(', ') : (r.hasPad ? '🟦 Pad (untagged)' : '⚠️ No pad');
+  const linerLine= r.liners?.length ? r.liners.map(l=>`🧥 ${escH(l.name)}`).join(', ') : null;
+
+  const tog = (key, label, yesLabel='Yes', noLabel='No') => {
+    const active = ti[key];
+    return `<div class="thm-row">
+      <span class="thm-lbl">${label}</span>
+      <div class="thm-toggle-group">
+        <button class="thm-tog${active===true?' on':''}" data-key="${key}" data-val="true">${yesLabel}</button>
+        <button class="thm-tog${active===false?' on':''}" data-key="${key}" data-val="false">${noLabel}</button>
+      </div>
+    </div>`;
+  };
+  const tri = (key, label, opts) => {
+    return `<div class="thm-row">
+      <span class="thm-lbl">${label}</span>
+      <div class="thm-toggle-group">
+        ${opts.map(([val,lbl])=>`<button class="thm-tog${ti[key]===val?' on':''}" data-key="${key}" data-val="${val}">${lbl}</button>`).join('')}
+      </div>
+    </div>`;
+  };
+
+  ov.innerHTML=`<div class="thm-modal" onclick="event.stopPropagation()">
+    <div class="thm-title">🌡️ Refine Thermal Rating</div>
+    <div class="thm-gear-summary">
+      <div>${bagLine}</div>
+      <div>${padLine}</div>
+      ${linerLine?`<div>${linerLine}</div>`:''}
+      <div style="font-family:'Space Mono',monospace;font-size:0.4rem;opacity:0.5;margin-top:3px;">Tag items as Bag / Pad / Liner in their edit drawer for better accuracy</div>
+    </div>
+    <div class="thm-section-lbl">Conditions</div>
+    ${tri('shelter','Shelter',[['tent','🏕 Tent'],['bivy','🪨 Bivy'],['open','🌙 Open']])}
+    ${tri('wind','Wind',[['low','🍃 Low'],['medium','💨 Medium'],['high','🌬 High']])}
+    ${tri('humidity','Humidity',[['dry','☀️ Dry'],['damp','🌫 Damp'],['wet','🌧 Wet']])}
+    <div class="thm-section-lbl">Clothing & Gear</div>
+    ${tog('baseLayer','Base layer worn sleeping')}
+    ${tog('liner','Sleeping bag liner')}
+    <div class="thm-section-lbl">You</div>
+    ${tri('sleepType','Sleeper type',[['warm','🔥 Warm'],['normal','😐 Normal'],['cold','🥶 Cold']])}
+    ${tog('bigMeal','Big meal before bed')}
+  </div>`;
+
+  document.body.appendChild(ov);
+
+  // Wire up toggles
+  ov.addEventListener('click', e=>{
+    const btn = e.target.closest('.thm-tog');
+    if(!btn) return;
+    const key = btn.dataset.key;
+    let val = btn.dataset.val;
+    if(val==='true') val=true; else if(val==='false') val=false;
+    ti[key] = val;
+    ti._filled = true;
+    // Update button states
+    btn.closest('.thm-toggle-group').querySelectorAll('.thm-tog').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    scheduleSave();
+    renderThermal();
   });
-  let val='—',sub='No thermal data — add temp ratings to sleep items';
-  if(tempR!==null){val=`${tempR}°C / ${Math.round(tempR*9/5+32)}°F`;sub='Coldest combined system rating';}
-  else if(rVals.length>0){val=`R${rVals.reduce((a,b)=>a+b,0).toFixed(1)}`;sub='Combined R-value';}
-  document.getElementById('thermal-val').textContent=val;
-  document.getElementById('thermal-sub').textContent=sub;
+
+  // Close on outside click
+  const close = e=>{ if(!ov.querySelector('.thm-modal').contains(e.target)){ov.remove();document.removeEventListener('click',close);} };
+  setTimeout(()=>document.addEventListener('click',close),0);
 }
 function renderLegend(){
   const tot=total();
@@ -9483,6 +9694,16 @@ function loadState(){
 
     _stateLoaded = true;
     window.CUSTOM_FIELD_DEFS = mergeFieldDefs(d.customFieldDefs||[]);
+    // Migrate: move fields.temp into item.extra for sleep items (one-time)
+    CATS.forEach(cat=>{
+      cat.items.forEach(item=>{
+        if(item.fields && item.fields.temp !== undefined && (item.extra===undefined||item.extra==='')){
+          item.extra = String(item.fields.temp);
+          item.extra_unit = item.fields.temp_unit || '°C';
+        }
+        if(item.fields){ delete item.fields.temp; delete item.fields.temp_unit; }
+      });
+    });
     return true;
   } catch(e){ return false; }
 }
@@ -15245,7 +15466,6 @@ function _fieldBaseUnit(fieldKey){
 
 // ── Custom item data fields ──
 const PRESET_FIELDS=[
-  {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'number', unit:'°C',  unitOptions:['°C','°F'],       preset:true},
   {key:'rvalue',  label:'R-Value',     icon:'Ⓡ',  type:'number', unit:'',    unitOptions:null,               preset:true},
   {key:'length',  label:'Length',      icon:'📏', type:'number', unit:'cm',  unitOptions:['cm','in','ft'],   preset:true},
   {key:'volume',  label:'Volume',      icon:'⊔', type:'number', unit:'ml',  unitOptions:['ml','L','fl oz'], preset:true},
@@ -15994,6 +16214,14 @@ function buildNewItemDrawer(item, cat, srcCatId){
         placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off"/>
         ${cat.id==='sleep' ? _fieldUnitSel('extra-inp-'+item.id, {key:'temp',unitOptions:['°C','°F'],unit:'°C'}, item.extra_unit||'°C') : ''}    </div>` : ''}
     ${buildDrawerFieldsSection(item)}
+    ${cat.id==='sleep' ? `<div class="gw-field gw-itemtype-row">
+      <span class="gw-field-lbl">Item Type</span>
+      <div class="gw-itemtype-btns">
+        <button class="gw-itemtype-btn${item.itemType==='bag'?' active':''}" onclick="event.stopPropagation();_setItemType('${item.id}','bag',this)">🛌 Bag</button>
+        <button class="gw-itemtype-btn${item.itemType==='pad'?' active':''}" onclick="event.stopPropagation();_setItemType('${item.id}','pad',this)">🟦 Pad</button>
+        <button class="gw-itemtype-btn${item.itemType==='liner'?' active':''}" onclick="event.stopPropagation();_setItemType('${item.id}','liner',this)">🧥 Liner</button>
+      </div>
+    </div>` : ''}
     <hr class="gw-drawer-divider"/>
     <div class="gw-confirm-row">
       <button class="gw-confirm-btn" onclick="saveDrawer('${srcCatId}','${item.id}',this)">✓ Save</button>
