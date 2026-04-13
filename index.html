@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.25 — Gear Organizer</title>
+<title>BaseCamp v8.26 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -663,7 +663,7 @@ body.dragging-active, body.dragging-active *{
 .gw-item:hover{opacity:1;border-color:var(--lichen);background:var(--cream);transform:translateX(-1px);box-shadow:2px 2px 8px var(--shadow);}
 .gw-item.in-season{opacity:1;background:rgba(184,201,163,0.18);border-color:rgba(184,201,163,0.5);}
 .gw-item.dragging-wall{opacity:0.35;transform:scale(0.96);}
-.gw-item-left{display:flex;align-items:center;gap:0.3rem;min-width:0;flex:1;flex-wrap:wrap;}
+.gw-item-left{display:flex;align-items:center;gap:0.3rem;min-width:0;flex:1;}
 .gw-item-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .gw-item-name{font-size:0.72rem;font-weight:600;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .gw-item-extra{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);}
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.25</div>
+      <div class="logo-sub">Gear Organizer · v8.26</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8296,9 +8296,9 @@ function renderGearWall(){
             <div class="gw-item-dot" style="background:${cat.color};flex-shrink:0;"></div>
             <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId && (item._localVerified || _isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
             ${extraTag}
-            ${renderItemFieldPills(item)}
           </div>
           <div class="gw-item-right">
+            ${renderItemFieldPills(item)}
             <span class="gw-item-weight" ${item.wOverride!=null?'title="Custom weight — differs from product spec" style="text-decoration:underline dotted;cursor:help;"':''}>${dw(item.w)}${item.wOverride!=null?'<span style="font-size:0.55em;opacity:0.6;margin-left:2px;">✏</span>':''}</span>
             ${(!item.productId && hasLink)?`<span class="gw-link-indicator" title="Has product link" style="font-size:0.7rem;cursor:pointer;" onclick="event.stopPropagation();window.open('${escH(item.link)}','_blank')">🔗</span>`:''}
             <button class="gw-item-edit-btn" title="Edit item"
@@ -8405,9 +8405,9 @@ function renderGearWall(){
           <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
           <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
           ${ucExtraTag}
-          ${renderItemFieldPills(item)}
         </div>
         <div class="gw-item-right">
+          ${renderItemFieldPills(item)}
           <span class="gw-item-weight">${dw(item.w)}</span>
           <button class="gw-toggle-btn" onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">${inSeason?'⊖':'⊕'}</button>
         </div>`;
