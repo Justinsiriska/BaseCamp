@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.41 — Gear Organizer</title>
+<title>BaseCamp v8.42 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1525,18 +1525,17 @@ html.dark .trip-col{background:rgba(18,28,16,0.88);border-color:rgba(60,95,45,0.
   border-bottom:2px solid rgba(184,201,163,0.35);
   background:rgba(74,103,65,0.06);
   display:flex;align-items:stretch;overflow:hidden;
-  height:110px;position:relative;
+  min-height:90px;position:relative;
 }
 html.dark .trip-col-header{background:rgba(20,38,15,0.6);border-bottom-color:rgba(60,95,45,0.4);}
 .trip-col-header-right{display:flex;flex-direction:column;justify-content:center;gap:0.25rem;flex:1;min-width:0;padding:0.6rem 0.4rem 0.6rem 0.8rem;}
 .trip-col-name{
-  font-family:'Playfair Display',serif;font-size:clamp(0.7rem,2.5vw,1.05rem);font-weight:700;
-  color:var(--forest);display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap;
-  line-height:1.15;min-height:0;
+  font-family:'Playfair Display',serif;font-weight:700;
+  color:var(--forest);line-height:1.2;
 }
 html.dark .trip-col-name{color:#a8d89a;}
 .trip-col-avatar{
-  width:90px;flex-shrink:0;align-self:stretch;height:110px;
+  width:80px;flex-shrink:0;align-self:stretch;height:auto;
   display:flex;align-items:center;justify-content:center;
   font-size:1.4rem;font-weight:800;color:white;overflow:hidden;
   border-top-left-radius:14px;
@@ -2479,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.41</div>
+      <div class="logo-sub">Gear Organizer · v8.42</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -13883,9 +13882,12 @@ function renderTripsPage(){
       <div class="trip-col-header">
         <div class="trip-col-avatar" style="${m.avatar&&m.avatar.startsWith('<img')?'':'background:'+(m.color||'var(--sage)')}">${m.avatar||m.name[0]}</div>
         <div class="trip-col-header-right">
-          <div class="trip-col-name">${escH(m.name)}</div>
-          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;opacity:0.55;margin-top:1px;">${roleLabel}</div>
-          <div class="trip-col-stats">
+          <div style="display:flex;align-items:center;gap:0.4rem;min-width:0;">
+            <div class="trip-col-name" style="flex:1;min-width:0;font-size:clamp(0.6rem,1.8vw,1rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(m.name)}</div>
+            <div class="trip-col-mini-donut" title="Click for breakdown" style="flex-shrink:0;"></div>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.38rem;opacity:0.55;">${roleLabel}</div>
+          <div class="trip-col-stats" style="margin-top:0.2rem;">
             ${tripMode==='gear'
               ? `<span class="trip-col-stat">Total <strong>${dwTrip(totalW)}</strong></span>
                  <span class="trip-col-stat">Gear <strong>${dwTrip(gearW)}</strong></span>`
@@ -13938,8 +13940,8 @@ function renderTripsPage(){
                 })()
             }
           </div>
+                  </div>
         </div>
-        <div class="trip-col-mini-donut" title="Click for breakdown"></div>
       </div>
       <div class="trip-col-body" id="col-body-${m.id}"></div>`;
     cols.appendChild(col);
