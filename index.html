@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v7.5 — Gear Organizer</title>
+<title>BaseCamp v7.7 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1177,6 +1177,31 @@ html.dark .food-cat-card.food-drop-target{border-color:var(--water)!important;}
 .food-cat-body{padding:0.1rem 0.75rem 0.3rem;}
 .food-cat-card.collapsed .food-cat-body{display:none;}
 .food-cat-card.collapsed .caret{transform:rotate(-90deg);}
+
+/* Food unified wrapper */
+.food-unified-wrap{background:var(--cream);border:1.5px solid rgba(184,201,163,0.4);border-radius:12px;overflow:hidden;}
+html.dark .food-unified-wrap{background:#0d180d;border-color:var(--dm-border);}
+
+/* Food category headers — thin, tinted */
+.food-cat-hd-new{display:flex;align-items:center;gap:6px;padding:5px 10px;border-left:3px solid transparent;cursor:default;}
+.food-cat-icon-new{font-size:13px;flex-shrink:0;}
+.food-cat-name-new{font-family:'Space Mono',monospace;font-size:0.5rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);cursor:pointer;flex:1;}
+.food-cat-name-new:hover{color:var(--forest);}
+.food-hd-kcal{font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--ember);font-weight:700;}
+.food-hd-dot{font-size:0.45rem;color:var(--stone);margin:0 1px;}
+.food-hd-wt{font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--bark);font-weight:700;}
+.food-add-chip{font-family:'Nunito',sans-serif;font-size:0.55rem;font-weight:800;color:var(--forest);background:transparent;border:1px solid rgba(74,103,65,0.3);border-radius:20px;padding:1px 7px;cursor:pointer;flex-shrink:0;transition:all 0.12s;}
+.food-add-chip:hover{background:rgba(74,103,65,0.1);border-color:var(--moss);}
+html.dark .food-add-chip{color:#7abf6a;border-color:rgba(74,143,68,0.3);}
+.food-caret-btn{background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.6rem;padding:0 2px;transition:transform 0.2s;flex-shrink:0;}
+
+/* Food item rows — new compact style */
+.food-item-row-new{display:flex;align-items:center;padding:4px 10px 4px 12px;border-top:0.5px solid rgba(184,201,163,0.15);gap:6px;}
+.food-item-row-new:hover{background:rgba(184,201,163,0.06);}
+html.dark .food-item-row-new{border-top-color:rgba(55,85,40,0.2);}
+html.dark .food-item-row-new:hover{background:rgba(30,50,22,0.4);}
+.food-count-stepper-new{display:flex;align-items:center;gap:1px;flex-shrink:0;}
+.food-cat-body-new{}
 
 /* Food item rows */
 .food-item-row{display:flex;align-items:center;justify-content:space-between;padding:0.28rem 0.15rem;border-bottom:1px solid rgba(184,201,163,0.2);gap:0.4rem;}
@@ -2418,7 +2443,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v7.5</div>
+      <div class="logo-sub">Gear Organizer · v7.7</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8384,31 +8409,9 @@ function renderGearWall(){
 
 // Handle dropping an item into a gear wall category (changes gwCatId)
 function gwPromptCategory(){
-  // If only one cat, go straight to modal
-  const gwCats = CATS.filter(c=>c.onGearWall!==false);
-  if(gwCats.length === 1){ openAddItemModal(gwCats[0].id); return; }
-
-  // Show a small popover to pick a category
-  document.getElementById('gw-cat-picker')?.remove();
-  const picker = document.createElement('div');
-  picker.id = 'gw-cat-picker';
-  picker.style.cssText = 'position:fixed;inset:0;z-index:1999;display:flex;align-items:center;justify-content:center;';
-  picker.addEventListener('click', e=>{ if(e.target===picker) picker.remove(); });
-
-  picker.innerHTML = `<div style="background:var(--cream);border:1.5px solid var(--lichen);border-radius:14px;padding:1rem 1.25rem;width:min(320px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.15);">
-    <div style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);margin-bottom:0.7rem;">Add to which category?</div>
-    <div style="display:flex;flex-direction:column;gap:0.35rem;">
-      ${gwCats.map(cat=>`
-        <button onclick="document.getElementById('gw-cat-picker').remove();openAddItemModal('${cat.id}')"
-          style="text-align:left;background:transparent;border:1px solid rgba(184,201,163,0.4);border-radius:8px;padding:0.45rem 0.7rem;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:700;color:var(--bark);display:flex;align-items:center;gap:0.5rem;transition:background 0.12s;"
-          onmouseover="this.style.background='rgba(184,201,163,0.15)'" onmouseout="this.style.background='transparent'">
-          <span style="width:10px;height:10px;border-radius:50%;background:${cat.color};flex-shrink:0;display:inline-block;"></span>
-          ${escH(cat.name)}
-          <span style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-left:auto;">${cat.items.length} items</span>
-        </button>`).join('')}
-    </div>
-  </div>`;
-  document.body.appendChild(picker);
+  // Default to uncategorised — user can change category inside the modal
+  const defaultCat = CATS.find(c=>c.id==='uncategorised') || CATS.filter(c=>c.onGearWall!==false)[0];
+  if(defaultCat) openAddItemModal(defaultCat.id);
 }
 
 function gwInlineAdd(catId){
@@ -8435,7 +8438,19 @@ function openAddItemModal(catId){
   overlay.innerHTML = `
     <div class="gw-add-modal" id="gw-add-modal-${iid}" data-catid="${catId}" autocomplete="off">
       <div class="gw-add-modal-hd">
-        <span class="gw-add-modal-title">Add to ${escH(cat.name)}</span>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span class="gw-add-modal-title">ADD ITEM</span>
+          <button class="gw-cat-pick-btn" id="gam-catbtn-${iid}" 
+            onclick="gwModalPickCategory('${iid}')"
+            title="Change category"
+            style="display:flex;align-items:center;gap:4px;background:transparent;border:1px solid rgba(184,201,163,0.4);border-radius:20px;padding:2px 8px 2px 5px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);transition:all 0.12s;"
+            onmouseover="this.style.borderColor='var(--moss)';this.style.color='var(--forest)'"
+            onmouseout="this.style.borderColor='rgba(184,201,163,0.4)';this.style.color='var(--stone)'">
+            <span id="gam-catdot-${iid}" style="width:8px;height:8px;border-radius:50%;background:${escH(cat.color)};display:inline-block;flex-shrink:0;"></span>
+            <span id="gam-catname-${iid}">${escH(cat.name)}</span>
+            <span style="font-size:0.5rem;opacity:0.6;">▾</span>
+          </button>
+        </div>
         <button class="gw-cancel-btn" style="padding:2px 8px;" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕</button>
       </div>
       <div class="gw-unified-name-wrap">
@@ -8512,6 +8527,46 @@ function addModalCustomField(iid){
   // Reset form
   document.getElementById(`gam-nf-label-${iid}`).value = '';
   document.getElementById(`gam-nff-${iid}`).classList.remove('open');
+}
+
+function gwModalPickCategory(iid){
+  const gwCats = CATS.filter(c=>c.onGearWall!==false && c.id!=='uncategorised');
+  const allCats = [...gwCats, CATS.find(c=>c.id==='uncategorised')].filter(Boolean);
+
+  document.getElementById('gw-cat-picker')?.remove();
+  const picker = document.createElement('div');
+  picker.id = 'gw-cat-picker';
+  picker.style.cssText = 'position:fixed;inset:0;z-index:2100;';
+  picker.addEventListener('click', e=>{ if(e.target===picker) picker.remove(); });
+
+  const btn = document.getElementById(`gam-catbtn-${iid}`);
+  const r = btn?.getBoundingClientRect() || {left:100,bottom:100};
+
+  picker.innerHTML = `<div style="position:fixed;top:${r.bottom+4}px;left:${r.left}px;background:var(--cream);border:1.5px solid var(--lichen);border-radius:10px;padding:0.4rem;min-width:180px;box-shadow:0 6px 20px rgba(0,0,0,0.13);z-index:2101;">
+    ${allCats.map(cat=>`
+      <button onclick="gwModalSetCategory('${iid}','${cat.id}');document.getElementById('gw-cat-picker').remove();"
+        style="display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:transparent;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;color:var(--bark);"
+        onmouseover="this.style.background='rgba(184,201,163,0.18)'" onmouseout="this.style.background='transparent'">
+        <span style="width:8px;height:8px;border-radius:50%;background:${escH(cat.color)};flex-shrink:0;display:inline-block;"></span>
+        ${escH(cat.name)}
+      </button>`).join('')}
+  </div>`;
+  document.body.appendChild(picker);
+}
+
+function gwModalSetCategory(iid, catId){
+  const cat = CATS.find(c=>c.id===catId);
+  if(!cat) return;
+  // Update the button display
+  const dot = document.getElementById(`gam-catdot-${iid}`);
+  const label = document.getElementById(`gam-catname-${iid}`);
+  const saveBtn = document.querySelector(`#gw-add-modal-${iid} .gw-confirm-btn`);
+  if(dot) dot.style.background = cat.color;
+  if(label) label.textContent = cat.name;
+  // Update the save button onclick to use the new catId
+  if(saveBtn) saveBtn.setAttribute('onclick', `saveAddItemModal('${catId}','${iid}','${(document.querySelector('.s-pill.active')||{dataset:{}}).dataset.s||season}')`);
+  // Store on modal for saveAddItemModal to read
+  document.getElementById(`gw-add-modal-${iid}`)?.setAttribute('data-catid', catId);
 }
 
 function saveAddItemModal(catId, iid, activePack){
@@ -9650,29 +9705,44 @@ function renderFoodBag(){
   const cont = document.getElementById('food-cats');
   if(!cont) return;
   cont.innerHTML='';
-  FOOD_CATS.forEach(cat=>{
+
+  // Single unified wrapper card
+  const wrap = document.createElement('div');
+  wrap.className = 'food-unified-wrap';
+
+  FOOD_CATS.forEach((cat, catIdx)=>{
     const items=foodSeasonItems(cat.id);
     const w=foodCatWeight(cat.id);
     const kcal=foodCatKcal(cat.id);
     const collapsed=foodCatCollapsed[cat.id];
-    const card=document.createElement('div');
-    card.className=`food-cat-card${collapsed?' collapsed':''}`;
-    card.dataset.catId=cat.id;
+    const bgColor = cat.color ? _hexToRgba(cat.color, 0.10) : 'transparent';
+    const borderColor = cat.color ? _hexToRgba(cat.color, 0.35) : 'rgba(184,201,163,0.3)';
 
-    const rowsHtml=items.map(item=>{
-      const qty=item.qty||1;
-      const totalW=Math.round((item.w_total/qty)*qty); // same as w_total but explicit
-      const totalKcal=Math.round(item.kcal_total);
-      return `
-      <div class="food-item-row" draggable="true" data-food-iid="${item.id}" data-food-cat="${cat.id}">
-        <div class="food-item-left">
-          <span class="food-item-drag-handle">⠿</span>
-          <span class="food-item-name food-item-name-editable" title="Tap to edit unit weight/kcal" onclick="event.stopPropagation();foodEditUnitOpen('${item.id}')">${escH(item.name)}</span>
-          ${qty>1?`<span style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:900;color:var(--sun);margin-left:2px;flex-shrink:0;">×${qty}</span>`:''}
-          <span style="font-family:'Space Mono',monospace;font-size:0.35rem;color:var(--stone);opacity:0.55;margin-left:3px;">${Math.round(totalKcal/qty)}kcal · ${dw(Math.round(totalW/qty))}/unit</span>
-        </div>
-        <div class="food-item-right">
-          <div class="food-count-stepper" title="Quantity">
+    // Category header
+    const hd = document.createElement('div');
+    hd.className = 'food-cat-hd-new';
+    hd.style.background = bgColor;
+    hd.style.borderLeftColor = cat.color || 'transparent';
+    if(catIdx > 0) hd.style.borderTop = '0.5px solid rgba(184,201,163,0.25)';
+    hd.innerHTML = `
+      <span class="food-cat-icon-new">${cat.icon}</span>
+      <span class="food-cat-name-new cat-name-clickable" onclick="event.stopPropagation();foodCatRename('${cat.id}')">${escH(cat.name)}</span>
+      ${kcal>0?`<span class="food-hd-kcal">${Math.round(kcal)}kcal</span><span class="food-hd-dot">·</span>`:''}
+      ${w>0?`<span class="food-hd-wt">${dw(w)}</span>`:''}
+      <button class="food-add-chip" onclick="event.stopPropagation();foodQuickAddOpen('${cat.id}')">＋ Add</button>
+      <button class="food-caret-btn" onclick="event.stopPropagation();foodCatCollapsed['${cat.id}']=!foodCatCollapsed['${cat.id}'];renderFoodBag()" 
+        style="transform:rotate(${collapsed?'-90':'0'}deg)">${collapsed?'▸':'▾'}</button>`;
+    wrap.appendChild(hd);
+
+    if(!collapsed){
+      const rowsHtml = items.map(item=>{
+        const qty = item.qty||1;
+        const totalW = Math.round(item.w_total);
+        const totalKcal = Math.round(item.kcal_total);
+        return `<div class="food-item-row-new" draggable="true" data-food-iid="${item.id}" data-food-cat="${cat.id}">
+          <span class="food-item-drag-handle" style="color:var(--stone);opacity:0.3;font-size:0.6rem;padding:0 4px;cursor:grab;">⠿</span>
+          <span class="food-item-name food-item-name-editable" onclick="event.stopPropagation();foodEditUnitOpen('${item.id}')">${escH(item.name)}${qty>1?`<span style="font-family:'Nunito',sans-serif;font-size:0.7rem;font-weight:900;color:var(--sun);margin-left:3px;">×${qty}</span>`:''}</span>
+          <div class="food-count-stepper-new">
             <button class="food-count-btn" onclick="event.stopPropagation();foodAdjustCount('${item.id}',-1)">−</button>
             <span class="food-count-val" style="font-weight:800;color:${qty>1?'var(--sun)':'var(--stone)'}">×${qty}</span>
             <button class="food-count-btn" onclick="event.stopPropagation();foodAdjustCount('${item.id}',1)">＋</button>
@@ -9680,79 +9750,57 @@ function renderFoodBag(){
           <span class="food-item-kcal">${totalKcal}kcal</span>
           <span class="food-item-w">${dw(totalW)}</span>
           <button class="del-btn" onclick="event.stopPropagation();foodRemoveItem('${item.id}')">✕</button>
-        </div>
-      </div>`;
-    }).join('');
+        </div>`;
+      }).join('');
 
-    const isBuiltin = ['breakfast','lunch','dinner','snacks','drinks'].includes(cat.id);
-    card.innerHTML=`
-      <div class="food-cat-head" onclick="foodCatCollapsed['${cat.id}']=!foodCatCollapsed['${cat.id}'];renderFoodBag()" ondragenter="_foodCatDragEnter('${cat.id}')" ondragleave="_foodCatDragLeave()">
-        <div class="food-cat-head-l">
-          <span class="food-cat-icon">${cat.icon}</span>
-          <span class="food-cat-name cat-name-clickable" title="Click to rename${!isBuiltin?' or delete':''}" onclick="event.stopPropagation();foodCatRename('${cat.id}')">${cat.name}</span>
-          <span class="food-cat-meta">(${items.length})</span>
-        </div>
-        <div class="food-cat-pills">
-          ${kcal>0?`<span class="food-cat-pill-c">${Math.round(kcal)}kcal</span>`:''}
-          ${w>0?`<span class="food-cat-pill-w">${dw(w)}</span>`:''}
-          <button class="caret" style="background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.65rem;transition:transform 0.3s;">▼</button>
-        </div>
-      </div>
-      <div class="food-cat-body" data-drop-cat="${cat.id}">
-        ${items.length===0
-          ?`<p class="food-empty-hint">Nothing here yet — drag from Fridge or click + Add →</p>`
-          :rowsHtml}
-        <button class="add-btn-ghost" onclick="foodQuickAddOpen('${cat.id}')">＋ Add item to this bag</button>
-      </div>`;
+      const body = document.createElement('div');
+      body.className = 'food-cat-body-new';
+      body.dataset.dropCat = cat.id;
+      body.innerHTML = items.length===0
+        ? `<p class="food-empty-hint" style="padding:5px 12px 5px 28px;">Nothing here — drag from Fridge or tap ＋ Add</p>`
+        : rowsHtml;
 
-    // Drop zone: accepts fridge drags and item-reorder drags
-    const body = card.querySelector('.food-cat-body');
-    body.addEventListener('dragover', e=>{ e.preventDefault(); card.classList.add('food-drop-target'); });
-    body.addEventListener('dragleave', ()=>card.classList.remove('food-drop-target'));
-    body.addEventListener('drop', e=>{
-      e.preventDefault(); card.classList.remove('food-drop-target');
-      // Auto-expand the category if it was collapsed
-      if(foodCatCollapsed[cat.id]){ foodCatCollapsed[cat.id]=false; }
-      const fridgeId = e.dataTransfer.getData('fridgeId');
-      const moveIid = e.dataTransfer.getData('foodItemId');
-      const fromCat = e.dataTransfer.getData('foodFromCat');
-      if(fridgeId){
-        // Check if this exact fridge item already exists in this category for the current season
-        const existing = FOOD_ITEMS.find(i=>i.fridgeId===fridgeId && i.catId===cat.id && i.s.includes(foodSeason));
-        if(existing){
-          // Same category — merge by incrementing qty
-          existing.qty = (existing.qty||1) + 1;
-          existing.w_total = Math.round(existing.w_total / (existing.qty-1) * existing.qty);
-          existing.kcal_total = Math.round(existing.kcal_total / (existing.qty-1) * existing.qty);
-          existing.protein = Math.round(existing.protein / (existing.qty-1) * existing.qty * 10)/10;
-          existing.carbs = Math.round(existing.carbs / (existing.qty-1) * existing.qty * 10)/10;
-          existing.fat = Math.round(existing.fat / (existing.qty-1) * existing.qty * 10)/10;
-          renderFoodBag(); renderFoodBreakdown(); scheduleSave();
-          toast(`✅ ${existing.name} ×${existing.qty}`);
-        } else {
-          // Different category or new — open serving modal
-          _foodDragTargetCat = cat.id;
-          foodOpenServingModal(fridgeId);
+      // Drop zone
+      body.addEventListener('dragover', e=>{ e.preventDefault(); hd.style.outline=`2px solid ${cat.color||'var(--moss)'}`; });
+      body.addEventListener('dragleave', ()=>hd.style.outline='');
+      body.addEventListener('drop', e=>{
+        e.preventDefault(); hd.style.outline='';
+        if(foodCatCollapsed[cat.id]){ foodCatCollapsed[cat.id]=false; }
+        const fridgeId = e.dataTransfer.getData('fridgeId');
+        const moveIid = e.dataTransfer.getData('foodItemId');
+        const fromCat = e.dataTransfer.getData('foodFromCat');
+        if(fridgeId){
+          const existing = FOOD_ITEMS.find(i=>i.fridgeId===fridgeId && i.catId===cat.id && i.s.includes(foodSeason));
+          if(existing){
+            existing.qty=(existing.qty||1)+1;
+            existing.w_total=Math.round(existing.w_total/(existing.qty-1)*existing.qty);
+            existing.kcal_total=Math.round(existing.kcal_total/(existing.qty-1)*existing.qty);
+            renderFoodBag(); renderFoodBreakdown(); scheduleSave();
+            toast(`✅ ${existing.name} ×${existing.qty}`);
+          } else {
+            _foodDragTargetCat=cat.id; foodOpenServingModal(fridgeId);
+          }
+        } else if(moveIid && fromCat){
+          const item=FOOD_ITEMS.find(i=>i.id===moveIid);
+          if(item && item.catId!==cat.id){ item.catId=cat.id; renderFoodBag(); renderFoodBreakdown(); scheduleSave(); }
         }
-      } else if(moveIid && fromCat){
-        // Move item between categories
-        const item = FOOD_ITEMS.find(i=>i.id===moveIid);
-        if(item && item.catId!==cat.id){ item.catId=cat.id; renderFoodBag(); renderFoodBreakdown(); scheduleSave(); }
-      }
-    });
-
-    // Item drag-start for reordering
-    card.querySelectorAll?.('.food-item-row').forEach(row=>{
-      row.addEventListener('dragstart', e=>{
-        e.dataTransfer.setData('foodItemId', row.dataset.foodIid);
-        e.dataTransfer.setData('foodFromCat', row.dataset.foodCat);
-        row.style.opacity='0.4';
       });
-      row.addEventListener('dragend', ()=>row.style.opacity='');
-    });
 
-    cont.appendChild(card);
+      // Item drag-start
+      body.querySelectorAll('.food-item-row-new').forEach(row=>{
+        row.addEventListener('dragstart', e=>{
+          e.dataTransfer.setData('foodItemId', row.dataset.foodIid);
+          e.dataTransfer.setData('foodFromCat', row.dataset.foodCat);
+          row.style.opacity='0.4';
+        });
+        row.addEventListener('dragend', ()=>row.style.opacity='');
+      });
+
+      wrap.appendChild(body);
+    }
   });
+
+  cont.appendChild(wrap);
 }
 
 let _foodDragTargetCat = null;
