@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.16 — Gear Organizer</title>
+<title>BaseCamp v8.19 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.16</div>
+      <div class="logo-sub">Gear Organizer · v8.19</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4427,7 +4427,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   </div>
 </div>
 
-<script id="tw-data">window.__TW_DATA__={"schema":7,"season":"winter","unit":"g","packs":[{"id":"winter","name":"Winter Alpine","icon":"❄️"},{"id":"shoulder","name":"Shoulder Season","icon":"🍂"},{"id":"summer","name":"Summer Fast","icon":"☀️"}],"cats":[{"id":"sleep","name":"Sleep System","icon":"🌙","color":"#4a6741","hasExtra":true,"extraLabel":"Temp / R-Value","items":[],"packs":["winter","shoulder","summer"]},{"id":"pack","name":"Pack","icon":"🎒","color":"#8b7355","hasExtra":true,"extraLabel":"Volume (L)","items":[],"packs":["winter","shoulder","summer"]},{"id":"cooking","name":"Cooking & Water","icon":"🔥","color":"#c85a2a","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"clothes","name":"Clothes","icon":"🧥","color":"#7ba7bc","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"uncategorised","name":"Uncategorised","icon":"📦","color":"#8b8b8b","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]}],"foodSeason":"winter","foodItems":[],"foodCatsCustom":[],"fridgeCustom":[],"fridgeHistory":[],"trailLibrary":[],"trips":[],"deletedTrips":[],"activeTripId":null,"profile":{"name":"","bio":"","color":"#4a8fa8","photo":null}};</script>
+<script id="tw-data">window.__TW_DATA__={"schema":7,"season":"winter","unit":"g","packs":[{"id":"winter","name":"Winter Alpine","icon":"❄️"},{"id":"shoulder","name":"Shoulder Season","icon":"🍂"},{"id":"summer","name":"Summer Fast","icon":"☀️"}],"cats":[{"id":"sleep","name":"Sleep System","icon":"🌙","color":"#4a6741","hasExtra":true,"extraLabel":"Temp Rating","items":[],"packs":["winter","shoulder","summer"]},{"id":"pack","name":"Pack","icon":"🎒","color":"#8b7355","hasExtra":true,"extraLabel":"Volume (L)","items":[],"packs":["winter","shoulder","summer"]},{"id":"cooking","name":"Cooking & Water","icon":"🔥","color":"#c85a2a","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"clothes","name":"Clothes","icon":"🧥","color":"#7ba7bc","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"uncategorised","name":"Uncategorised","icon":"📦","color":"#8b8b8b","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]}],"foodSeason":"winter","foodItems":[],"foodCatsCustom":[],"fridgeCustom":[],"fridgeHistory":[],"trailLibrary":[],"trips":[],"deletedTrips":[],"activeTripId":null,"profile":{"name":"","bio":"","color":"#4a8fa8","photo":null}};</script>
 <script>
 // ============================================================
 // STATE
@@ -4579,7 +4579,7 @@ function _hexToRgba(hex, alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 const CATS=[
-  {id:'sleep',         name:'Sleep System',    icon:'🌙',color:'#4a6741',pc:'pill-sleep',    cc:'cc-sleep',    hasExtra:true, extraLabel:'Temp / R-Value', items:[],packs:null},
+  {id:'sleep',         name:'Sleep System',    icon:'🌙',color:'#4a6741',pc:'pill-sleep',    cc:'cc-sleep',    hasExtra:true, extraLabel:'Temp Rating', items:[],packs:null},
   {id:'pack',          name:'Pack',            icon:'🎒',color:'#8b7355',pc:'pill-pack',     cc:'cc-pack',     hasExtra:true, extraLabel:'Volume (L)',     items:[],packs:null},
   {id:'cooking',       name:'Cooking & Water', icon:'🔥',color:'#c85a2a',pc:'pill-cooking',  cc:'cc-cooking',  hasExtra:false,extraLabel:'',               items:[],packs:null},
   {id:'clothes',       name:'Clothes',         icon:'🧥',color:'#7ba7bc',pc:'pill-clothes',  cc:'cc-clothes',  hasExtra:false,extraLabel:'',               items:[],packs:null},
@@ -4849,7 +4849,7 @@ const DEMO_PACKS = [
   {id:'summer',  name:'Summer Fast',   icon:'☀️'},
 ];
 const DEMO_CATS = [
-  {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', pc:'pill-sleep', cc:'cc-sleep', hasExtra:true, extraLabel:'Temp / R-Value',
+  {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', pc:'pill-sleep', cc:'cc-sleep', hasExtra:true, extraLabel:'Temp Rating',
    items:[
     {id:'d1', name:'Tent',               w:1200, extra:'', s:['winter','shoulder','summer']},
     {id:'d2', name:'Sleeping Bag (-7°C)',w:850,  extra:'-7°C', s:['winter','shoulder']},
@@ -7014,7 +7014,7 @@ function addItemFromPack(cid, targetPackId){
   const extraField = cat.hasExtra ? `
     <div style="display:flex;align-items:center;gap:0.4rem;">
       <span style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);width:56px;text-align:right;flex-shrink:0;">${cat.extraLabel.split('/')[0].trim()}</span>
-      <input class="gw-field-inp mono" id="pia-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" style="flex:1;">
+      <input class="gw-field-inp mono" id="pia-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off" style="flex:1;">
     </div>` : '';
 
   const form = document.createElement('div');
@@ -7115,10 +7115,24 @@ function autoSaveDrawer(cid, iid){
   }
 
   // Apply all drawer values
+  if(item.productId){
+    item._nameOverride = name; // local only — crew/follower view uses DB name
+  }
   item.name = name;
   item.w = getWeightInGrams(drawer?.querySelector('.gw-edit-w')) ?? toGrams(drawer?.querySelector('.gw-edit-w')?.value||0);
   const extraInp = drawer?.querySelector('.gw-edit-extra');
-  if(extraInp) item.extra = extraInp.value.trim();
+  if(extraInp){
+    // Convert extra (temp) to base unit before saving
+    const extraUnit = extraInp.dataset.fieldUnit || '°C';
+    const rawExtra = extraInp.value.trim();
+    if(extraUnit === '°F' && rawExtra){
+      // Store in °C internally
+      item.extra = String(Math.round((_fieldConvert(rawExtra,'°F','°C','temp'))*10)/10);
+    } else {
+      item.extra = rawExtra;
+    }
+    item.extra_unit = extraUnit;
+  }
   const linkInp = drawer?.querySelector('.gw-edit-link');
   if(linkInp) item.link = linkInp.value.trim();
   item.fields = readDrawerFields(drawer);
@@ -7152,7 +7166,18 @@ function saveDrawer(cid, iid, btn){
   if(item.productId && newW !== item.w && item.w !== 0) item.wOverride = newW;
   item.w = newW;
   const extraInp = drawer.querySelector('.gw-edit-extra');
-  if(extraInp) item.extra = extraInp.value.trim();
+  if(extraInp){
+    // Convert extra (temp) to base unit before saving
+    const extraUnit = extraInp.dataset.fieldUnit || '°C';
+    const rawExtra = extraInp.value.trim();
+    if(extraUnit === '°F' && rawExtra){
+      // Store in °C internally
+      item.extra = String(Math.round((_fieldConvert(rawExtra,'°F','°C','temp'))*10)/10);
+    } else {
+      item.extra = rawExtra;
+    }
+    item.extra_unit = extraUnit;
+  }
   const linkInp = drawer.querySelector('.gw-edit-link');
   if(linkInp) item.link = linkInp.value.trim();
   item.fields = readDrawerFields(drawer);
@@ -8503,7 +8528,7 @@ function openAddItemModal(catId){
       <div class="gw-unified-name-wrap">
         <input class="gw-field-inp gw-unified-name-inp" id="gam-name-${iid}" type="text"
           placeholder="Item name…" autocomplete="new-password"
-          oninput="gearUnifiedSearch('${iid}',this.value)"/>
+          oninput="gearUnifiedSearch('${iid}',this.value)" autocomplete="off"/>
       </div>
       <button class="gw-find-product-btn" onclick="openFindExactFlow('${iid}')">
         + Want to find your exact product?
@@ -8516,7 +8541,7 @@ function openAddItemModal(catId){
       ${extraLabel ? `
       <div class="gw-field">
         <span class="gw-field-lbl">${escH(extraLabel)}</span>
-        <input class="gw-field-inp mono" id="gam-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off"/>
+        <input class="gw-field-inp mono" id="gam-extra-${iid}" type="text" placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off" autocomplete="off"/>
       </div>` : ''}
       ${buildDrawerFieldsSection({id:'modal-'+iid, fields:{}})}
       <div class="gw-confirm-row" style="margin-top:0.6rem;">
@@ -9205,7 +9230,7 @@ async function saveToFile(){
         {id:'summer', name:'Summer Fast', icon:'☀️'}
       ],
       cats: [
-        {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', hasExtra:true, extraLabel:'Temp / R-Value', items:[], packs:['winter','shoulder','summer']},
+        {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', hasExtra:true, extraLabel:'Temp Rating', items:[], packs:['winter','shoulder','summer']},
         {id:'pack', name:'Pack', icon:'🎒', color:'#8b7355', hasExtra:true, extraLabel:'Volume (L)', items:[], packs:['winter','shoulder','summer']},
         {id:'cooking', name:'Cooking & Water', icon:'🔥', color:'#c85a2a', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']},
         {id:'clothes', name:'Clothes', icon:'🧥', color:'#7ba7bc', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']},
@@ -15139,7 +15164,7 @@ function buildDrawerFieldsSection(item){
     return `
     <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
       <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
-      <input id="${inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" data-field-unit="${escH(storedUnit)}" data-default-unit="${escH(baseUnit||def.unit||'')}" type="${def.type==='number'?'number':'text'}" value="${escH(String(displayVal))}" placeholder="${escH(storedUnit||def.unit||'')}"/>
+      <input id="${inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" data-field-unit="${escH(storedUnit)}" data-default-unit="${escH(baseUnit||def.unit||'')}" type="${def.type==='number'?'number':'text'}" value="${escH(String(displayVal))}" placeholder="${escH(storedUnit||def.unit||'')}" autocomplete="off"/>
       ${unitSel}
       <button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${item.id}','${def.key}',this)" title="Remove">✕</button>
     </div>`;
@@ -15195,7 +15220,7 @@ function drawerToggleField(iid,fieldKey,chipBtn){
   const activeFields=section.querySelector('.gw-active-fields');
   const def=getFieldDefs().find(d=>d.key===fieldKey);if(!def)return;
   if(isActive){activeFields.querySelector(`[data-field-key="${fieldKey}"]`)?.remove();chipBtn.classList.remove('active');}
-  else{chipBtn.classList.add('active');const row=document.createElement('div');row.className='gw-field gw-active-field-row';row.dataset.fieldKey=fieldKey;const _inpId=`fld-${iid}-${fieldKey}`;const _unitSel=def.unitOptions?_fieldUnitSel(_inpId,def,def.unit||def.unitOptions[0]):'';const _defUnit=def.unit||(def.unitOptions&&def.unitOptions[0])||'';row.innerHTML=`<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${_inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${fieldKey}" data-field-unit="${escH(_defUnit)}" data-default-unit="${escH(_defUnit)}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/>${_unitSel}<button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${fieldKey}',this)">✕</button>`;activeFields.appendChild(row);row.querySelector('input')?.focus();}
+  else{chipBtn.classList.add('active');const row=document.createElement('div');row.className='gw-field gw-active-field-row';row.dataset.fieldKey=fieldKey;const _inpId=`fld-${iid}-${fieldKey}`;const _unitSel=def.unitOptions?_fieldUnitSel(_inpId,def,def.unit||def.unitOptions[0]):'';const _defUnit=def.unit||(def.unitOptions&&def.unitOptions[0])||'';row.innerHTML=`<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${_inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${fieldKey}" data-field-unit="${escH(_defUnit)}" data-default-unit="${escH(_defUnit)}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}" autocomplete="off"/>${_unitSel}<button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${fieldKey}',this)">✕</button>`;activeFields.appendChild(row);row.querySelector('input')?.focus();}
 }
 function drawerRemoveField(iid,fieldKey,btn){btn.closest('.gw-active-field-row')?.remove();btn.closest('.gw-fields-section')?.querySelector(`.gw-field-chip[onclick*="'${fieldKey}'"]`)?.classList.remove('active');}
 function drawerShowNewFieldForm(btn){const form=btn.closest('.gw-fields-section').querySelector('.gw-new-field-form');if(form){form.classList.add('open');form.querySelector('input')?.focus();}}
@@ -15215,7 +15240,7 @@ function drawerSaveNewField(iid,btn){
   chipsEl.insertBefore(newChip,customBtn);
   const activeFields=section.querySelector('.gw-active-fields');
   const row=document.createElement('div');row.className='gw-field gw-active-field-row';row.dataset.fieldKey=key;
-  row.innerHTML=`<span class="gw-field-lbl">🏷️ ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp" data-field-key="${key}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${key}',this)">✕</button>`;
+  row.innerHTML=`<span class="gw-field-lbl">🏷️ ${escH(def.label)}</span><input class="gw-field-inp gw-field-val-inp" data-field-key="${key}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}" autocomplete="off"/><button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${iid}','${key}',this)">✕</button>`;
   activeFields.appendChild(row);row.querySelector('input')?.focus();
 }
 
@@ -15280,6 +15305,41 @@ async function gearProductSubmitEdit(productId, field, oldVal, newVal){
 // ── Find Exact Product — 2-step flow ────────────────────────────────────────
 // Step 1: collect name/brand/URL, optionally scrape
 // Step 2: full editable form pre-filled from scrape → saves item to GW + DB
+function fexLiveSearch(iid, val){
+  clearTimeout(window._fexSearchTimer);
+  const resultsEl = document.getElementById(`fex-results-${iid}`);
+  if(!resultsEl) return;
+  if(!val || val.length < 2){ resultsEl.style.display='none'; return; }
+  window._fexSearchTimer = setTimeout(async ()=>{
+    const results = await gearProductSearch(val);
+    if(!results.length){ resultsEl.style.display='none'; return; }
+    resultsEl.innerHTML = results.map(p=>`
+      <div class="gw-product-result" onclick="fexSelectProduct('${iid}','${p.id}',${JSON.stringify(escH(p.name))},${JSON.stringify(escH(p.brand||''))},${p.weight_g||0})">
+        <div class="gw-product-result-img">${p.image_url?`<img src="${escH(p.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;" onerror="this.parentElement.textContent='🎒'">`:'🎒'}</div>
+        <div class="gw-product-result-info">
+          <div class="gw-product-result-name">${escH(p.name)}${p.verified?'<span class="gw-verified-badge" title="Verified">✓</span>':''}</div>
+          <div class="gw-product-result-meta">${escH(p.brand||'')}${p.weight_g?` · ${p.weight_g}g`:''}</div>
+        </div>
+      </div>`).join('');
+    resultsEl.style.display = 'block';
+  }, 280);
+}
+
+function fexSelectProduct(iid, productId, name, brand, weight_g){
+  // Fill in the fex form fields with selected product
+  const nameInp  = document.getElementById(`fex-name-${iid}`);
+  const brandInp = document.getElementById(`fex-brand-${iid}`);
+  const wInp     = document.getElementById(`fex-weight-${iid}`);
+  if(nameInp)  nameInp.value  = name;
+  if(brandInp) brandInp.value = brand;
+  if(wInp && weight_g){ wInp.value = weight_g; }
+  document.getElementById(`fex-results-${iid}`)?.style && (document.getElementById(`fex-results-${iid}`).style.display='none');
+
+  // Store pending product selection so submitFindExact can link it directly instead of re-inserting
+  window._fexDirectLink = window._fexDirectLink || {};
+  window._fexDirectLink[iid] = productId;
+}
+
 function openFindExactFlow(iid){
   const resultsEl = document.getElementById(`gw-results-${iid}`);
   if(resultsEl) resultsEl.style.display = 'none';
@@ -15300,7 +15360,11 @@ function openFindExactFlow(iid){
       <p>Paste a link to the product page and we'll fill in the details automatically.</p>
       <div class="find-exact-row">
         <div class="find-exact-label">Product name</div>
-        <input class="gw-field-inp" id="fex-name-${iid}" type="text" value="${escH(existingName)}" placeholder="e.g. MSR PocketRocket 2" autocomplete="off"/>
+        <div style="position:relative;flex:1;">
+          <input class="gw-field-inp" id="fex-name-${iid}" type="text" value="${escH(existingName)}" placeholder="e.g. MSR PocketRocket 2" autocomplete="off"
+            oninput="fexLiveSearch('${iid}',this.value)" style="width:100%;box-sizing:border-box;"/>
+          <div id="fex-results-${iid}" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:600;background:var(--paper);border:1.5px solid var(--lichen);border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(45,74,45,0.13);"></div>
+        </div>
       </div>
       <div class="find-exact-row">
         <div class="find-exact-label">Brand</div>
@@ -15403,14 +15467,23 @@ async function submitFindExact(iid, btn){
     await waitForSupabase();
     const sb = sbClient();
 
-    // Insert community product
-    const { data: inserted, error } = await sb.from('gear_products')
-      .insert([{ name, brand:brand||null, url:url||null, image_url:imgUrl||null,
-                 weight_g:weight||null, price:price||null, source:'community', verified:false }])
-      .select('id').single();
-    if(error) throw error;
+    // Check if user directly selected an existing product
+    const directProductId = (window._fexDirectLink||{})[iid];
+    let productId;
 
-    const productId = inserted.id;
+    if(directProductId){
+      // Use existing product directly — no insert needed
+      productId = directProductId;
+      delete (window._fexDirectLink||{})[iid];
+    } else {
+      // Insert new community product
+      const { data: inserted, error } = await sb.from('gear_products')
+        .insert([{ name, brand:brand||null, url:url||null, image_url:imgUrl||null,
+                   weight_g:weight||null, price:price||null, source:'community', verified:false }])
+        .select('id').single();
+      if(error) throw error;
+      productId = inserted.id;
+    }
     const isModal = !!document.getElementById(`gam-name-${iid}`);
 
     if(isModal){
@@ -15689,6 +15762,24 @@ function _gearDrawerRenderLinked(drawer, iid, product){
     <button class="gw-product-unlink-btn" onclick="gearDrawerUnlink('${iid}')" title="Unlink product">✕</button>`;
   searchWrap.parentNode.insertBefore(div, searchWrap);
   searchWrap.style.display='none'; // hide search box when linked
+  // Show name input back as editable (override mode)
+  const drawerNameInp = drawer?.querySelector('.gw-edit-name');
+  if(drawerNameInp){
+    drawerNameInp.closest('.gw-unified-name-wrap') && (drawerNameInp.closest('.gw-unified-name-wrap').style.display='');
+    // Replace the oninput handler — no longer does search, just marks local override
+    drawerNameInp.oninput = null;
+    drawerNameInp.removeAttribute('oninput');
+    drawerNameInp.style.borderStyle = 'dashed';
+    drawerNameInp.title = 'Local name — only visible to you. Product DB name shown to others.';
+    // Add override indicator if not present
+    if(!drawer.querySelector('.gw-local-override-note')){
+      const note = document.createElement('div');
+      note.className = 'gw-local-override-note';
+      note.style.cssText = 'font-family:Space Mono,monospace;font-size:0.38rem;color:var(--stone);margin-top:2px;opacity:0.7;';
+      note.textContent = 'Local edits only — others see DB values';
+      drawerNameInp.parentNode.insertBefore(note, drawerNameInp.nextSibling);
+    }
+  }
 }
 
 function gearDrawerUnlink(iid){
@@ -15750,9 +15841,18 @@ function buildNewItemDrawer(item, cat, srcCatId){
     </div>
     ${extraLabel ? `
     <div class="gw-field">
-      <span class="gw-field-lbl">${extraLabel.split('/')[0].trim()}</span>
-      <input class="gw-field-inp mono gw-edit-extra" type="text" value="${escH(item.extra||'')}"
-        placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}"/>
+      <span class="gw-field-lbl">${escH(extraLabel)}</span>
+      <input class="gw-field-inp mono gw-edit-extra" id="extra-inp-${item.id}" type="${cat.id==='sleep'?'number':'text'}"
+        value="${escH(item.extra||'')}"
+        data-field-unit="${escH(item.extra_unit||'°C')}"
+        placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off"/>
+      ${cat.id==='sleep' ? (() => {
+        const d={key:'temp',unitOptions:['°C','°F'],unit:'°C'};
+        const active=item.extra_unit||'°C';
+        return '<div class="weight-unit-sel" id="fus-extra-inp-'+item.id+'" data-field-key="temp">'+
+          ['°C','°F'].map(u=>'<button type="button" onclick="fieldUnitSwitch('extra-inp-'+item.id+'','temp',this)" class="'+(u===active?'active':'')+'">'+(u==='°C'?'°C':'°F')+'</button>').join('')+
+          '</div>';
+      })() : ''}
     </div>` : ''}
     ${buildDrawerFieldsSection(item)}
     <hr class="gw-drawer-divider"/>
@@ -16275,7 +16375,7 @@ function adminToggleField(pid, fieldKey, chipBtn){
     const _aInpId = `adm-fld-${pid}-${fieldKey}`;
     const _aDefUnit = def.unit||(def.unitOptions&&def.unitOptions[0])||'';
     const _aUnitSel = def.unitOptions ? _fieldUnitSel(_aInpId, def, _aDefUnit) : '';
-    row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${_aInpId}" class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${fieldKey}" data-field-unit="${escH(_aDefUnit)}" data-default-unit="${escH(_aDefUnit)}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}"/>${_aUnitSel}<button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${fieldKey}\']')?.classList.remove('active')">✕</button>`;
+    row.innerHTML = `<span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span><input id="${_aInpId}" class="gw-field-inp gw-field-val-inp adm-field-val" data-field-key="${fieldKey}" data-field-unit="${escH(_aDefUnit)}" data-default-unit="${escH(_aDefUnit)}" type="${def.type==='number'?'number':'text'}" value="" placeholder="${escH(def.unit||'')}" autocomplete="off"/>${_aUnitSel}<button type="button" class="gw-active-field-remove" onclick="this.closest('.gw-active-field-row').remove();this.closest('.gw-fields-section')?.querySelector('.gw-field-chip[onclick*=\'${fieldKey}\']')?.classList.remove('active')">✕</button>`;
     activeFields.appendChild(row);
     row.querySelector('input')?.focus();
   }
