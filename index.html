@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.55 — Gear Organizer</title>
+<title>BaseCamp v8.56 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2505,7 +2505,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.55</div>
+      <div class="logo-sub">Gear Organizer · v8.56</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7973,18 +7973,27 @@ function _getThermalRating(){
   };
 
   // Level 2: high confidence
+  // Adjustments are in °C and represent how much colder you can handle.
+  // Negative adj = gear/conditions help you stay warm = you can handle colder temps = lower rating number.
+  // Positive adj = worse conditions = you need warmer temps = higher (less negative) rating number.
   let adj = 0;
-  if(ti.shelter==='tent') adj+=5; else if(ti.shelter==='bivy') adj+=2;
-  if(ti.baseLayer) adj+=4;
+  // Shelter: tent keeps you warm → you can handle colder → lower temp rating
+  if(ti.shelter==='tent') adj-=5; else if(ti.shelter==='bivy') adj-=2; // open = 0 penalty
+  // Base layer: extra warmth → lower temp rating
+  if(ti.baseLayer) adj-=4;
+  // Liner: extra warmth → lower temp rating
   if(ti.liner){
-    // Use liner's own temp rating if available
     const linerTemp = liners.map(l=>l.extra?parseFloat(l.extra):null).find(t=>t!==null&&!isNaN(t));
-    adj += linerTemp!=null ? Math.abs(Math.min(0,linerTemp)) : 3;
+    adj -= linerTemp!=null ? Math.abs(Math.min(0,linerTemp)) : 3;
   }
-  if(ti.wind==='medium') adj-=3; else if(ti.wind==='high') adj-=8;
-  if(ti.humidity==='damp') adj-=2; else if(ti.humidity==='wet') adj-=4;
-  if(ti.coldSleeper) adj-=3; else if(ti.warmSleeper) adj+=3;
-  if(ti.bigMeal) adj+=2;
+  // Wind: more wind = worse conditions = higher (warmer) rating needed
+  if(ti.wind==='medium') adj+=3; else if(ti.wind==='high') adj+=8; // low = 0
+  // Humidity: wetter = worse conditions = higher rating needed
+  if(ti.humidity==='damp') adj+=2; else if(ti.humidity==='wet') adj+=4; // dry = 0
+  // Sleeper type: cold sleeper needs warmer conditions = higher rating
+  if(ti.sleepType==='cold') adj+=3; else if(ti.sleepType==='warm') adj-=3; // normal = 0
+  // Big meal: slight warmth boost
+  if(ti.bigMeal) adj-=2;
 
   const level2Temp = Math.round(bagTempC + padAdj + adj);
   return {
