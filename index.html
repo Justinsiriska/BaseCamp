@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.43 — Gear Organizer</title>
+<title>BaseCamp v8.44 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -95,7 +95,7 @@ html.dark .pack-item-drag-handle{
 }
 .pack-item-drag-handle:hover{opacity:0.7;}
 .pack-item-drag-handle:active{cursor:grabbing;}
-.pack-item-row{border-bottom-color:rgba(55,85,40,0.3);}
+.pack-item-row{border-bottom-color:rgba(55,85,40,0.3);overflow:hidden;}
 html.dark .pack-item-name{color:#b8dea8;}
 html.dark .pack-item-extra{background:rgba(15,25,12,0.8);color:#7a9f6a;border:1px solid rgba(55,85,40,0.4);}
 html.dark .item-weight-display{color:#8ac878;}
@@ -897,11 +897,11 @@ html.dark .cat-head{border-bottom-color:rgba(55,85,40,0.28);}
   border-bottom:1px solid rgba(184,201,163,0.15);
   gap:0.4rem;
   cursor:grab;
-}
+overflow:hidden;}
 .pack-item-row:active{cursor:grabbing;}
 .pack-item-row:last-child{border-bottom:none;}
 .pack-item-row:hover{background:rgba(184,201,163,0.07);border-radius:5px;}
-.pack-item-left{display:flex;align-items:center;gap:0.35rem;min-width:0;flex:1;}
+.pack-item-left{display:flex;align-items:center;gap:0.35rem;min-width:0;flex:1;overflow:hidden;}
 .pack-item-name{
   font-family:'Nunito',sans-serif;font-size:0.78rem;color:var(--bark);
   padding:1px 3px;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -2478,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.43</div>
+      <div class="logo-sub">Gear Organizer · v8.44</div>
     </div>
   </div>
   <div class="nav-tabs">
