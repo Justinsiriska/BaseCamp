@@ -15567,7 +15567,7 @@ function buildNewItemDrawer(item, cat, srcCatId){
       <input class="gw-field-inp mono gw-edit-w" id="wInp-${item.id}" type="number" min="0"
         value="${wVal}" placeholder="0" data-weight-unit="${wUnit}"/>
       ${_weightUnitSel('wInp-'+item.id, wUnit)}
-      ${item.wOverride!=null?'<span class="gw-override-badge" title="You've entered a custom weight — differs from the product spec">✏︎ custom weight</span>':''}
+      ${item.wOverride!=null?'<span class="gw-override-badge" title="Custom weight \u2014 differs from product spec">\u270e custom weight</span>':''}
     </div>
     ${extraLabel ? `
     <div class="gw-field">
