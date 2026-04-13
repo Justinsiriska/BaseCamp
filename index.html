@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.14 — Gear Organizer</title>
+<title>BaseCamp v8.16 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -244,13 +244,14 @@ html.dark .admin-page-title{color:#a8d890;}
 .gw-unified-name-inp{width:100%;font-size:0.82rem;}
 .gw-unified-name-wrap{position:static;}
 .gw-unified-name-wrap .gw-product-results{
-  position:fixed;
-  width:260px;
+  position:absolute;
+  top:100%;left:0;right:0;
   z-index:500;
   background:var(--paper);
   border:1.5px solid var(--lichen);
-  border-radius:10px;
-  max-height:320px;
+  border-top:none;
+  border-radius:0 0 10px 10px;
+  max-height:220px;
   overflow-y:auto;
   box-shadow:0 6px 20px rgba(45,74,45,0.13);
 }
@@ -2472,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.14</div>
+      <div class="logo-sub">Gear Organizer · v8.16</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7177,15 +7178,25 @@ function discardDrawer(cid, iid){
   if(!item) return;
 
   if(item._new){
-    // If user typed a name, auto-save instead of discarding
-    const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
-    const name = (wrap?.querySelector('.gw-edit-name')?.value||'').trim();
-    if(name){ autoSaveDrawer(cid, iid); return; }
+    // New item with nothing typed — just remove it
     cat.items = cat.items.filter(i=>i.id!==iid);
     renderAll();
   } else {
-    // Existing item — auto-save any changes then close
-    autoSaveDrawer(cid, iid);
+    // Existing item — close without saving, restore original values
+    const wrap = document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
+    if(wrap){
+      wrap.classList.remove('open');
+      // Restore drawer inputs to current saved values
+      const drawer = wrap.querySelector('.gw-drawer');
+      if(drawer){
+        const nameInp = drawer.querySelector('.gw-edit-name');
+        const wInp = drawer.querySelector('.gw-edit-w');
+        const extraInp = drawer.querySelector('.gw-edit-extra');
+        if(nameInp) nameInp.value = item.name||'';
+        if(wInp) wInp.value = item.w ? displayWVal(item.w) : '';
+        if(extraInp) extraInp.value = item.extra||'';
+      }
+    }
   }
 }
 
@@ -15083,7 +15094,7 @@ function _fieldBaseUnit(fieldKey){
 // ── Custom item data fields ──
 const PRESET_FIELDS=[
   {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'number', unit:'°C',  unitOptions:['°C','°F'],       preset:true},
-  {key:'rvalue',  label:'R-Value',     icon:'🔲', type:'number', unit:'',    unitOptions:null,               preset:true},
+  {key:'rvalue',  label:'R-Value',     icon:'Ⓡ',  type:'number', unit:'',    unitOptions:null,               preset:true},
   {key:'length',  label:'Length',      icon:'📏', type:'number', unit:'cm',  unitOptions:['cm','in','ft'],   preset:true},
   {key:'volume',  label:'Volume',      icon:'📦', type:'number', unit:'ml',  unitOptions:['ml','L','fl oz'], preset:true},
   {key:'battery', label:'Battery Life',icon:'🔋', type:'number', unit:'hrs', unitOptions:null,               preset:true},
@@ -15095,14 +15106,21 @@ function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>
 function renderItemFieldPills(item){
   if(!item.fields||!Object.keys(item.fields).length)return'';
   const defs=getFieldDefs();
-  return Object.entries(item.fields).map(([key,val])=>{
+  return Object.entries(item.fields).filter(([key])=>!key.endsWith('_unit')).map(([key,val])=>{
     if(val===''||val===null||val===undefined)return'';
     const def=defs.find(d=>d.key===key)||{icon:'🏷️',label:key,unit:''};
-    // Get the stored unit for this field if it exists
-    const unit = item.fields[key+'_unit'] || def.unit || '';
-    const displayVal = escH(String(val));
-    const displayUnit = escH(String(unit));
-    return`<span class="item-field-pill" title="${escH(def.label)}: ${displayVal}${displayUnit}"><span class="item-field-pill-icon">${def.icon}</span><span class="item-field-pill-val">${displayVal}</span>${displayUnit?`<span class="item-field-pill-unit">${displayUnit}</span>`:''}</span>`;
+    // Get stored display unit; convert base value to display unit
+    const storedUnit = item.fields[key+'_unit'] || def.unit || '';
+    const baseUnit   = _fieldBaseUnit(key);
+    // Convert from base unit to display unit for rendering
+    let displayVal = val;
+    if(def.unitOptions && baseUnit && storedUnit && baseUnit !== storedUnit){
+      const converted = _fieldConvert(String(val), baseUnit, storedUnit, key);
+      displayVal = converted;
+    }
+    // For rvalue — no unit suffix at all
+    const displayUnit = key==='rvalue' ? '' : escH(storedUnit);
+    return`<span class="item-field-pill" title="${escH(def.label)}: ${displayVal}${storedUnit}"><span class="item-field-pill-icon">${def.icon}</span><span class="item-field-pill-val">${escH(String(displayVal))}</span>${displayUnit?`<span class="item-field-pill-unit">${displayUnit}</span>`:''}</span>`;
   }).join('');
 }
 function buildDrawerFieldsSection(item){
@@ -15110,16 +15128,22 @@ function buildDrawerFieldsSection(item){
   // Active field rows — shown inline like Name/Weight
   const activeRows=defs.filter(def=>itemFields[def.key]!==undefined&&itemFields[def.key]!=='').map(def=>{
     const storedUnit = itemFields[def.key+'_unit'] || def.unit || (def.unitOptions&&def.unitOptions[0]) || '';
+    const baseUnit   = _fieldBaseUnit(def.key);
+    // Show value in display unit, not base unit
+    let displayVal = itemFields[def.key];
+    if(def.unitOptions && baseUnit && storedUnit && baseUnit !== storedUnit){
+      displayVal = _fieldConvert(String(displayVal), baseUnit, storedUnit, def.key);
+    }
     const inpId = `fld-${item.id}-${def.key}`;
     const unitSel = def.unitOptions ? _fieldUnitSel(inpId, def, storedUnit) : '';
     return `
     <div class="gw-field gw-active-field-row" data-field-key="${def.key}">
       <span class="gw-field-lbl">${def.icon} ${escH(def.label)}</span>
-      <input id="${inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" data-field-unit="${escH(storedUnit)}" data-default-unit="${escH(def.unit||'')}" type="${def.type==='number'?'number':'text'}" value="${escH(String(itemFields[def.key]))}" placeholder="${escH(def.unit||'')}"/>
+      <input id="${inpId}" class="gw-field-inp gw-field-val-inp" data-field-key="${def.key}" data-field-unit="${escH(storedUnit)}" data-default-unit="${escH(baseUnit||def.unit||'')}" type="${def.type==='number'?'number':'text'}" value="${escH(String(displayVal))}" placeholder="${escH(storedUnit||def.unit||'')}"/>
       ${unitSel}
       <button type="button" class="gw-active-field-remove" onclick="drawerRemoveField('${item.id}','${def.key}',this)" title="Remove">✕</button>
     </div>`;
-  }).join('');
+  }).join('');;
   // Chips — all field options
   const chips=defs.map(def=>{
     const hasValue=itemFields[def.key]!==undefined&&itemFields[def.key]!=='';
@@ -15480,17 +15504,8 @@ function gearUnifiedSearch(iid, val){
       </div>
     </div>`;
     resultsEl.innerHTML = rows + findRow;
-    // Inside add modal: CSS handles positioning (absolute below input)
-    // For inline drawers: use fixed positioning to avoid clipping
-    const inModal = !!resultsEl.closest('.gw-add-modal');
-    if(!inModal){
-      const chip = resultsEl.closest('.gw-item-wrap')?.querySelector('.gw-item');
-      if(chip){
-        const r = chip.getBoundingClientRect();
-        resultsEl.style.top  = r.top + 'px';
-        resultsEl.style.left = (r.right + 8) + 'px';
-      }
-    }
+    // Modal: CSS positions below input. Inline drawer: absolute below input.
+    // No JS positioning needed — both handled by CSS now.
     resultsEl.style.display = 'block';
     // Position sibling panel if in add modal context
     if(typeof _positionAddResultsPanel === 'function'){
