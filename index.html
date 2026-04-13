@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.47 — Gear Organizer</title>
+<title>BaseCamp v8.48 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2478,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.47</div>
+      <div class="logo-sub">Gear Organizer · v8.48</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4405,7 +4405,6 @@ function renderPackPills(){
 }
 
 function addPackConfig(){
-  // Remove any existing modal
   document.getElementById('new-pack-modal-overlay')?.remove();
   const overlay = document.createElement('div');
   overlay.id = 'new-pack-modal-overlay';
@@ -4413,48 +4412,93 @@ function addPackConfig(){
   overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
 
   const EMOJIS = ['🎒','🏕️','☀️','❄️','🍂','🌿','🏔️','⛺','🌄','🥾','🧭','🪨','🌲','💧','🔥','⚡','🌙','🏞️','🗻','🌊','🦅','🐻','🦌','🌸','🍁'];
-  let selectedEmoji = '🎒';
+  const dupOptions = PACKS.map(p=>`<option value="${p.id}">${p.icon} ${escH(p.name)}</option>`).join('');
 
   overlay.innerHTML = `
-    <div style="background:var(--cream);border-radius:18px;padding:1.5rem 1.5rem 1.2rem;max-width:340px;width:calc(100vw - 2rem);box-shadow:0 16px 48px rgba(0,0,0,0.2);border:1.5px solid rgba(184,201,163,0.4);">
+    <div style="background:var(--cream);border-radius:18px;padding:1.4rem;max-width:360px;width:calc(100vw - 2rem);box-shadow:0 16px 48px rgba(0,0,0,0.2);border:1.5px solid rgba(184,201,163,0.4);">
       <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--forest);margin-bottom:1rem;">New Pack</div>
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.8rem;align-items:center;">
-        <button id="npm-emoji-btn" style="font-size:1.4rem;background:rgba(184,201,163,0.15);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;width:46px;height:46px;cursor:pointer;flex-shrink:0;">🎒</button>
+
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;align-items:center;">
+        <button id="npm-emoji-btn" style="font-size:1.3rem;background:rgba(184,201,163,0.15);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;width:42px;height:42px;cursor:pointer;flex-shrink:0;line-height:1;">🎒</button>
         <input id="npm-name" type="text" value="New Pack" placeholder="Pack name…"
-          style="flex:1;font-family:'Nunito',sans-serif;font-size:0.85rem;padding:0.5rem 0.7rem;border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;background:var(--paper);color:var(--bark);outline:none;"
+          style="flex:1;font-family:'Nunito',sans-serif;font-size:0.85rem;padding:0.45rem 0.7rem;border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;background:var(--paper);color:var(--bark);outline:none;"
           autocomplete="off"/>
       </div>
-      <div id="npm-emoji-grid" style="display:none;flex-wrap:wrap;gap:4px;margin-bottom:0.8rem;background:var(--paper);border:1.5px solid rgba(184,201,163,0.3);border-radius:10px;padding:0.5rem;">
-        ${EMOJIS.map(e=>`<button onclick="document.getElementById('npm-emoji-btn').textContent='${e}';this.closest('#npm-emoji-grid').style.display='none';" style="font-size:1.2rem;width:36px;height:36px;background:transparent;border:none;cursor:pointer;border-radius:6px;" onmouseover="this.style.background='rgba(184,201,163,0.2)'" onmouseout="this.style.background='transparent'">${e}</button>`).join('')}
+
+      <div id="npm-emoji-grid" style="display:none;flex-wrap:wrap;gap:3px;margin-bottom:0.75rem;background:var(--paper);border:1.5px solid rgba(184,201,163,0.3);border-radius:10px;padding:0.45rem;">
+        ${EMOJIS.map(e=>`<button data-e="${e}" style="font-size:1.15rem;width:34px;height:34px;background:transparent;border:none;cursor:pointer;border-radius:6px;">${e}</button>`).join('')}
       </div>
-      <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
-        <button onclick="document.getElementById('new-pack-modal-overlay').remove()" style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;padding:0.4rem 1rem;border-radius:20px;border:1.5px solid rgba(184,201,163,0.5);background:transparent;cursor:pointer;color:var(--stone);">Cancel</button>
-        <button id="npm-confirm" style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:800;padding:0.4rem 1.2rem;border-radius:20px;border:none;background:var(--forest);color:#fff;cursor:pointer;">Create Pack</button>
+
+      ${PACKS.length > 0 ? `
+      <div style="margin-bottom:0.75rem;">
+        <div style="font-family:'Space Mono',monospace;font-size:0.45rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.3rem;">Duplicate from existing pack</div>
+        <select id="npm-dup" style="width:100%;font-family:'Nunito',sans-serif;font-size:0.78rem;padding:0.4rem 0.6rem;border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;background:var(--paper);color:var(--bark);cursor:pointer;outline:none;">
+          <option value="">— start blank —</option>
+          ${dupOptions}
+        </select>
+      </div>` : ''}
+
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.25rem;">
+        <button onclick="document.getElementById('new-pack-modal-overlay').remove()"
+          style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;padding:0.42rem 1rem;border-radius:20px;border:1.5px solid rgba(184,201,163,0.5);background:transparent;cursor:pointer;color:var(--stone);white-space:nowrap;">
+          Cancel
+        </button>
+        <button id="npm-confirm"
+          style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:800;padding:0.42rem 1.2rem;border-radius:20px;border:none;background:var(--forest);color:#fff;cursor:pointer;white-space:nowrap;">
+          Create Pack
+        </button>
       </div>
     </div>`;
 
   document.body.appendChild(overlay);
 
-  // Wire up emoji picker toggle
+  // Emoji picker toggle
   document.getElementById('npm-emoji-btn').onclick = ()=>{
-    const grid = document.getElementById('npm-emoji-grid');
-    grid.style.display = grid.style.display === 'none' ? 'flex' : 'none';
+    const g = document.getElementById('npm-emoji-grid');
+    g.style.display = g.style.display === 'none' ? 'flex' : 'none';
   };
+  document.getElementById('npm-emoji-grid').addEventListener('click', e=>{
+    const e2 = e.target.closest('[data-e]');
+    if(!e2) return;
+    document.getElementById('npm-emoji-btn').textContent = e2.dataset.e;
+    document.getElementById('npm-emoji-grid').style.display = 'none';
+  });
+  // Emoji hover
+  document.getElementById('npm-emoji-grid').querySelectorAll('button').forEach(b=>{
+    b.onmouseenter=()=>b.style.background='rgba(184,201,163,0.2)';
+    b.onmouseleave=()=>b.style.background='transparent';
+  });
 
-  // Wire up confirm
+  // Confirm
   document.getElementById('npm-confirm').onclick = ()=>{
     const name = document.getElementById('npm-name').value.trim();
     const icon = document.getElementById('npm-emoji-btn').textContent.trim();
     if(!name) return;
     const id = 'pack_'+Date.now();
+    const dupId = document.getElementById('npm-dup')?.value;
     PACKS.push({id, name, icon});
+    if(dupId){
+      // Copy all items from the source pack into the new pack
+      CATS.forEach(cat=>{
+        cat.items.forEach(item=>{
+          if(item.s && item.s.includes(dupId)){
+            if(!item.s.includes(id)) item.s.push(id);
+          }
+        });
+      });
+      FOOD_ITEMS.forEach(item=>{
+        if(item.s && item.s.includes(dupId)){
+          if(!item.s.includes(id)) item.s.push(id);
+        }
+      });
+    }
     setSeason(id, null);
     overlay.remove();
   };
 
-  // Enter key submits
   document.getElementById('npm-name').addEventListener('keydown', e=>{
     if(e.key==='Enter') document.getElementById('npm-confirm').click();
+    if(e.key==='Escape') overlay.remove();
   });
 
   setTimeout(()=>{ document.getElementById('npm-name')?.select(); }, 50);
