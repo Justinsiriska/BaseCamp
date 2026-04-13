@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.48 — Gear Organizer</title>
+<title>BaseCamp v8.49 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2478,7 +2478,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.48</div>
+      <div class="logo-sub">Gear Organizer · v8.49</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3800,7 +3800,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <!-- Trip name -->
       <div>
         <label style="font-family:'Space Mono',monospace;font-size:0.52rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);display:block;margin-bottom:0.3rem;">Trip Name <span style="color:var(--ember);">*</span></label>
-        <input class="gw-field-inp" id="new-trip-name" type="text" placeholder="e.g. &quot;July 4 — Mt Washington&quot;" style="width:100%;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('new-trip-location').focus()">
+        <input class="gw-field-inp" id="new-trip-name" type="text" placeholder="e.g. &quot;July 4 — Mt Washington&quot;" style="width:100%;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('new-trip-location').focus()" maxlength="60">
       </div>
 
       <!-- Location + Dates side by side -->
@@ -4293,7 +4293,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <div class="cat-edit-title">✏️ Edit Category</div>
     <div class="cat-edit-row">
       <div class="cat-edit-lbl">Name</div>
-      <input class="cat-edit-inp" id="ce-name" type="text" placeholder="Category name">
+      <input class="cat-edit-inp" id="ce-name" type="text" placeholder="Category name" maxlength="30">
     </div>
     <div class="cat-edit-row">
       <div class="cat-edit-lbl">Icon</div>
@@ -4523,6 +4523,7 @@ function startRenamePack(packId, pillEl){
   const inp=document.createElement('input');
   inp.className='pack-rename-input';
   inp.value=pack.name;
+  inp.maxLength=LIMITS.PACK_NAME;
   inp.style.width=Math.max(60, pack.name.length*9)+'px';
   // Hide the edit button temporarily
   const editBtn=pillEl.querySelector('.s-pill-edit');
@@ -4579,6 +4580,38 @@ const PD={
   seasonTimer:null
 };
 const DELETED=[];    // [{id,name,w,extra,link,s,catId,catName,catIcon,deletedAt}, ...]
+
+// ================================================================
+// INPUT LIMITS & VALIDATION
+// ================================================================
+const LIMITS = {
+  ITEM_NAME:     60,
+  ITEM_EXTRA:    80,
+  CAT_NAME:      30,
+  PACK_NAME:     40,
+  TRIP_NAME:     60,
+  TRIP_LOCATION: 60,
+  BIO:          160,
+  PRODUCT_NAME:  80,
+  BRAND_NAME:    40,
+  WEIGHT_MAX:  99999,
+  WEIGHT_MIN:      0,
+  VOLUME_MAX:  99999,
+  RVALUE_MAX:     20,
+  TEMP_MIN_C:    -60,
+  TEMP_MAX_C:     60,
+  LENGTH_MAX:    999,
+  BATTERY_MAX:   999,
+  DAYS_MAX:      365,
+  DAYS_MIN:        1,
+  CATS_MAX:       20,
+  ITEMS_PER_CAT: 100,
+  PACKS_MAX:      20,
+  TRIP_MEMBERS:   12,
+};
+function _limitVal(str, max){ return typeof str==='string' ? str.slice(0,max) : str; }
+function _validateNum(val, min, max){ const n=parseFloat(val); if(isNaN(n)) return null; return Math.min(max,Math.max(min,n)); }
+
 function uid(){return Math.random().toString(36).slice(2,9);}
 
 // ============================================================
@@ -5841,7 +5874,8 @@ function profileStartBioEdit(){
   inp.placeholder = 'Tell your crew about yourself…';
   bioEl.replaceWith(inp);
   inp.focus();
-  const commit = ()=>{ MY_PROFILE.bio = inp.value.trim(); saveProfile(); renderCrewPage(); };
+  inp.maxLength = LIMITS.BIO;
+  const commit = ()=>{ MY_PROFILE.bio = _limitVal(inp.value.trim(), LIMITS.BIO); saveProfile(); renderCrewPage(); };
   inp.addEventListener('blur', commit);
   inp.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); inp.blur(); }});
 }
@@ -12684,8 +12718,7 @@ function openTripArchive(){
 let _ntDays = null;
 
 function ntAdjDays(delta){
-  _ntDays = Math.max(0.5, (_ntDays||0) + delta*0.5);
-  // Round to nearest 0.5
+  _ntDays = Math.max(0.5, Math.min(LIMITS.DAYS_MAX, (_ntDays||0) + delta*0.5));
   _ntDays = Math.round(_ntDays*2)/2;
   const label = _ntDays === 0.5 ? '½ day' : (_ntDays % 1 !== 0 ? Math.floor(_ntDays)+'½ days' : _ntDays+' day'+(_ntDays!==1?'s':''));
   document.getElementById('new-trip-days-val').textContent = label;
@@ -15302,7 +15335,16 @@ function readDrawerFields(drawer){
         // store display unit so we can convert back when reopening
         fields[key+'_unit']=unit;
       } else {
-        fields[key]=isNaN(parseFloat(val))?val:parseFloat(val)||val;
+        // Clamp numeric fields to safe limits
+      let numVal = isNaN(parseFloat(val)) ? val : parseFloat(val)||val;
+      if(typeof numVal==='number'){
+        if(key==='rvalue') numVal=_validateNum(numVal,0,LIMITS.RVALUE_MAX)??numVal;
+        else if(key==='length') numVal=_validateNum(numVal,0,LIMITS.LENGTH_MAX)??numVal;
+        else if(key==='volume') numVal=_validateNum(numVal,0,LIMITS.VOLUME_MAX)??numVal;
+        else if(key==='battery') numVal=_validateNum(numVal,0,LIMITS.BATTERY_MAX)??numVal;
+        else if(key==='temp') numVal=_validateNum(numVal,LIMITS.TEMP_MIN_C,LIMITS.TEMP_MAX_C)??numVal;
+      }
+      fields[key]=numVal;
       }
     }
   });
