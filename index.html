@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.22 — Gear Organizer</title>
+<title>BaseCamp v8.25 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -663,7 +663,7 @@ body.dragging-active, body.dragging-active *{
 .gw-item:hover{opacity:1;border-color:var(--lichen);background:var(--cream);transform:translateX(-1px);box-shadow:2px 2px 8px var(--shadow);}
 .gw-item.in-season{opacity:1;background:rgba(184,201,163,0.18);border-color:rgba(184,201,163,0.5);}
 .gw-item.dragging-wall{opacity:0.35;transform:scale(0.96);}
-.gw-item-left{display:flex;align-items:center;gap:0.35rem;min-width:0;flex:1;}
+.gw-item-left{display:flex;align-items:center;gap:0.3rem;min-width:0;flex:1;flex-wrap:wrap;}
 .gw-item-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .gw-item-name{font-size:0.72rem;font-weight:600;color:var(--bark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .gw-item-extra{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--stone);}
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.22</div>
+      <div class="logo-sub">Gear Organizer · v8.25</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8292,13 +8292,11 @@ function renderGearWall(){
         chip.title=inSeason?`In your ${season} pack`:`Not in ${season} · click ⊕ to add`;
         chip.innerHTML=`
           <div class="gw-drag-handle" title="Drag to add/remove from pack">⠿</div>
-          <div class="gw-item-left" style="${renderItemFieldPills(item)?'flex-direction:column;align-items:flex-start;gap:1px':''}">
-            <div style="display:flex;align-items:center;gap:4px;">
-            <div class="gw-item-dot" style="background:${cat.color}"></div>
+          <div class="gw-item-left">
+            <div class="gw-item-dot" style="background:${cat.color};flex-shrink:0;"></div>
             <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId && (item._localVerified || _isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
-            ${extraTag}</div>
-            </div>
-            ${renderItemFieldPills(item)?`<div class="gw-item-pills">${renderItemFieldPills(item)}</div>`:''}
+            ${extraTag}
+            ${renderItemFieldPills(item)}
           </div>
           <div class="gw-item-right">
             <span class="gw-item-weight" ${item.wOverride!=null?'title="Custom weight — differs from product spec" style="text-decoration:underline dotted;cursor:help;"':''}>${dw(item.w)}${item.wOverride!=null?'<span style="font-size:0.55em;opacity:0.6;margin-left:2px;">✏</span>':''}</span>
@@ -8356,7 +8354,6 @@ function renderGearWall(){
           ${buildNewItemDrawer(item, cat, srcCatId)}
         `;
         // If item already linked to a product, load the banner async
-        if(item.productId) gearDrawerLoadLinked(item.id, item.productId);
 
         // Store snapshot on the drawer element for discard
         drawer._orig = _orig;
@@ -8404,13 +8401,11 @@ function renderGearWall(){
       chip.className=`gw-item${inSeason?' in-season':''}`;
       const ucExtraTag = item.extra ? `<span class="gw-item-extra">${escH(String(item.extra))}</span>` : '';
       chip.innerHTML=`<div class="gw-drag-handle">⠿</div>
-        <div class="gw-item-left" style="${renderItemFieldPills(item)?'flex-direction:column;align-items:flex-start;gap:1px':''}">
-          <div style="display:flex;align-items:center;gap:4px;">
-            <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
-            <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
-            ${ucExtraTag}
-          </div>
-          ${renderItemFieldPills(item)?`<div class="gw-item-pills">${renderItemFieldPills(item)}</div>`:''}
+        <div class="gw-item-left">
+          <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
+          <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
+          ${ucExtraTag}
+          ${renderItemFieldPills(item)}
         </div>
         <div class="gw-item-right">
           <span class="gw-item-weight">${dw(item.w)}</span>
@@ -15816,16 +15811,12 @@ function buildNewItemDrawer(item, cat, srcCatId){
 
   // If already linked, show linked banner; else show unified name+search
   const topSection = item.productId
-    ? `<div class="gw-product-linked" id="gw-linked-${item.id}">
-        <div class="gw-product-linked-img">🎒</div>
-        <div class="gw-product-linked-info">
-          <div class="gw-product-linked-name" style="opacity:0.5">Loading product…</div>
-          <div class="gw-product-linked-meta"></div>
-        </div>
-        <button class="gw-product-unlink-btn" onclick="gearDrawerUnlink('${item.id}')" title="Unlink">✕</button>
-      </div>
-      <div class="gw-field" style="display:none">
-        <input class="gw-field-inp gw-edit-name" type="text" value="${escH(item.name)}" placeholder="Item name"/>
+    ? `<div class="gw-unified-name-wrap">
+        <input class="gw-field-inp gw-edit-name gw-unified-name-inp" type="text"
+          value="${escH(item.name)}" placeholder="Item name"
+          oninput="gearUnifiedSearch('${item.id}',this.value)"
+          autocomplete="new-password"/>
+        <div class="gw-product-results" id="gw-results-${item.id}" style="display:none"></div>
       </div>`
     : `<div class="gw-unified-name-wrap">
         <input class="gw-field-inp gw-edit-name gw-unified-name-inp" type="text"
@@ -15854,7 +15845,7 @@ function buildNewItemDrawer(item, cat, srcCatId){
         ${cat.id==='sleep' ? _fieldUnitSel('extra-inp-'+item.id, {key:'temp',unitOptions:['°C','°F'],unit:'°C'}, item.extra_unit||'°C') : ''}    </div>` : ''}
     ${buildDrawerFieldsSection(item)}
     <hr class="gw-drawer-divider"/>
-    ${(!item.productId || !(item._localVerified || _isProductVerified(item.productId))) ? `
+    ${!item.productId ? `
     <button class="gw-find-product-btn" onclick="openFindExactFlow('${item.id}')">
       + Find exact product in database
     </button>` : ''}
