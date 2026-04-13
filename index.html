@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.38 — Gear Organizer</title>
+<title>BaseCamp v8.39 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -171,10 +171,11 @@ html.dark .p1-breakdown{
 /* My packs — col 2, separate card */
 .p1-left{
   position:relative;
-  border-radius:22px;
+  border-radius:0 22px 22px 0;
   background:rgba(255,255,255,0.32);
   box-shadow:0 4px 28px rgba(45,74,45,0.09);
-  border:2px solid rgba(184,201,163,0.42);border-left:none;border-radius:0 22px 22px 0;
+  border:2px solid rgba(184,201,163,0.42);
+  border-left:none;
   padding:1.25rem 1.1rem 1.4rem;
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
@@ -701,9 +702,9 @@ html.dark .gw-item.in-season .gw-toggle-btn{color:#e07858;}
 }
 /* Primary glow — subtle left-column emphasis */
 .p1-left::before{
-  content:'';position:absolute;inset:-6px;border-radius:22px;
+  content:'';position:absolute;inset:-6px;border-radius:0 22px 22px 0;
   background:linear-gradient(145deg,rgba(45,74,45,0.08),rgba(74,103,65,0.04));
-  border:1.5px solid rgba(74,103,65,0.18);
+  border:none;
   pointer-events:none;z-index:0;
 }
 .p1-left > *{position:relative;z-index:1;}
@@ -2478,7 +2479,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.38</div>
+      <div class="logo-sub">Gear Organizer · v8.39</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5515,7 +5516,7 @@ function renderCrewPage(){
           nm.className = 'crew-pack-item-name';
           nm.textContent = item.name;
           // Add verified badge for crew view
-          if(item.productId && (item._localVerified || _isProductVerified(item.productId))){
+          if(item.productId){
             const badge = document.createElement('span');
             badge.className = 'pack-item-verified';
             badge.title = 'Verified product — tap to view';
@@ -6108,7 +6109,7 @@ function renderCats(){
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
-          <span class="pack-item-name">${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
+          <span class="pack-item-name">${escH(item.name)}${item.productId?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${buyBtn}${extraTag}${renderItemFieldPills(item)}
         </div>
@@ -6293,7 +6294,7 @@ function renderCats(){
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
-          <span class="pack-item-name">${escH(item.name)}${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
+          <span class="pack-item-name">${escH(item.name)}${item.productId?`<span class="pack-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`:''}</span>
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${renderItemFieldPills(item)}
         </div>
@@ -8225,7 +8226,7 @@ function renderGearWall(){
           <div class="gw-drag-handle" title="Drag to add/remove from pack">⠿</div>
           <div class="gw-item-left">
             <div class="gw-item-dot" style="background:${cat.color};flex-shrink:0;"></div>
-            <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId && (item._localVerified || _isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
+            <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${item.productId?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
             ${extraTag}
           </div>
           <div class="gw-item-right">
@@ -8334,7 +8335,7 @@ function renderGearWall(){
       chip.innerHTML=`<div class="gw-drag-handle">⠿</div>
         <div class="gw-item-left">
           <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
-          <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
+          <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${item.productId?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
           ${ucExtraTag}
         </div>
         <div class="gw-item-right">
