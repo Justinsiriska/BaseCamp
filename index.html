@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.20 — Gear Organizer</title>
+<title>BaseCamp v8.22 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.20</div>
+      <div class="logo-sub">Gear Organizer · v8.22</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8402,10 +8402,15 @@ function renderGearWall(){
       wrap.className='gw-item-wrap'; wrap.dataset.iid=item.id; wrap.dataset.cid=srcCatId;
       const chip = document.createElement('div');
       chip.className=`gw-item${inSeason?' in-season':''}`;
+      const ucExtraTag = item.extra ? `<span class="gw-item-extra">${escH(String(item.extra))}</span>` : '';
       chip.innerHTML=`<div class="gw-drag-handle">⠿</div>
-        <div class="gw-item-left">
-          <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
-          <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>
+        <div class="gw-item-left" style="${renderItemFieldPills(item)?'flex-direction:column;align-items:flex-start;gap:1px':''}">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
+            <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${(item.productId&&(item._localVerified||_isProductVerified(item.productId)))?`<span class="gw-item-verified" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')">✓</span>`:''}
+            ${ucExtraTag}
+          </div>
+          ${renderItemFieldPills(item)?`<div class="gw-item-pills">${renderItemFieldPills(item)}</div>`:''}
         </div>
         <div class="gw-item-right">
           <span class="gw-item-weight">${dw(item.w)}</span>
@@ -15121,7 +15126,7 @@ const PRESET_FIELDS=[
   {key:'temp',    label:'Temp Rating', icon:'🌡️', type:'number', unit:'°C',  unitOptions:['°C','°F'],       preset:true},
   {key:'rvalue',  label:'R-Value',     icon:'Ⓡ',  type:'number', unit:'',    unitOptions:null,               preset:true},
   {key:'length',  label:'Length',      icon:'📏', type:'number', unit:'cm',  unitOptions:['cm','in','ft'],   preset:true},
-  {key:'volume',  label:'Volume',      icon:'📦', type:'number', unit:'ml',  unitOptions:['ml','L','fl oz'], preset:true},
+  {key:'volume',  label:'Volume',      icon:'⊔', type:'number', unit:'ml',  unitOptions:['ml','L','fl oz'], preset:true},
   {key:'battery', label:'Battery Life',icon:'🔋', type:'number', unit:'hrs', unitOptions:null,               preset:true},
 ];
 window.CUSTOM_FIELD_DEFS=[...PRESET_FIELDS];
