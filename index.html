@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v7.9 — Gear Organizer</title>
+<title>BaseCamp v8.1 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -288,6 +288,19 @@ html.dark .gw-add-item-btn{background:#3a6830;color:#d4e8c8;}
 .gw-find-product-btn:hover{background:rgba(74,103,65,0.08);border-color:var(--moss);}
 html.dark .gw-find-product-btn{color:#7abf6a;border-color:rgba(74,143,68,0.3);}
 html.dark .gw-find-product-btn:hover{background:rgba(30,50,22,0.6);}
+
+/* ── Pack pill overflow ── */
+.s-pill-more{font-family:'Nunito',sans-serif;font-size:0.7rem;font-weight:700;background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:20px;padding:0.28rem 0.65rem;cursor:pointer;color:var(--stone);white-space:nowrap;transition:all 0.15s;}
+.s-pill-more:hover{background:rgba(184,201,163,0.2);border-color:var(--sage);}
+.s-pill-more.active{background:rgba(74,143,168,0.15);border-color:var(--water);color:var(--water);}
+html.dark .s-pill-more{background:rgba(8,14,8,0.85);border-color:rgba(55,85,40,0.5);color:#7aaf6a;}
+.pack-overflow-pop{position:fixed;z-index:3000;background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;padding:4px;min-width:180px;box-shadow:0 6px 20px rgba(0,0,0,0.12);}
+html.dark .pack-overflow-pop{background:#0f1a0f;border-color:var(--dm-border);}
+.pack-overflow-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.75rem;font-weight:700;color:var(--bark);}
+.pack-overflow-item:hover{background:rgba(184,201,163,0.2);}
+.pack-overflow-item.active{color:var(--water);background:rgba(74,143,168,0.1);}
+.pack-overflow-w{font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);}
+html.dark .pack-overflow-item{color:#c8e8b0;}
 
 /* ── Add item modal ── */
 .gw-add-modal{
@@ -2443,7 +2456,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v7.9</div>
+      <div class="logo-sub">Gear Organizer · v8.1</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2983,7 +2996,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <!-- COL 2 — My Food Bag -->
     <div class="p1-left" id="food-bag-col">
       <div class="my-packs-title">
-        <div>My Food Bag<span class="my-packs-title-sub">Food by Pack Configuration</span></div>
+        <div>Food Bag<span class="my-packs-title-sub">by pack configuration</span></div>
       </div>
       <div class="season-bar" id="food-config-bar">
         <div class="season-bar-top"><span class="season-lbl">Pack Configurations</span></div>
@@ -4418,11 +4431,17 @@ function renderPackPills(){
   const row=document.getElementById('season-pills-row');
   if(!row) return;
   row.innerHTML='';
-  // Only show base packs + packs belonging to active (non-deleted) trips
   const activeTripPackIds = new Set(TRIPS.map(t=>t.packId).filter(Boolean));
   const deletedPackIds = new Set(DELETED_TRIPS.map(t=>t.packId).filter(Boolean));
-  const visiblePacks = PACKS.filter(p=>!deletedPackIds.has(p.id) || activeTripPackIds.has(p.id));
-  visiblePacks.forEach(p=>{
+  const visiblePacks = PACKS.filter(p=>!deletedPackIds.has(p.id)||activeTripPackIds.has(p.id));
+  const MAX=3;
+  let ordered=[...visiblePacks];
+  const activeIdx=ordered.findIndex(p=>p.id===season);
+  if(activeIdx>=MAX){ const tmp=ordered[MAX-1]; ordered[MAX-1]=ordered[activeIdx]; ordered[activeIdx]=tmp; }
+  const shown=ordered.slice(0,MAX);
+  const overflow=ordered.slice(MAX);
+
+  shown.forEach(p=>{
     const w=packWeight(p.id);
     const isActive=p.id===season;
     const btn=document.createElement('button');
@@ -4432,12 +4451,46 @@ function renderPackPills(){
     btn.addEventListener('click',()=>setSeason(p.id,btn));
     row.appendChild(btn);
   });
+
+  if(overflow.length){
+    const hasActive=overflow.some(p=>p.id===season);
+    const ap=hasActive?overflow.find(p=>p.id===season):null;
+    const moreBtn=document.createElement('button');
+    moreBtn.className='s-pill-more'+(hasActive?' active':'');
+    moreBtn.innerHTML=(ap?`${ap.icon} <span class="s-pill-name">${escH(ap.name)}</span> `:'')+'▾';
+    moreBtn.title='More pack configs';
+    moreBtn.onclick=e=>{e.stopPropagation();_togglePackOverflow(moreBtn,overflow);};
+    row.appendChild(moreBtn);
+  }
+
   const addBtn=document.createElement('button');
   addBtn.className='add-pack-btn';
   addBtn.textContent='+ New Config';
   addBtn.onclick=()=>addPackConfig();
   row.appendChild(addBtn);
 }
+
+function _togglePackOverflow(anchor,overflow){
+  document.getElementById('pack-overflow-pop')?.remove();
+  const pop=document.createElement('div');
+  pop.id='pack-overflow-pop';
+  pop.className='pack-overflow-pop';
+  overflow.forEach(p=>{
+    const w=packWeight(p.id);
+    const item=document.createElement('div');
+    item.className='pack-overflow-item'+(p.id===season?' active':'');
+    item.innerHTML=`<span>${p.icon} ${escH(p.name)}</span><span class="pack-overflow-w">${dw(w)}</span>`;
+    item.onclick=()=>{setSeason(p.id);pop.remove();};
+    pop.appendChild(item);
+  });
+  const r=anchor.getBoundingClientRect();
+  pop.style.top=(r.bottom+4)+'px';
+  pop.style.left=r.left+'px';
+  document.body.appendChild(pop);
+  const close=()=>{pop.remove();document.removeEventListener('click',close);};
+  setTimeout(()=>document.addEventListener('click',close),0);
+}
+
 function addPackConfig(){
   const name=prompt('Pack configuration name:','New Pack');
   if(!name||!name.trim()) return;
@@ -9568,20 +9621,58 @@ function renderFoodPage(){
 }
 
 function renderFoodPills(){
-  const bar = document.getElementById('food-season-pills');
+  const bar=document.getElementById('food-season-pills');
   if(!bar) return;
-  bar.innerHTML = '';
-  const activeTripPackIds = new Set(TRIPS.map(t=>t.packId).filter(Boolean));
-  const deletedPackIds = new Set(DELETED_TRIPS.map(t=>t.packId).filter(Boolean));
-  const visiblePacks = PACKS.filter(p=>!deletedPackIds.has(p.id) || activeTripPackIds.has(p.id));
-  visiblePacks.forEach(p=>{
-    const w = FOOD_ITEMS.filter(i=>i.s.includes(p.id)).reduce((s,i)=>s+(i.w_total||0),0);
-    const btn = document.createElement('button');
-    btn.className = 's-pill' + (p.id===foodSeason?' active':'');
-    btn.innerHTML = `${p.icon} <span class="s-pill-name">${escH(p.name)}</span><span class="s-pill-weight">${dw(w)}</span>`;
-    btn.onclick = ()=>{ foodSeason=p.id; season=p.id; renderFoodPage(); scheduleSave(); };
+  bar.innerHTML='';
+  const activeTripPackIds=new Set(TRIPS.map(t=>t.packId).filter(Boolean));
+  const deletedPackIds=new Set(DELETED_TRIPS.map(t=>t.packId).filter(Boolean));
+  const visiblePacks=PACKS.filter(p=>!deletedPackIds.has(p.id)||activeTripPackIds.has(p.id));
+  const MAX=3;
+  let ordered=[...visiblePacks];
+  const activeIdx=ordered.findIndex(p=>p.id===foodSeason);
+  if(activeIdx>=MAX){ const tmp=ordered[MAX-1]; ordered[MAX-1]=ordered[activeIdx]; ordered[activeIdx]=tmp; }
+  const shown=ordered.slice(0,MAX);
+  const overflow=ordered.slice(MAX);
+
+  shown.forEach(p=>{
+    const w=FOOD_ITEMS.filter(i=>i.s.includes(p.id)).reduce((s,i)=>s+(i.w_total||0),0);
+    const btn=document.createElement('button');
+    btn.className='s-pill'+(p.id===foodSeason?' active':'');
+    btn.innerHTML=`${p.icon} <span class="s-pill-name">${escH(p.name)}</span><span class="s-pill-weight">${dw(w)}</span>`;
+    btn.onclick=()=>{foodSeason=p.id;season=p.id;renderFoodPage();scheduleSave();};
     bar.appendChild(btn);
   });
+
+  if(overflow.length){
+    const hasActive=overflow.some(p=>p.id===foodSeason);
+    const ap=hasActive?overflow.find(p=>p.id===foodSeason):null;
+    const moreBtn=document.createElement('button');
+    moreBtn.className='s-pill-more'+(hasActive?' active':'');
+    moreBtn.innerHTML=(ap?`${ap.icon} <span class="s-pill-name">${escH(ap.name)}</span> `:'')+'▾';
+    moreBtn.title='More pack configs';
+    moreBtn.onclick=e=>{
+      e.stopPropagation();
+      document.getElementById('pack-overflow-pop')?.remove();
+      const pop=document.createElement('div');
+      pop.id='pack-overflow-pop';
+      pop.className='pack-overflow-pop';
+      overflow.forEach(p=>{
+        const w=FOOD_ITEMS.filter(i=>i.s.includes(p.id)).reduce((s,i)=>s+(i.w_total||0),0);
+        const item=document.createElement('div');
+        item.className='pack-overflow-item'+(p.id===foodSeason?' active':'');
+        item.innerHTML=`<span>${p.icon} ${escH(p.name)}</span><span class="pack-overflow-w">${dw(w)}</span>`;
+        item.onclick=()=>{foodSeason=p.id;season=p.id;renderFoodPage();scheduleSave();pop.remove();};
+        pop.appendChild(item);
+      });
+      const r=moreBtn.getBoundingClientRect();
+      pop.style.top=(r.bottom+4)+'px';
+      pop.style.left=r.left+'px';
+      document.body.appendChild(pop);
+      const close=()=>{pop.remove();document.removeEventListener('click',close);};
+      setTimeout(()=>document.addEventListener('click',close),0);
+    };
+    bar.appendChild(moreBtn);
+  }
 }
 
 function renderFoodBreakdown(){
