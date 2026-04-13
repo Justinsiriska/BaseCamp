@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.53 — Gear Organizer</title>
+<title>BaseCamp v8.55 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2505,7 +2505,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.53</div>
+      <div class="logo-sub">Gear Organizer · v8.55</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8064,7 +8064,7 @@ function _openThermalModal(r){
     </div>`;
   };
 
-  ov.innerHTML=`<div class="thm-modal" onclick="event.stopPropagation()">
+  ov.innerHTML=`<div class="thm-modal" id="thm-modal-inner">
     <div class="thm-title">🌡️ Refine Thermal Rating</div>
     <div class="thm-gear-summary">
       <div>${bagLine}</div>
@@ -8082,12 +8082,17 @@ function _openThermalModal(r){
     <div class="thm-section-lbl">You</div>
     ${tri('sleepType','Sleeper type',[['warm','🔥 Warm'],['normal','😐 Normal'],['cold','🥶 Cold']])}
     ${tog('bigMeal','Big meal before bed')}
+  <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+    <button id="thm-done-btn" style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:800;padding:0.42rem 1.4rem;border-radius:20px;border:none;background:#2d5a27;color:#fff;cursor:pointer;">✓ Done</button>
+  </div>
   </div>`;
 
   document.body.appendChild(ov);
 
-  // Wire up toggles
-  ov.addEventListener('click', e=>{
+  // Wire up toggles — attach to modal inner div to avoid stopProp issues
+  const modalInner = document.getElementById('thm-modal-inner');
+  modalInner.addEventListener('click', e=>{
+    e.stopPropagation(); // prevent triggering overlay close
     const btn = e.target.closest('.thm-tog');
     if(!btn) return;
     const key = btn.dataset.key;
@@ -8102,9 +8107,13 @@ function _openThermalModal(r){
     renderThermal();
   });
 
-  // Close on outside click
-  const close = e=>{ if(!ov.querySelector('.thm-modal').contains(e.target)){ov.remove();document.removeEventListener('click',close);} };
-  setTimeout(()=>document.addEventListener('click',close),0);
+  // Done button closes
+  document.getElementById('thm-done-btn').onclick = ()=>{ ov.remove(); };
+
+  // Close on outside click (clicks outside .thm-modal)
+  ov.addEventListener('click', e=>{
+    if(!modalInner.contains(e.target)){ ov.remove(); }
+  });
 }
 function renderLegend(){
   const tot=total();
@@ -15484,11 +15493,11 @@ function mergeFieldDefs(saved){const merged=[...PRESET_FIELDS];(saved||[]).forEa
 function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>d.key===def.key)){defs.push(def);window.CUSTOM_FIELD_DEFS=defs;scheduleSave();}}
 function renderItemFieldPills(item){
   let pills = '';
-  // Render item.extra (temp rating for sleep items) as a chip
-  if(item.extra && item.extra.trim() !== '' && /[0-9]/.test(item.extra)){
+  // Render item.extra as temp chip ONLY for sleep category items
+  const _itemCat = CATS.find(cat=>cat.items.some(i=>i===item));
+  if(_itemCat?.id==='sleep' && item.extra && item.extra.trim() !== '' && /^-?[0-9]/.test(item.extra.trim())){
     const unit = item.extra_unit || '°C';
-    const icon = '🌡️';
-    pills += `<span class="item-field-pill" title="Temp Rating: ${escH(item.extra)}${escH(unit)}"><span class="item-field-pill-icon">${icon}</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
+    pills += `<span class="item-field-pill" title="Temp Rating: ${escH(item.extra)}${escH(unit)}"><span class="item-field-pill-icon">🌡️</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
   }
   if(!item.fields||!Object.keys(item.fields).length)return pills;
   const defs=getFieldDefs();
