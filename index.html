@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.26 — Gear Organizer</title>
+<title>BaseCamp v8.27 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2473,7 +2473,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.26</div>
+      <div class="logo-sub">Gear Organizer · v8.27</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -16712,6 +16712,11 @@ async function sbInit(){
   }
 
   const stored = getStoredSession();
+  if(!stored?.user){
+    // No session — clear any stale localStorage so logged-out users see a clean state
+    localStorage.removeItem(SAVE_KEY);
+    _stateLoaded = false;
+  }
   if(stored?.user){
     _sbUser = stored.user;
     authUpdateUI(stored.user);
