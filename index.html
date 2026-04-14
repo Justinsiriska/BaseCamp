@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.63 — Gear Organizer</title>
+<title>BaseCamp v8.66 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2511,7 +2511,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.63</div>
+      <div class="logo-sub">Gear Organizer · v8.66</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6569,8 +6569,12 @@ function renderCats(){
       ucEmpty.textContent = 'No uncategorised items in this pack';
       ucCard.appendChild(ucEmpty);
     }
-    // add button now in ucHdr above
-    cont.insertBefore(ucCard, cont.firstChild);
+    // Append first, then reposition after pack card (pack card is now fully in DOM)
+    cont.appendChild(ucCard);
+    const packCard = cont.querySelector('.cat-card[data-cid="pack"]');
+    if(packCard){
+      packCard.insertAdjacentElement('afterend', ucCard);
+    }
   }
 
   const hiddenBar = document.getElementById('hidden-cats-bar');
@@ -8754,7 +8758,7 @@ function renderGearWall(){
     ucDiv.className = 'gw-cat';
     ucDiv.dataset.gwCat = 'uncategorised';
     ucDiv.dataset.cid = 'uncategorised';
-    ucDiv.style.cssText = 'border-top:1px dashed rgba(184,201,163,0.3);margin-top:0.3rem;';
+    ucDiv.style.cssText = 'margin-bottom:0.3rem;';
 
     const ucHd = document.createElement('div');
     ucHd.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.6;padding:0.5rem 0.7rem 0.2rem;";
@@ -8805,7 +8809,7 @@ function renderGearWall(){
       wrap.appendChild(chip); ucItems.appendChild(wrap);
     });
     ucDiv.appendChild(ucItems);
-    body.appendChild(ucDiv);
+    body.insertBefore(ucDiv, body.firstChild);
   }
 
   // ── Recently Deleted section ──
