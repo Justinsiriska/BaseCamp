@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.78 — Gear Organizer</title>
+<title>BaseCamp v8.79 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2564,7 +2564,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.78</div>
+      <div class="logo-sub">Gear Organizer · v8.79</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -16742,7 +16742,7 @@ async function admMpLoadList(){
   const sb = sbClient();
   const { data, error } = await sb
     .from('marketplace_items')
-    .select('*, product:gear_products(name,brand,weight_g,price)')
+    .select('*, product:gear_products(*)')
     .eq('category', _admMpCat)
     .order('featured_order', { ascending: true });
   if(error || !data || data.length === 0){
@@ -16750,20 +16750,106 @@ async function admMpLoadList(){
     return;
   }
   list.innerHTML = data.map(row=>`
-    <div style="display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0.65rem;background:var(--paper);border:1.5px solid rgba(184,201,163,0.35);border-radius:8px;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:0.75rem;color:var(--bark);">${escH(row.product?.name||'')}</div>
-        <div style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);">${escH(row.product?.brand||'')} · ${row.product?.weight_g||0}g · ${escH(row.product?.price||'')}</div>
-        ${row.curator_note?`<div style="font-family:'Nunito',sans-serif;font-style:italic;font-size:0.62rem;color:var(--stone);opacity:0.7;">"${escH(row.curator_note)}"</div>`:''}
-        ${row.tags?.length?`<div style="margin-top:3px;display:flex;gap:3px;">${row.tags.map(t=>`<span style="font-family:'Space Mono',monospace;font-size:0.4rem;padding:1px 6px;background:rgba(74,143,168,0.1);border:1px solid rgba(74,143,168,0.3);border-radius:10px;color:var(--water);">${escH(t)}</span>`).join('')}</div>`:''}
+    <div id="adm-mp-row-${row.id}" style="background:var(--paper);border:1.5px solid rgba(184,201,163,0.35);border-radius:10px;overflow:hidden;">
+      <!-- Summary row -->
+      <div style="display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0.65rem;">
+        ${row.product?.image_url?`<img src="${escH(row.product.image_url)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" onerror="this.style.display='none'">`:
+          `<div style="width:36px;height:36px;background:rgba(184,201,163,0.15);border-radius:6px;flex-shrink:0;"></div>`}
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:0.75rem;color:var(--bark);">${escH(row.product?.name||'')}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);">${escH(row.product?.brand||'')}${row.product?.weight_g?' · '+row.product.weight_g+'g':''}${row.product?.price?' · '+escH(row.product.price):''}</div>
+          ${row.curator_note?`<div style="font-family:'Nunito',sans-serif;font-style:italic;font-size:0.6rem;color:var(--stone);opacity:0.7;">"${escH(row.curator_note)}"</div>`:''}
+          ${row.tags?.length?`<div style="margin-top:3px;display:flex;gap:3px;flex-wrap:wrap;">${row.tags.map(t=>`<span style="font-family:'Space Mono',monospace;font-size:0.38rem;padding:1px 5px;background:rgba(74,143,168,0.1);border:1px solid rgba(74,143,168,0.3);border-radius:8px;color:var(--water);">${escH(t)}</span>`).join('')}</div>`:''}
+        </div>
+        <div style="display:flex;gap:0.3rem;flex-shrink:0;align-items:center;">
+          <input type="number" value="${row.featured_order||0}" style="width:42px;font-size:0.6rem;padding:2px 5px;border:1px solid rgba(184,201,163,0.4);border-radius:5px;background:var(--cream);color:var(--bark);"
+            onchange="admMpUpdateOrder('${row.id}',this.value)" title="Featured order">
+          <button onclick="admMpToggleEdit('${row.id}')" style="background:rgba(184,201,163,0.15);border:1px solid rgba(184,201,163,0.4);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:0.6rem;color:var(--bark);">✏️ Edit</button>
+          <button onclick="admMpDelete('${row.id}')" style="background:rgba(200,90,42,0.1);border:1px solid rgba(200,90,42,0.3);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:0.6rem;color:#c85a2a;">✕</button>
+        </div>
       </div>
-      <div style="display:flex;gap:0.3rem;flex-shrink:0;align-items:center;">
-        <input type="number" value="${row.featured_order||0}" style="width:42px;font-size:0.6rem;padding:2px 5px;border:1px solid rgba(184,201,163,0.4);border-radius:5px;background:var(--cream);color:var(--bark);"
-          onchange="admMpUpdateOrder('${row.id}',this.value)" title="Featured order">
-        <button onclick="admMpDelete('${row.id}')" style="background:rgba(200,90,42,0.1);border:1px solid rgba(200,90,42,0.3);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:0.6rem;color:#c85a2a;">✕</button>
+      <!-- Inline edit panel (hidden by default) -->
+      <div id="adm-mp-edit-${row.id}" style="display:none;padding:0.75rem 0.85rem;background:rgba(184,201,163,0.06);border-top:1.5px solid rgba(184,201,163,0.25);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Name</div>
+            <input class="gw-field-inp" id="adm-mp-edit-name-${row.id}" value="${escH(row.product?.name||'')}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Brand</div>
+            <input class="gw-field-inp" id="adm-mp-edit-brand-${row.id}" value="${escH(row.product?.brand||'')}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Weight (g)</div>
+            <input class="gw-field-inp mono" id="adm-mp-edit-weight-${row.id}" type="number" value="${row.product?.weight_g||''}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Price</div>
+            <input class="gw-field-inp" id="adm-mp-edit-price-${row.id}" value="${escH(row.product?.price||'')}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Brand URL</div>
+            <input class="gw-field-inp" id="adm-mp-edit-url-${row.id}" value="${escH(row.product?.url||'')}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Amazon / Affiliate URL</div>
+            <input class="gw-field-inp" id="adm-mp-edit-aff-${row.id}" value="${escH(row.product?.affiliate_url||'')}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Image URL</div>
+            <input class="gw-field-inp" id="adm-mp-edit-img-${row.id}" value="${escH(row.product?.image_url||'')}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Tags (comma separated)</div>
+            <input class="gw-field-inp" id="adm-mp-edit-tags-${row.id}" value="${escH((row.tags||[]).join(','))}" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Curator note</div>
+            <input class="gw-field-inp" id="adm-mp-edit-note-${row.id}" value="${escH(row.curator_note||'')}" style="width:100%;box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:0.4rem;">
+          <button onclick="admMpToggleEdit('${row.id}')" class="gw-cancel-btn" style="font-size:0.6rem;">Cancel</button>
+          <button onclick="admMpSaveEdit('${row.id}','${row.product_id}')" class="gw-confirm-btn" style="font-size:0.6rem;">✓ Save Changes</button>
+        </div>
       </div>
     </div>
   `).join('');
+}
+
+function admMpToggleEdit(rowId){
+  const panel = document.getElementById('adm-mp-edit-'+rowId);
+  if(!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  // Update button label
+  const btn = document.querySelector(`#adm-mp-row-${rowId} button[onclick*="admMpToggleEdit"]`);
+  if(btn) btn.textContent = isOpen ? '✏️ Edit' : '✕ Cancel';
+}
+
+async function admMpSaveEdit(mpId, productId){
+  const g = id => document.getElementById(id)?.value.trim()||'';
+  const tags = g('adm-mp-edit-tags-'+mpId).split(',').map(t=>t.trim()).filter(Boolean);
+  await waitForSupabase();
+  const sb = sbClient();
+  // Update gear_products
+  await sb.from('gear_products').update({
+    name:          g('adm-mp-edit-name-'+mpId),
+    brand:         g('adm-mp-edit-brand-'+mpId),
+    weight_g:      parseFloat(g('adm-mp-edit-weight-'+mpId))||null,
+    price:         g('adm-mp-edit-price-'+mpId)||null,
+    url:           g('adm-mp-edit-url-'+mpId)||null,
+    affiliate_url: g('adm-mp-edit-aff-'+mpId)||null,
+    image_url:     g('adm-mp-edit-img-'+mpId)||null,
+  }).eq('id', productId);
+  // Update marketplace_items
+  await sb.from('marketplace_items').update({
+    tags,
+    curator_note: g('adm-mp-edit-note-'+mpId)||null,
+  }).eq('id', mpId);
+  toast('✅ Saved');
+  _mpData = [];
+  admMpLoadList();
 }
 
 async function admMpDelete(mpId){
