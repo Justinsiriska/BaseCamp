@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.56 — Gear Organizer</title>
+<title>BaseCamp v8.57 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2505,7 +2505,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.56</div>
+      <div class="logo-sub">Gear Organizer · v8.57</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -17121,14 +17121,8 @@ async function sbInit(){
   }
 
   const stored = getStoredSession();
-  if(!stored?.user){
-    // No valid session — wipe any profile data that loadState() restored from localStorage
-    // so logged-out visitors never see a stale profile photo/name
-    MY_PROFILE.name = '';
-    MY_PROFILE.bio = '';
-    MY_PROFILE.avatarDataUrl = '';
-    MY_PROFILE._userUploadedPhoto = null;
-  }
+  // Only clear profile if definitely no session — Supabase may restore session async
+  // We check after Supabase confirms no active session in the else branch below
   if(stored?.user){
     _sbUser = stored.user;
     authUpdateUI(stored.user);
@@ -17139,6 +17133,14 @@ async function sbInit(){
     await Promise.all([sbLoadFriends(), sbPullSharedTrips(), sbLoadTripInvites(), sbLoadFollows(), sbLoadPublicUsers()]);
     await sbLoadTripMemberStatus();
     sbSubscribeTrips();
+  } else {
+    // Confirmed no session — safe to clear stale profile from localStorage
+    MY_PROFILE.name = '';
+    MY_PROFILE.bio = '';
+    MY_PROFILE.avatarDataUrl = '';
+    MY_PROFILE._userUploadedPhoto = null;
+    authUpdateUI(null);
+    renderCrewPage();
   }
 
   // Live sign-in / sign-out events
