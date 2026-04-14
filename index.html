@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.79 — Gear Organizer</title>
+<title>BaseCamp v8.80 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2564,7 +2564,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.79</div>
+      <div class="logo-sub">Gear Organizer · v8.80</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -16800,6 +16800,12 @@ async function admMpLoadList(){
             <input class="gw-field-inp" id="adm-mp-edit-img-${row.id}" value="${escH(row.product?.image_url||'')}" style="width:100%;box-sizing:border-box;">
           </div>
           <div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Category</div>
+            <select class="gw-field-inp" id="adm-mp-edit-cat-${row.id}" style="width:100%;box-sizing:border-box;">
+              ${MP_CATEGORIES.map(cat=>`<option value="${cat.id}" ${cat.id===row.category?'selected':''}>${cat.icon} ${cat.label}</option>`).join('')}
+            </select>
+          </div>
+          <div>
             <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:2px;">Tags (comma separated)</div>
             <input class="gw-field-inp" id="adm-mp-edit-tags-${row.id}" value="${escH((row.tags||[]).join(','))}" style="width:100%;box-sizing:border-box;">
           </div>
@@ -16842,10 +16848,12 @@ async function admMpSaveEdit(mpId, productId){
     affiliate_url: g('adm-mp-edit-aff-'+mpId)||null,
     image_url:     g('adm-mp-edit-img-'+mpId)||null,
   }).eq('id', productId);
+  const newCat = g('adm-mp-edit-cat-'+mpId);
   // Update marketplace_items
   await sb.from('marketplace_items').update({
     tags,
     curator_note: g('adm-mp-edit-note-'+mpId)||null,
+    ...(newCat ? { category: newCat } : {}),
   }).eq('id', mpId);
   toast('✅ Saved');
   _mpData = [];
