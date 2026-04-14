@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.66 — Gear Organizer</title>
+<title>BaseCamp v8.67 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1028,6 +1028,18 @@ overflow:hidden;}
 
 /* PAGE 2 — two-panel browser + comparison */
 .p2{max-width:1900px;margin:0 auto;padding:1.2rem 2rem 2rem;display:grid;grid-template-columns:1.4fr 1.3fr 1.8fr;gap:1.2rem;align-items:start;}
+/* Marketplace page — collapsible gear-ref right column */
+.p2{transition:grid-template-columns 0.25s ease;}
+.p2.ref-collapsed{grid-template-columns:1.4fr 1fr 38px;}
+.p2-ref{position:sticky;top:80px;overflow:hidden;transition:all 0.25s ease;}
+.p2-ref-inner{opacity:1;transition:opacity 0.2s ease;}
+.p2.ref-collapsed .p2-ref-inner{opacity:0;pointer-events:none;}
+.p2-ref-toggle{position:absolute;top:0.55rem;right:0;width:28px;height:28px;background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--stone);transition:all 0.18s;z-index:5;flex-shrink:0;}
+.p2-ref-toggle:hover{background:rgba(184,201,163,0.2);color:var(--bark);}
+.p2.ref-collapsed .p2-ref-toggle{right:5px;}
+.p2-ref-collapsed-label{display:none;writing-mode:vertical-rl;font-family:'Space Mono',monospace;font-size:0.45rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);opacity:0.5;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;}
+.p2.ref-collapsed .p2-ref-collapsed-label{display:block;}
+
 .p2-left{position:sticky;top:80px;}
 .p2-mid{position:sticky;top:80px;}
 .p2-right{position:sticky;top:80px;}
@@ -2511,12 +2523,12 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.66</div>
+      <div class="logo-sub">Gear Organizer · v8.67</div>
     </div>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('kit',this)">🎒 My Backpacks</button>
-    <button class="nav-tab" onclick="showPage('lab',this)">🔬 Gear Lab</button>
+    <button class="nav-tab" onclick="showPage('lab',this)">🛒 Marketplace</button>
     <button class="nav-tab" onclick="showPage('trips',this);renderTripsPage()">🏕️ Trips</button>
     <button class="nav-tab" onclick="showPage('crew',this);renderCrewPage()">👥 Crew</button>
     <button class="nav-tab" onclick="showPage('demo',this);renderDemoPage();startDemo()">▶ Demo</button>
@@ -2912,7 +2924,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   <div id="kit-food-view" style="display:none;"></div><!-- food content injected by setKitView -->
 </div>
 
-<!-- PAGE 2 — GEAR LAB -->
+<!-- PAGE 2 — MARKETPLACE -->
 <div id="page-food-template" style="display:none;">
   <div class="p1" style="grid-template-columns:0.75fr 2.4fr 1.6fr;">
     <!-- COL 1 — Food Breakdown (sticky) -->
@@ -4080,7 +4092,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="lab-panel">
         <div class="lab-panel-hd">
           <div class="lab-panel-title">🛒 Marketplace</div>
-          <div class="lab-panel-sub">Browse &amp; filter · click or drag to compare →</div>
+          <div class="lab-panel-sub">Browse &amp; filter gear · search &amp; compare</div>
         </div>
         <div style="padding:0.5rem 0.65rem 0;">
           <input class="lm-search" id="lm-search" type="text" placeholder="Search gear…" oninput="renderLabMktFiltered()">
@@ -4115,28 +4127,20 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
         </div>
       </div>
     </div>
-    <!-- RIGHT — Comparison panel -->
-    <div class="p2-right">
-      <div class="cmp-panel">
-        <div class="cmp-panel-hd">
-          <div>
-            <div class="cmp-panel-title">⚖️ Comparison</div>
-            <div class="cmp-panel-sub">Owned items always on top</div>
+    <!-- RIGHT — My Gear reference (collapsible) -->
+    <div class="p2-ref" id="p2-ref-col" style="position:relative;">
+      <button class="p2-ref-toggle" id="p2-ref-toggle" onclick="toggleGearRef()" title="Collapse gear reference">◀</button>
+      <span class="p2-ref-collapsed-label">My Gear</span>
+      <div class="p2-ref-inner" id="p2-ref-inner">
+        <div class="gw-panel" style="border-radius:16px;overflow:hidden;">
+          <div class="gw-hd" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div class="gw-title">🪝 My Gear</div>
+              <div class="gw-subtitle">Your current kit · for reference</div>
+            </div>
           </div>
-          <div class="cmp-sort-bar">
-            <span class="cmp-sort-lbl">Sort:</span>
-            <button class="cmp-sort-btn active" onclick="setCmpSort('weight',this)">Weight</button>
-            <button class="cmp-sort-btn" onclick="setCmpSort('price',this)">Price</button>
-            <button class="cmp-sort-btn" onclick="setCmpSort('wpd',this)">g/$</button>
-            <button class="cmp-sort-btn" onclick="setCmpSort('thermal',this)">Thermal</button>
-          </div>
+          <div class="gw-body" id="mp-gear-ref-body"></div>
         </div>
-        <div class="cmp-cat-bar" id="cmp-cat-bar" style="display: none;"></div>
-        <div class="cmp-queue" id="cmp-queue" ondragover="event.preventDefault();this.querySelector('.cmp-drop-hint')?.classList.add('over')" ondragleave="this.querySelector('.cmp-drop-hint')?.classList.remove('over')" ondrop="cmpQueueDrop(event)">
-          <span class="cmp-queue-empty" id="cmp-queue-empty">No items yet</span>
-          <span class="cmp-drop-hint" id="cmp-drop-hint">+ Drop here</span>
-        </div>
-        <div id="cmp-body"><div class="cmp-empty"><div class="cmp-empty-icon">📊</div><div class="cmp-empty-lbl">Nothing to compare yet</div><div class="cmp-empty-sub">Click or drag items from the left panels.<br>Mix your owned gear with market alternatives.</div></div></div>
       </div>
     </div>
   </div>
@@ -8208,11 +8212,78 @@ let cmpSort = 'weight';
 let cmpCatFilter = 'all';
 let labDrag = null;
 
+
+let _mpRefCollapsed = false;
+function toggleGearRef(){
+  _mpRefCollapsed = !_mpRefCollapsed;
+  const p2 = document.querySelector('#page-lab .p2');
+  const btn = document.getElementById('p2-ref-toggle');
+  if(_mpRefCollapsed){
+    p2.classList.add('ref-collapsed');
+    if(btn) btn.innerHTML = '▶';
+    if(btn) btn.title = 'Expand gear reference';
+  } else {
+    p2.classList.remove('ref-collapsed');
+    if(btn) btn.innerHTML = '◀';
+    if(btn) btn.title = 'Collapse gear reference';
+  }
+}
+
+function renderMpGearRef(){
+  const body = document.getElementById('mp-gear-ref-body');
+  if(!body) return;
+  body.innerHTML = '';
+
+  const activeTripPackIds = new Set(TRIPS.map(t=>t.packId).filter(Boolean));
+  const deletedPackIds = new Set(DELETED_TRIPS.map(t=>t.packId).filter(Boolean));
+
+  CATS.forEach(cat => {
+    const items = cat.items.filter(i => !deletedPackIds.has(i.id));
+    if(items.length === 0) return;
+
+    const group = document.createElement('div');
+    group.className = 'gw-cat';
+    group.style.cssText = 'border-left:3px solid ' + cat.color + ';margin-bottom:2px;';
+
+    const hd = document.createElement('div');
+    hd.className = 'gw-cat-hd';
+    hd.style.borderLeftColor = cat.color;
+    hd.style.backgroundColor = _hexToRgba(cat.color, 0.1);
+    hd.innerHTML = `<div class="gw-cat-label"><span>${cat.icon}</span><span>${escH(cat.name)}</span><span class="gw-cat-count">(${items.length})</span></div>`;
+    group.appendChild(hd);
+
+    const itemsDiv = document.createElement('div');
+    itemsDiv.className = 'gw-items';
+    items.forEach(item => {
+      const inSeason = item.s && item.s.includes(season);
+      const wrap = document.createElement('div');
+      wrap.className = 'gw-item-wrap';
+      const chip = document.createElement('div');
+      chip.className = 'gw-item' + (inSeason ? ' in-season' : '');
+      chip.innerHTML = `<div class="gw-item-left">
+        <div class="gw-item-dot" style="background:${cat.color}"></div>
+        <span class="gw-item-name">${item.name ? escH(item.name) : '<em style="opacity:0.4">unnamed</em>'}</span>
+      </div>
+      <div class="gw-item-right">
+        <span class="gw-item-weight">${dw(item.w)}</span>
+      </div>`;
+      wrap.appendChild(chip);
+      itemsDiv.appendChild(wrap);
+    });
+    group.appendChild(itemsDiv);
+    body.appendChild(group);
+  });
+
+  if(body.children.length === 0){
+    body.innerHTML = '<p style="color:var(--stone);font-size:0.7rem;padding:0.8rem;opacity:0.6;text-align:center;">No gear yet — add items in My Backpacks</p>';
+  }
+}
 function renderLab(){
   renderLabGear();
   renderLabMktQuick();
   renderCmpCatBar();
   renderCmpPanel();
+  renderMpGearRef();
 }
 
 // ── LEFT: My Gear — full cat-card format mirroring My Kit ──
