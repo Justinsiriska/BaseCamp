@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.58 — Gear Organizer</title>
+<title>BaseCamp v8.59 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -326,6 +326,12 @@ html.dark .gw-find-product-btn:hover{background:rgba(30,50,22,0.6);}
 .s-pill-more.active{background:rgba(74,143,168,0.15);border-color:var(--water);color:var(--water);}
 html.dark .s-pill-more{background:rgba(8,14,8,0.85);border-color:rgba(55,85,40,0.5);color:#7aaf6a;}
 .pack-overflow-pop{position:fixed;z-index:3000;background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:10px;padding:4px;min-width:180px;box-shadow:0 6px 20px rgba(0,0,0,0.12);}
+/* Kit view toggle (Gear / Food) */
+.kit-view-toggle{display:flex;align-items:center;gap:0;background:rgba(184,201,163,0.18);border:1.5px solid rgba(184,201,163,0.45);border-radius:20px;padding:3px;flex-shrink:0;}
+.kit-view-btn{font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;padding:0.22rem 0.75rem;border:none;border-radius:16px;cursor:pointer;transition:all 0.18s;background:transparent;color:var(--stone);}
+.kit-view-btn.active{background:var(--forest);color:var(--cream);box-shadow:0 1px 6px rgba(45,74,45,0.22);}
+.kit-view-btn:not(.active):hover{background:rgba(184,201,163,0.25);color:var(--bark);}
+
 html.dark .pack-overflow-pop{background:#0f1a0f;border-color:var(--dm-border);}
 .pack-overflow-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.75rem;font-weight:700;color:var(--bark);}
 .pack-overflow-item:hover{background:rgba(184,201,163,0.2);}
@@ -2505,12 +2511,11 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.57</div>
+      <div class="logo-sub">Gear Organizer · v8.59</div>
     </div>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('kit',this)">📋 My Kit</button>
-    <button class="nav-tab" onclick="showPage('food',this)">🍽️ Food Bag</button>
     <button class="nav-tab" onclick="showPage('lab',this)">🔬 Gear Lab</button>
     <button class="nav-tab" onclick="showPage('trips',this);renderTripsPage()">🏕️ Trips</button>
     <button class="nav-tab" onclick="showPage('crew',this);renderCrewPage()">👥 Crew</button>
@@ -2528,6 +2533,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 
 <!-- PAGE 1 — MY KIT -->
 <div id="page-kit" class="page active">
+  <div id="kit-gear-view">
   <div class="p1">
     <!-- COL 1 — Weight Breakdown (sticky, joined to col 2) -->
     <div class="p1-breakdown">
@@ -2553,8 +2559,11 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <div class="p1-left">
       <div class="pack-header">
         <div class="pack-header-top">
-          <span class="pack-header-title">My Packs</span>
-          
+          <span class="pack-header-title" id="kit-page-title">My Packs</span>
+          <div class="kit-view-toggle" id="kit-view-toggle">
+            <button class="kit-view-btn active" id="kit-gear-btn" onclick="setKitView('gear')">📋 Gear</button>
+            <button class="kit-view-btn" id="kit-food-btn" onclick="setKitView('food')">🍽️ Food</button>
+          </div>
         </div>
         <div class="season-bar" id="pack-config-bar">
           <div class="season-pills" id="season-pills-row"><button class="s-pill" data-s="winter">❄️ <span class="s-pill-name">Winter Alpine</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('winter',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('winter')">✕</button></button><button class="s-pill" data-s="shoulder">🍂 <span class="s-pill-name">Shoulder Season</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('shoulder',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('shoulder')">✕</button></button><button class="s-pill" data-s="summer">☀️ <span class="s-pill-name">Summer Fast</span><span class="s-pill-weight">2200g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('summer',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('summer')">✕</button></button><button class="s-pill" data-s="trip_1775578819306">🏕️ <span class="s-pill-name">test 62</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775578819306',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775578819306')">✕</button></button><button class="s-pill active" data-s="trip_1775604059558">🏕️ <span class="s-pill-name">Justin and Johnny white mountains</span><span class="s-pill-weight">2000g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775604059558',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775604059558')">✕</button></button><button class="add-pack-btn">+ New Pack</button></div>
@@ -2897,10 +2906,12 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <button class="add-cat-btn" onclick="catEditOpenNew(true)">＋ New Gear Wall Category</button>
     </div>
   </div>
+  </div><!-- end kit-gear-view -->
+  <div id="kit-food-view" style="display:none;"></div><!-- food content injected by setKitView -->
 </div>
 
 <!-- PAGE 2 — GEAR LAB -->
-<div id="page-food" class="page">
+<div id="page-food-template" style="display:none;">
   <div class="p1" style="grid-template-columns:0.75fr 2.4fr 1.6fr;">
     <!-- COL 1 — Food Breakdown (sticky) -->
     <div class="p1-breakdown" id="food-breakdown-col">
@@ -5078,7 +5089,7 @@ const DEMO_STEPS = [
     id:'foodbag',
     title:'Food Bag',
     body:'The Food Bag tab lets you plan meals by pack configuration. You have a Fridge of ingredients — drag them into Breakfast, Lunch, Dinner or Snacks categories. Calories and weight auto-calculate.',
-    hint:'👆 Click "Food Bag" in the nav to explore it',
+    hint:'👆 Use the 📋 Gear / 🍽️ Food toggle in My Kit to explore it',
     targetId:'unit-btn',
     arrow:'bottom',
     complete: el => new Promise(resolve=>{
@@ -6160,29 +6171,26 @@ function parseGPX(gpxText){
 }
 
 function showPage(pg, el){
+  // 'food' is now a view within the kit page, not a separate page
+  if(pg === 'food'){
+    showPage('kit', el || document.querySelector('.nav-tab[onclick*="kit"]'));
+    setKitView('food');
+    return;
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+pg).classList.add('active');
-  el.classList.add('active');
+  if(el) el.classList.add('active');
 
   // ── Keep active pack in sync across pages ──
-  // When entering Food Bag from Kit (or Trips), match foodSeason to the current kit season
-  // When entering Kit from Food Bag (or Trips), match season to foodSeason
-  // When entering from Trips, use the active trip's packId if available
-  if(pg === 'food'){
-    const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
-    const target = tripPack || season;
-    if(PACKS.find(p=>p.id===target)) { foodSeason = target; }
-  } else if(pg === 'kit'){
+  if(pg === 'kit'){
     const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
     const target = tripPack || foodSeason;
     if(PACKS.find(p=>p.id===target)) { season = target; }
   }
 
   if(pg==='lab') renderLab();
-  if(pg==='food') renderFoodPage();
   if(pg==='trips'){
-    // Sync season to active trip's pack so any My Kit add buttons target the right pack
     const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
     if(tripPack && PACKS.find(p=>p.id===tripPack)){ season = tripPack; foodSeason = tripPack; }
     renderTripsPage();
@@ -6190,6 +6198,46 @@ function showPage(pg, el){
   if(pg==='crew') renderCrewPage();
   if(pg!=='demo') document.getElementById('demo-finish-banner')?.remove();
   requestAnimationFrame(()=>window.scrollTo(0,0));
+}
+
+let _kitView = 'gear';
+function setKitView(view){
+  _kitView = view;
+  const gearView = document.getElementById('kit-gear-view');
+  const foodView = document.getElementById('kit-food-view');
+  const gearBtn  = document.getElementById('kit-gear-btn');
+  const foodBtn  = document.getElementById('kit-food-btn');
+  if(!gearView || !foodView) return;
+
+  if(view === 'food'){
+    // Sync pack
+    const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
+    const target = tripPack || season;
+    if(PACKS.find(p=>p.id===target)) foodSeason = target;
+
+    // Move food template content into the food view if not already there
+    const tmpl = document.getElementById('page-food-template');
+    if(tmpl && foodView.children.length === 0){
+      while(tmpl.firstChild) foodView.appendChild(tmpl.firstChild);
+    }
+
+    gearView.style.display = 'none';
+    foodView.style.display = '';
+    gearBtn.classList.remove('active');
+    foodBtn.classList.add('active');
+    renderFoodPage();
+  } else {
+    // Sync back
+    const tripPack = activeTripId ? TRIPS.find(t=>t.id===activeTripId)?.packId : null;
+    const target = tripPack || foodSeason;
+    if(PACKS.find(p=>p.id===target)) season = target;
+
+    gearView.style.display = '';
+    foodView.style.display = 'none';
+    gearBtn.classList.add('active');
+    foodBtn.classList.remove('active');
+    renderAll();
+  }
 }
 
 // ============================================================
