@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.75 — Gear Organizer</title>
+<title>BaseCamp v8.76 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -359,6 +359,10 @@ html.dark .pack-overflow-pop{background:#0f1a0f;border-color:var(--dm-border);}
 .mp-card-compare{font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--bark);background:rgba(184,201,163,0.18);border:1.5px solid rgba(184,201,163,0.45);border-radius:6px;padding:0.2rem 0.55rem;cursor:pointer;}
 .mp-card-add{font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:white;background:var(--forest);border:none;border-radius:6px;padding:0.2rem 0.55rem;cursor:pointer;}
 .mp-card-compare:hover{background:rgba(184,201,163,0.3);}
+.adm-mp-field-chip{font-family:'Space Mono',monospace;font-size:0.45rem;padding:0.18rem 0.55rem;border-radius:12px;border:1.5px solid rgba(184,201,163,0.45);background:transparent;color:var(--stone);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.adm-mp-field-chip:hover{background:rgba(184,201,163,0.18);color:var(--bark);}
+.adm-mp-field-chip.active{background:var(--forest);color:var(--cream);border-color:var(--forest);}
+
 .mp-card-add:hover{background:#2d5a2d;}
 html.dark .mp-card{background:rgba(14,22,12,0.7);border-color:rgba(72,108,52,0.35);}
 
@@ -2550,7 +2554,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.75</div>
+      <div class="logo-sub">Gear Organizer · v8.76</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -16398,6 +16402,106 @@ function admMpSetCat(catId){
   admMpLoadList();
 }
 
+
+let _admMpExistingProductId = null;
+const _admMpActiveFields = new Set();
+
+const ADM_MP_FIELDS = {
+  r_value:    { label: 'R-Value',     type: 'number', placeholder: 'e.g. 4.5' },
+  volume_l:   { label: 'Volume (L)',  type: 'number', placeholder: 'e.g. 65' },
+  temp_rating:{ label: 'Temp Rating', type: 'number', placeholder: 'e.g. -5 (°C)' },
+  length_cm:  { label: 'Length (cm)', type: 'number', placeholder: 'e.g. 183' },
+  width_cm:   { label: 'Width (cm)',  type: 'number', placeholder: 'e.g. 52' },
+  fill_power: { label: 'Fill Power',  type: 'number', placeholder: 'e.g. 800' },
+  denier:     { label: 'Denier',      type: 'number', placeholder: 'e.g. 20D' },
+  seasons:    { label: 'Seasons',     type: 'text',   placeholder: 'e.g. 3-season' },
+};
+
+function admMpToggleField(key){
+  const btn = document.querySelector(`.adm-mp-field-chip[data-field="${key}"]`);
+  const container = document.getElementById('adm-mp-extra-inputs');
+  if(!container) return;
+  if(_admMpActiveFields.has(key)){
+    _admMpActiveFields.delete(key);
+    if(btn) btn.classList.remove('active');
+    btn && (btn.textContent = '＋ ' + ADM_MP_FIELDS[key].label);
+    const existing = document.getElementById('adm-mp-field-'+key);
+    if(existing) existing.remove();
+  } else {
+    _admMpActiveFields.add(key);
+    if(btn){ btn.classList.add('active'); btn.textContent = '✓ ' + ADM_MP_FIELDS[key].label; }
+    const def = ADM_MP_FIELDS[key];
+    const wrap = document.createElement('div');
+    wrap.id = 'adm-mp-field-' + key;
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+    wrap.innerHTML = '<span style="font-family:Space Mono,monospace;font-size:0.4rem;color:var(--stone);opacity:0.7;">'+def.label+'</span>'
+      + '<input class="gw-field-inp" id="adm-mp-field-val-'+key+'" type="'+def.type+'" placeholder="'+def.placeholder+'" style="width:120px;">';
+    container.appendChild(wrap);
+  }
+}
+
+async function admMpNameSearch(q){
+  const drop = document.getElementById('adm-mp-name-drop');
+  if(!drop) return;
+  if(q.length < 2){ drop.style.display='none'; drop.innerHTML=''; return; }
+  await waitForSupabase();
+  const sb = sbClient();
+  const { data } = await sb.from('gear_products')
+    .select('id,name,brand,weight_g,price,url,affiliate_url,image_url,custom_fields')
+    .ilike('name','%'+q+'%')
+    .limit(10);
+  if(!data || data.length === 0){ drop.style.display='none'; return; }
+  drop.innerHTML = data.map(p=>`
+    <div onclick='admMpFillFromProduct(${JSON.stringify(p).replace(/'/g,"\'")})'
+      style="padding:6px 10px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.72rem;border-bottom:1px solid rgba(184,201,163,0.18);transition:background 0.1s;"
+      onmouseover="this.style.background='rgba(184,201,163,0.18)'" onmouseout="this.style.background=''">
+      <span style="font-weight:700;">${escH(p.name)}</span>
+      <span style="opacity:0.5;font-size:0.6rem;margin-left:0.4rem;">${escH(p.brand||'')}${p.weight_g?' · '+p.weight_g+'g':''}</span>
+    </div>
+  `).join('');
+  drop.style.display = 'block';
+  setTimeout(()=>document.addEventListener('click', function _close(e){
+    if(!drop.contains(e.target) && e.target.id!=='adm-mp-name'){
+      drop.style.display='none';
+      document.removeEventListener('click',_close);
+    }
+  }), 0);
+}
+
+function admMpFillFromProduct(p){
+  _admMpExistingProductId = p.id;
+  const set = (id, val) => { const el=document.getElementById(id); if(el && val!=null) el.value=val; };
+  set('adm-mp-name',       p.name);
+  set('adm-mp-brand',      p.brand||'');
+  set('adm-mp-price',      p.price||'');
+  set('adm-mp-url',        p.url||'');
+  set('adm-mp-amazon-url', p.affiliate_url||'');
+  set('adm-mp-image-url',  p.image_url||'');
+  const wEl = document.getElementById('adm-mp-weight');
+  if(wEl && p.weight_g){ wEl.value=p.weight_g; wEl.dataset.weightUnit='g'; }
+  // Pre-fill any known custom_fields
+  if(p.custom_fields && typeof p.custom_fields === 'object'){
+    Object.entries(p.custom_fields).forEach(([key, val])=>{
+      if(ADM_MP_FIELDS[key]){
+        if(!_admMpActiveFields.has(key)) admMpToggleField(key);
+        const inp = document.getElementById('adm-mp-field-val-'+key);
+        if(inp) inp.value = val;
+      }
+    });
+  }
+  // Show badge
+  const badge = document.getElementById('adm-mp-existing-badge');
+  if(badge){ badge.style.display='flex'; }
+  const drop = document.getElementById('adm-mp-name-drop');
+  if(drop) drop.style.display='none';
+}
+
+function admMpDetachExisting(){
+  _admMpExistingProductId = null;
+  const badge = document.getElementById('adm-mp-existing-badge');
+  if(badge) badge.style.display='none';
+}
+
 function admMpClearForm(){
   ['adm-mp-name','adm-mp-brand','adm-mp-weight','adm-mp-price','adm-mp-url',
    'adm-mp-amazon-url','adm-mp-image-url','adm-mp-tags','adm-mp-note'].forEach(id=>{
@@ -16406,6 +16510,11 @@ function admMpClearForm(){
   });
   const order = document.getElementById('adm-mp-order');
   if(order) order.value = '0';
+  // Reset extra fields
+  _admMpActiveFields.forEach(key => admMpToggleField(key));
+  _admMpActiveFields.clear();
+  // Reset existing product state
+  admMpDetachExisting();
 }
 
 async function admMpAddItem(){
@@ -16423,37 +16532,48 @@ async function admMpAddItem(){
   const affiliate_url = document.getElementById('adm-mp-amazon-url')?.value.trim()||null;
   const image_url = document.getElementById('adm-mp-image-url')?.value.trim()||null;
 
+  // Collect extra fields
+  const custom_fields = {};
+  _admMpActiveFields.forEach(key => {
+    const inp = document.getElementById('adm-mp-field-val-'+key);
+    if(inp && inp.value.trim()) custom_fields[key] = inp.type==='number' ? parseFloat(inp.value)||inp.value : inp.value.trim();
+  });
+
   await waitForSupabase();
   const sb = sbClient();
 
-  // 1. Insert into gear_products first
-  const { data: prodData, error: prodErr } = await sb.from('gear_products').insert([{
-    name, brand,
-    category: _admMpCat,
-    weight_g,
-    price,
-    url,
-    affiliate_url,
-    image_url,
-    source: 'curated',
-    verified: true,
-    custom_fields: {},
-  }]).select('id').single();
+  let productId = _admMpExistingProductId;
 
-  if(prodErr){ toast('❌ Product error: '+prodErr.message); return; }
+  if(!productId){
+    // Create new gear_products row
+    const { data: prodData, error: prodErr } = await sb.from('gear_products').insert([{
+      name, brand,
+      category: _admMpCat,
+      weight_g, price, url, affiliate_url, image_url,
+      source: 'curated', verified: true,
+      custom_fields,
+    }]).select('id').single();
+    if(prodErr){ toast('❌ Product error: '+prodErr.message); return; }
+    productId = prodData.id;
+  } else {
+    // Update existing product with any changed data
+    await sb.from('gear_products').update({
+      name, brand, weight_g, price, url, affiliate_url, image_url,
+      custom_fields: Object.keys(custom_fields).length ? custom_fields : undefined,
+    }).eq('id', productId);
+  }
 
-  // 2. Insert into marketplace_items linking to the new product
+  // Insert marketplace_items row
   const { error: mpErr } = await sb.from('marketplace_items').insert({
-    product_id: prodData.id,
+    product_id: productId,
     category: _admMpCat,
     tags,
     curator_note: note,
     featured_order: order,
   });
-
   if(mpErr){ toast('❌ Marketplace error: '+mpErr.message); return; }
 
-  toast('✅ Added to Marketplace & gear database');
+  toast(_admMpExistingProductId ? '✅ Added to Marketplace (used existing product)' : '✅ Added to Marketplace & gear database');
   admMpClearForm();
   _mpData = [];
   admMpLoadList();
@@ -16752,7 +16872,14 @@ async function renderAdminPage(){
       <div style="margin-bottom:1rem;padding:0.9rem 1rem;background:rgba(184,201,163,0.06);border-radius:12px;border:1.5px solid rgba(184,201,163,0.3);">
         <div style="font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.75rem;">➕ Add New Item to Marketplace</div>
         <div class="admin-add-form">
-          <div class="full"><input class="gw-field-inp" id="adm-mp-name" type="text" autocomplete="off" placeholder="Product name *" style="width:100%;box-sizing:border-box;"></div>
+          <div class="full" style="position:relative;">
+            <input class="gw-field-inp" id="adm-mp-name" type="text" autocomplete="off" placeholder="Product name * (type to search DB)" style="width:100%;box-sizing:border-box;" oninput="admMpNameSearch(this.value)">
+            <div id="adm-mp-name-drop" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:var(--paper);border:1.5px solid var(--lichen);border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;box-shadow:0 6px 16px rgba(45,74,45,0.13);"></div>
+          </div>
+          <div id="adm-mp-existing-badge" style="display:none;grid-column:1/-1;font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--water);padding:2px 0;align-items:center;gap:0.5rem;">
+            ✓ Pre-filled from DB &nbsp;
+            <button onclick="admMpDetachExisting()" style="background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.45rem;text-decoration:underline;padding:0;font-family:'Space Mono',monospace;">detach · create new instead</button>
+          </div>
           <input class="gw-field-inp" id="adm-mp-brand" type="text" autocomplete="off" placeholder="Brand *">
           <div style="display:flex;gap:0.4rem;align-items:center;">
             <input class="gw-field-inp mono" id="adm-mp-weight" type="number" placeholder="Weight" data-weight-unit="g" style="flex:1;">
@@ -16768,6 +16895,21 @@ async function renderAdminPage(){
             <span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);">Featured order</span>
           </div>
           <div class="full"><input class="gw-field-inp" id="adm-mp-note" type="text" placeholder="Curator note — why this item is great…" style="width:100%;box-sizing:border-box;"></div>
+          <!-- Extra fields -->
+          <div class="full">
+            <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.4rem;opacity:0.7;">Extra fields (optional)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;" id="adm-mp-extra-fields">
+              <button type="button" class="adm-mp-field-chip" data-field="r_value" onclick="admMpToggleField('r_value')">＋ R-Value</button>
+              <button type="button" class="adm-mp-field-chip" data-field="volume_l" onclick="admMpToggleField('volume_l')">＋ Volume (L)</button>
+              <button type="button" class="adm-mp-field-chip" data-field="temp_rating" onclick="admMpToggleField('temp_rating')">＋ Temp Rating</button>
+              <button type="button" class="adm-mp-field-chip" data-field="length_cm" onclick="admMpToggleField('length_cm')">＋ Length (cm)</button>
+              <button type="button" class="adm-mp-field-chip" data-field="width_cm" onclick="admMpToggleField('width_cm')">＋ Width (cm)</button>
+              <button type="button" class="adm-mp-field-chip" data-field="fill_power" onclick="admMpToggleField('fill_power')">＋ Fill Power</button>
+              <button type="button" class="adm-mp-field-chip" data-field="denier" onclick="admMpToggleField('denier')">＋ Denier</button>
+              <button type="button" class="adm-mp-field-chip" data-field="seasons" onclick="admMpToggleField('seasons')">＋ Seasons</button>
+            </div>
+            <div id="adm-mp-extra-inputs" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.4rem;"></div>
+          </div>
           <div class="full" style="display:flex;justify-content:flex-end;gap:0.5rem;">
             <button class="gw-cancel-btn" onclick="admMpClearForm()" style="font-size:0.65rem;">✕ Clear</button>
             <button class="gw-confirm-btn" onclick="admMpAddItem()" style="font-size:0.65rem;">＋ Add to Marketplace</button>
