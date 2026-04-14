@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.80 — Gear Organizer</title>
+<title>BaseCamp v8.82 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -216,10 +216,15 @@ html.dark .p1-left{
 .gw-field-unit{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--stone);flex-shrink:0;}
 
 /* Divider */
-.admin-section{background:var(--paper);border:1.5px solid rgba(184,201,163,0.4);border-radius:16px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;}
+.admin-section{background:var(--paper);border:1.5px solid rgba(184,201,163,0.4);border-radius:16px;padding:0;margin-bottom:1rem;overflow:hidden;}
 html.dark .admin-section{background:rgba(14,22,12,0.88);border-color:rgba(72,108,52,0.4);}
-.admin-section-title{font-family:"Space Mono",monospace;font-size:0.55rem;text-transform:uppercase;letter-spacing:2px;color:var(--stone);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem;}
+.admin-section-title{font-family:"Space Mono",monospace;font-size:0.55rem;text-transform:uppercase;letter-spacing:2px;color:var(--stone);margin-bottom:0;display:flex;align-items:center;gap:0.5rem;padding:0.9rem 1.2rem;cursor:pointer;user-select:none;transition:background 0.15s;}
+.admin-section-title:hover{background:rgba(184,201,163,0.08);}
 .admin-section-title span{font-size:0.9rem;}
+.admin-section-caret{margin-left:auto;font-size:0.7rem;transition:transform 0.2s;color:var(--stone);opacity:0.5;}
+.admin-section.collapsed .admin-section-caret{transform:rotate(-90deg);}
+.admin-section-body{padding:0 1.2rem 1.1rem;}
+.admin-section.collapsed .admin-section-body{display:none;}
 .admin-card{background:rgba(245,240,232,0.6);border:1px solid rgba(184,201,163,0.35);border-radius:10px;padding:0.7rem 0.9rem;margin-bottom:0.5rem;display:flex;align-items:flex-start;gap:0.8rem;}
 html.dark .admin-card{background:rgba(15,25,12,0.7);border-color:rgba(55,85,40,0.4);}
 .admin-card-info{flex:1;min-width:0;}
@@ -2564,7 +2569,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.80</div>
+      <div class="logo-sub">Gear Organizer · v8.82</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3963,13 +3968,47 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       </button>
     </div>
         <!-- MIDDLE — Marketplace with filters -->
-    <div class="p2-mid">
+    <div class="p2-mid" style="display:flex;flex-direction:column;gap:1rem;">
+      <!-- Section 1: Our Picks -->
       <div class="lab-panel">
         <div class="lab-panel-hd">
           <div class="lab-panel-title">🛒 Marketplace</div>
-          <div class="lab-panel-sub">Coming soon</div>
+          <div class="lab-panel-sub">Our picks — curated by BaseCamp</div>
         </div>
         <div id="mp-body"></div>
+      </div>
+      <!-- Section 2: Gear Database Search -->
+      <div class="lab-panel">
+        <div class="lab-panel-hd" style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="lab-panel-title">🔍 Search Gear Database</div>
+            <div class="lab-panel-sub">Browse all gear by name, brand or type</div>
+          </div>
+        </div>
+        <div style="padding:0.55rem 0.75rem 0;">
+          <div style="display:flex;gap:0.4rem;">
+            <input class="gw-field-inp" id="mp-db-search" type="text" placeholder="Name, brand or type…" autocomplete="off"
+              oninput="mpDbSearch(this.value)" style="flex:1;font-size:0.72rem;">
+            <select class="gw-field-inp" id="mp-db-cat" onchange="mpDbSearch(document.getElementById('mp-db-search').value)"
+              style="font-size:0.68rem;width:130px;flex-shrink:0;">
+              <option value="">All types</option>
+              <option value="sleep">Sleep</option>
+              <option value="shelter">Shelter</option>
+              <option value="pack">Pack</option>
+              <option value="cook">Cooking</option>
+              <option value="water">Water</option>
+              <option value="clothes">Clothing</option>
+              <option value="navigation">Navigation</option>
+              <option value="electronics">Electronics</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div id="mp-db-results" style="padding:0.4rem 0.75rem 0.65rem;min-height:60px;">
+          <div style="text-align:center;padding:1.2rem;font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--stone);opacity:0.4;">
+            Type to search the full gear database
+          </div>
+        </div>
       </div>
     </div>
     <!-- RIGHT — Comparison panel -->
@@ -8356,6 +8395,102 @@ async function mpLoadOwners(productId){
   } catch(e){
     list.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:0.5rem;color:var(--stone);opacity:0.45;">Could not load owners</div>';
   }
+}
+
+
+// ── Gear DB Search ────────────────────────────────────────────
+let _mpDbTimer = null;
+
+function mpDbSearch(q){
+  clearTimeout(_mpDbTimer);
+  const results = document.getElementById('mp-db-results');
+  if(!results) return;
+  const cat = document.getElementById('mp-db-cat')?.value || '';
+  if(!q.trim() && !cat){
+    results.innerHTML = '<div style="text-align:center;padding:1.2rem;font-family:Space Mono,monospace;font-size:0.52rem;color:var(--stone);opacity:0.4;">Type to search the full gear database</div>';
+    return;
+  }
+  results.innerHTML = '<div style="padding:0.6rem;font-family:Space Mono,monospace;font-size:0.48rem;color:var(--stone);opacity:0.5;">Searching…</div>';
+  _mpDbTimer = setTimeout(()=>_mpDbDoSearch(q, cat), 280);
+}
+
+async function _mpDbDoSearch(q, cat){
+  const results = document.getElementById('mp-db-results');
+  if(!results) return;
+  try {
+    await waitForSupabase();
+    const sb = sbClient();
+    let query = sb.from('gear_products')
+      .select('id,name,brand,category,weight_g,price,url,image_url,verified,custom_fields')
+      .eq('verified', true)
+      .limit(20);
+    if(q.trim()) query = query.or('name.ilike.%'+q+'%,brand.ilike.%'+q+'%');
+    if(cat) query = query.eq('category', cat);
+    query = query.order('name');
+    const { data, error } = await query;
+    if(error) throw error;
+    if(!data || data.length === 0){
+      results.innerHTML = '<div style="text-align:center;padding:1rem;font-family:Space Mono,monospace;font-size:0.52rem;color:var(--stone);opacity:0.4;">No results found</div>';
+      return;
+    }
+    results.innerHTML = '<div style="display:flex;flex-direction:column;gap:0.4rem;">'
+      + data.map(p => mpDbCardHtml(p)).join('')
+      + '</div>';
+  } catch(e){
+    results.innerHTML = '<div style="padding:0.6rem;font-family:Space Mono,monospace;font-size:0.48rem;color:#c85a2a;">Search failed: '+escH(e.message)+'</div>';
+  }
+}
+
+function mpDbCardHtml(p){
+  const wStr = p.weight_g ? (p.weight_g>=1000?(p.weight_g/1000).toFixed(2)+'kg':p.weight_g+'g') : '—';
+  const cf = p.custom_fields||{};
+  const fieldChips = Object.entries(cf).filter(([,v])=>v!=null&&v!=='').slice(0,4).map(([k,v])=>{
+    const labels = {r_value:'R',volume_l:'L',temp_rating:'°',length_cm:'cm',fill_power:'fp',denier:'D',seasons:'s'};
+    return `<span class="mp-field-chip">${labels[k]||k} ${escH(String(v))}</span>`;
+  }).join('');
+  return `
+    <div class="mp-card" style="opacity:0.92;">
+      ${p.image_url?`<img class="mp-card-img" src="${escH(p.image_url)}" onerror="this.style.display='none'" alt="">` : ''}
+      <div class="mp-card-body">
+        <div class="mp-card-top">
+          <div style="min-width:0;">
+            <div class="mp-card-name">${escH(p.name)}${p.verified?'<span class="gw-item-verified" style="margin-left:4px;" title="Verified product">✓</span>':''}</div>
+            <div class="mp-card-brand">${escH(p.brand||'')}${p.category?` · <span style="opacity:0.6;">${escH(p.category)}</span>`:''}</div>
+            ${fieldChips?`<div class="mp-card-fields">${fieldChips}</div>`:''}
+          </div>
+          <div class="mp-card-meta">
+            <span class="mp-card-weight">${wStr}</span>
+            ${p.price?`<span class="mp-card-price">${escH(p.price)}</span>`:''}
+          </div>
+        </div>
+        <div class="mp-card-actions">
+          ${p.url?`<a class="mp-card-buy" href="${escH(p.url)}" target="_blank" onclick="event.stopPropagation()">🛒 Buy</a>`:''}
+          <button class="mp-card-compare" onclick="mpDbAddToCompare(${JSON.stringify(p).replace(/"/g,'&quot;')})">⚖️ Compare</button>
+          <button class="mp-card-add" onclick="mpDbAddToKit(${JSON.stringify(p).replace(/"/g,'&quot;')})">＋ Add to Kit</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function mpDbAddToCompare(p){
+  const entry = {
+    type: 'mkt', catId: 'uncategorised',
+    item: { id: 'db_'+p.id, name: p.name, brand: p.brand, w: p.weight_g||0, price: p.price, url: p.url, image_url: p.image_url }
+  };
+  cmpAddItem(entry);
+}
+
+function mpDbAddToKit(p){
+  const cat = CATS.find(c=>c.id==='uncategorised');
+  if(!cat) return;
+  if(cat.items.find(i=>i.productId===p.id)){ toast('Already in your gear wall'); return; }
+  cat.items.push({
+    id: uid(), name: p.name, w: p.weight_g||0, s:[],
+    link: p.url||'', extra:'', gwCatId:'uncategorised',
+    productId: p.id, _fromMarketplace: true,
+  });
+  scheduleSave(); renderAll();
+  toast('✅ '+p.name+' added to Gear Wall');
 }
 
 function mpSetCat(catId){
@@ -16877,6 +17012,41 @@ async function admMpUpdateOrder(mpId, val){
   _mpData = [];
 }
 
+
+function adminSectionToggle(el){
+  const section = el.closest('.admin-section');
+  if(section) section.classList.toggle('collapsed');
+}
+
+function adminInitSections(defaultCollapsed = []){
+  document.querySelectorAll('#page-admin .admin-section').forEach(section => {
+    const title = section.querySelector('.admin-section-title');
+    if(!title) return;
+    // Wrap content that isn't the title in a body div
+    const children = [...section.children].filter(c => !c.classList.contains('admin-section-title'));
+    if(!section.querySelector('.admin-section-body')){
+      const body = document.createElement('div');
+      body.className = 'admin-section-body';
+      children.forEach(child => body.appendChild(child));
+      section.appendChild(body);
+    }
+    // Add caret if not present
+    if(!title.querySelector('.admin-section-caret')){
+      const caret = document.createElement('span');
+      caret.className = 'admin-section-caret';
+      caret.textContent = '▾';
+      title.appendChild(caret);
+    }
+    // Make title toggle
+    title.onclick = () => adminSectionToggle(title);
+    // Default collapsed
+    const sectionId = section.id || '';
+    if(defaultCollapsed.some(id => sectionId === id || (!id && true))){
+      section.classList.add('collapsed');
+    }
+  });
+}
+
 async function renderAdminPage(){
   if(!isAdmin()){ document.getElementById('page-admin').innerHTML='<div style="padding:3rem;text-align:center;color:var(--stone);font-family:Space Mono,monospace;font-size:0.6rem;">Access denied.</div>'; return; }
   const el = document.getElementById('page-admin');
@@ -17178,6 +17348,8 @@ async function renderAdminPage(){
   el.insertAdjacentHTML('beforeend', importHtml);
   // Init marketplace editor
   admMpSetCat('sleeping_bags');
+  // Make all sections collapsible — start long list sections collapsed
+  adminInitSections(['adm-import-section', 'adm-mp-section']);
 }
 
 async function adminAddProduct(){
