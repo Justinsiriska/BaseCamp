@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.60 — Gear Organizer</title>
+<title>BaseCamp v8.61 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2511,11 +2511,11 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.60</div>
+      <div class="logo-sub">Gear Organizer · v8.61</div>
     </div>
   </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('kit',this)">📋 My Kit</button>
+    <button class="nav-tab active" onclick="showPage('kit',this)">🎒 My Backpacks</button>
     <button class="nav-tab" onclick="showPage('lab',this)">🔬 Gear Lab</button>
     <button class="nav-tab" onclick="showPage('trips',this);renderTripsPage()">🏕️ Trips</button>
     <button class="nav-tab" onclick="showPage('crew',this);renderCrewPage()">👥 Crew</button>
@@ -2533,7 +2533,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 
 <!-- PAGE 1 — MY KIT -->
 <div id="page-kit" class="page active">
-  <div id="kit-view-bar" style="display:flex;align-items:center;gap:0.75rem;padding:0.55rem 1.2rem 0;margin-bottom:-0.3rem;">
+  <div id="kit-view-bar" style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 1.2rem 0;margin-bottom:-0.5rem;">
     <div class="kit-view-toggle" id="kit-view-toggle">
       <button class="kit-view-btn active" id="kit-gear-btn" onclick="setKitView('gear')">📋 Gear</button>
       <button class="kit-view-btn" id="kit-food-btn" onclick="setKitView('food')">🍽️ Food</button>
@@ -2945,12 +2945,11 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <div class="p1-left" id="food-bag-col">
       <div class="pack-header">
         <div class="pack-header-top">
-          <span class="pack-header-title">My Backpacks</span>
+          <span class="pack-header-title">My Food Bag</span>
         </div>
-      </div>
-      <div class="season-bar" id="food-config-bar">
-
-        <div class="season-pills" id="food-season-pills"></div>
+        <div class="season-bar" id="food-config-bar">
+          <div class="season-pills" id="food-season-pills"></div>
+        </div>
       </div>
       <div id="food-cats"></div>
       <button class="add-cat-btn" onclick="foodAddCatModal()">＋ New Food Category</button>
