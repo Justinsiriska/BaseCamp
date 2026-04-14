@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.59 — Gear Organizer</title>
+<title>BaseCamp v8.60 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2511,7 +2511,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.59</div>
+      <div class="logo-sub">Gear Organizer · v8.60</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2533,6 +2533,12 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 
 <!-- PAGE 1 — MY KIT -->
 <div id="page-kit" class="page active">
+  <div id="kit-view-bar" style="display:flex;align-items:center;gap:0.75rem;padding:0.55rem 1.2rem 0;margin-bottom:-0.3rem;">
+    <div class="kit-view-toggle" id="kit-view-toggle">
+      <button class="kit-view-btn active" id="kit-gear-btn" onclick="setKitView('gear')">📋 Gear</button>
+      <button class="kit-view-btn" id="kit-food-btn" onclick="setKitView('food')">🍽️ Food</button>
+    </div>
+  </div>
   <div id="kit-gear-view">
   <div class="p1">
     <!-- COL 1 — Weight Breakdown (sticky, joined to col 2) -->
@@ -2559,11 +2565,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <div class="p1-left">
       <div class="pack-header">
         <div class="pack-header-top">
-          <span class="pack-header-title" id="kit-page-title">My Packs</span>
-          <div class="kit-view-toggle" id="kit-view-toggle">
-            <button class="kit-view-btn active" id="kit-gear-btn" onclick="setKitView('gear')">📋 Gear</button>
-            <button class="kit-view-btn" id="kit-food-btn" onclick="setKitView('food')">🍽️ Food</button>
-          </div>
+          <span class="pack-header-title" id="kit-page-title">My Backpacks</span>
         </div>
         <div class="season-bar" id="pack-config-bar">
           <div class="season-pills" id="season-pills-row"><button class="s-pill" data-s="winter">❄️ <span class="s-pill-name">Winter Alpine</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('winter',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('winter')">✕</button></button><button class="s-pill" data-s="shoulder">🍂 <span class="s-pill-name">Shoulder Season</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('shoulder',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('shoulder')">✕</button></button><button class="s-pill" data-s="summer">☀️ <span class="s-pill-name">Summer Fast</span><span class="s-pill-weight">2200g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('summer',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('summer')">✕</button></button><button class="s-pill" data-s="trip_1775578819306">🏕️ <span class="s-pill-name">test 62</span><span class="s-pill-weight">0g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775578819306',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775578819306')">✕</button></button><button class="s-pill active" data-s="trip_1775604059558">🏕️ <span class="s-pill-name">Justin and Johnny white mountains</span><span class="s-pill-weight">2000g</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('trip_1775604059558',this.closest('.s-pill'))">✏️</button><button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('trip_1775604059558')">✕</button></button><button class="add-pack-btn">+ New Pack</button></div>
@@ -2943,7 +2945,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <div class="p1-left" id="food-bag-col">
       <div class="pack-header">
         <div class="pack-header-top">
-          <span class="pack-header-title">My Food Bags</span>
+          <span class="pack-header-title">My Backpacks</span>
         </div>
       </div>
       <div class="season-bar" id="food-config-bar">
