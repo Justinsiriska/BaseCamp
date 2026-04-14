@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.61 — Gear Organizer</title>
+<title>BaseCamp v8.62 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2511,7 +2511,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.61</div>
+      <div class="logo-sub">Gear Organizer · v8.62</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10039,17 +10039,12 @@ function renderFoodPills(){
   const activeTripPackIds=new Set(TRIPS.map(t=>t.packId).filter(Boolean));
   const deletedPackIds=new Set(DELETED_TRIPS.map(t=>t.packId).filter(Boolean));
   const visiblePacks=PACKS.filter(p=>!deletedPackIds.has(p.id)||activeTripPackIds.has(p.id));
-  const MAX=3;
-  let ordered=[...visiblePacks];
-  const activeIdx=ordered.findIndex(p=>p.id===foodSeason);
-  if(activeIdx>=MAX){ const tmp=ordered[MAX-1]; ordered[MAX-1]=ordered[activeIdx]; ordered[activeIdx]=tmp; }
-  const shown=ordered.slice(0,MAX);
-  const overflow=ordered.slice(MAX);
 
-  shown.forEach(p=>{
+  visiblePacks.forEach(p=>{
     const w=FOOD_ITEMS.filter(i=>i.s.includes(p.id)).reduce((s,i)=>s+(i.w_total||0),0);
     const btn=document.createElement('button');
     btn.className='s-pill'+(p.id===foodSeason?' active':'');
+    btn.dataset.s=p.id;
     btn.innerHTML=`${p.icon} <span class="s-pill-name">${escH(p.name)}</span><span class="s-pill-weight">${dw(w)}</span><button class="s-pill-edit" title="Rename" onclick="event.stopPropagation();startRenamePack('${p.id}',this.closest('.s-pill'))">✏️</button>${visiblePacks.length>1?`<button class="s-pill-edit" title="Delete config" onclick="event.stopPropagation();deletePackConfig('${p.id}')">✕</button>`:''}`;
     btn.addEventListener('click',()=>{foodSeason=p.id;season=p.id;renderFoodPage();scheduleSave();});
     bar.appendChild(btn);
@@ -10060,37 +10055,6 @@ function renderFoodPills(){
   addBtn.textContent='+ New Pack';
   addBtn.onclick=()=>addPackConfig();
   bar.appendChild(addBtn);
-
-  if(overflow.length){
-    const hasActive=overflow.some(p=>p.id===foodSeason);
-    const ap=hasActive?overflow.find(p=>p.id===foodSeason):null;
-    const moreBtn=document.createElement('button');
-    moreBtn.className='s-pill-more'+(hasActive?' active':'');
-    moreBtn.innerHTML=(ap?`${ap.icon} <span class="s-pill-name">${escH(ap.name)}</span> `:'')+'▾';
-    moreBtn.title='More pack configs';
-    moreBtn.onclick=e=>{
-      e.stopPropagation();
-      document.getElementById('pack-overflow-pop')?.remove();
-      const pop=document.createElement('div');
-      pop.id='pack-overflow-pop';
-      pop.className='pack-overflow-pop';
-      overflow.forEach(p=>{
-        const w=FOOD_ITEMS.filter(i=>i.s.includes(p.id)).reduce((s,i)=>s+(i.w_total||0),0);
-        const item=document.createElement('div');
-        item.className='pack-overflow-item'+(p.id===foodSeason?' active':'');
-        item.innerHTML=`<span>${p.icon} ${escH(p.name)}</span><span class="pack-overflow-w">${dw(w)}</span>`;
-        item.onclick=()=>{foodSeason=p.id;season=p.id;renderFoodPage();scheduleSave();pop.remove();};
-        pop.appendChild(item);
-      });
-      const r=moreBtn.getBoundingClientRect();
-      pop.style.top=(r.bottom+4)+'px';
-      pop.style.left=r.left+'px';
-      document.body.appendChild(pop);
-      const close=()=>{pop.remove();document.removeEventListener('click',close);};
-      setTimeout(()=>document.addEventListener('click',close),0);
-    };
-    bar.appendChild(moreBtn);
-  }
 }
 
 function renderFoodBreakdown(){
