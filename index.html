@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.67 — Gear Organizer</title>
+<title>BaseCamp v8.68 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1027,10 +1027,10 @@ overflow:hidden;}
 .thermal-sub{font-size:0.65rem;opacity:0.68;margin-top:2px;}
 
 /* PAGE 2 — two-panel browser + comparison */
-.p2{max-width:1900px;margin:0 auto;padding:1.2rem 2rem 2rem;display:grid;grid-template-columns:1.4fr 1.3fr 1.8fr;gap:1.2rem;align-items:start;}
+.p2{max-width:1900px;margin:0 auto;padding:1.2rem 2rem 2rem;display:grid;grid-template-columns:1.4fr 1.3fr 1.8fr 1.5fr;gap:1.2rem;align-items:start;}
 /* Marketplace page — collapsible gear-ref right column */
 .p2{transition:grid-template-columns 0.25s ease;}
-.p2.ref-collapsed{grid-template-columns:1.4fr 1fr 38px;}
+.p2.ref-collapsed{grid-template-columns:1.4fr 1.3fr 1.8fr 38px;}
 .p2-ref{position:sticky;top:80px;overflow:hidden;transition:all 0.25s ease;}
 .p2-ref-inner{opacity:1;transition:opacity 0.2s ease;}
 .p2.ref-collapsed .p2-ref-inner{opacity:0;pointer-events:none;}
@@ -2523,7 +2523,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.67</div>
+      <div class="logo-sub">Gear Organizer · v8.68</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4127,7 +4127,31 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
         </div>
       </div>
     </div>
-    <!-- RIGHT — My Gear reference (collapsible) -->
+    <!-- RIGHT — Comparison panel (restored) -->
+    <div class="p2-right">
+      <div class="cmp-panel">
+        <div class="cmp-panel-hd">
+          <div>
+            <div class="cmp-panel-title">⚖️ Comparison</div>
+            <div class="cmp-panel-sub">Owned items always on top</div>
+          </div>
+          <div class="cmp-sort-bar">
+            <span class="cmp-sort-lbl">Sort:</span>
+            <button class="cmp-sort-btn active" onclick="setCmpSort('weight',this)">Weight</button>
+            <button class="cmp-sort-btn" onclick="setCmpSort('price',this)">Price</button>
+            <button class="cmp-sort-btn" onclick="setCmpSort('wpd',this)">g/$</button>
+            <button class="cmp-sort-btn" onclick="setCmpSort('thermal',this)">Thermal</button>
+          </div>
+        </div>
+        <div class="cmp-cat-bar" id="cmp-cat-bar" style="display:none;"></div>
+        <div class="cmp-queue" id="cmp-queue" ondragover="event.preventDefault();this.querySelector('.cmp-drop-hint')?.classList.add('over')" ondragleave="this.querySelector('.cmp-drop-hint')?.classList.remove('over')" ondrop="cmpQueueDrop(event)">
+          <span class="cmp-queue-empty" id="cmp-queue-empty">No items yet</span>
+          <span class="cmp-drop-hint" id="cmp-drop-hint">+ Drop here</span>
+        </div>
+        <div id="cmp-body"><div class="cmp-empty"><div class="cmp-empty-icon">📊</div><div class="cmp-empty-lbl">Nothing to compare yet</div><div class="cmp-empty-sub">Click or drag items from the left panels.<br>Mix your owned gear with market alternatives.</div></div></div>
+      </div>
+    </div>
+    <!-- FAR RIGHT — Gear Wall reference (collapsible) -->
     <div class="p2-ref" id="p2-ref-col" style="position:relative;">
       <button class="p2-ref-toggle" id="p2-ref-toggle" onclick="toggleGearRef()" title="Collapse gear reference">◀</button>
       <span class="p2-ref-collapsed-label">My Gear</span>
@@ -4136,7 +4160,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
           <div class="gw-hd" style="display:flex;align-items:center;justify-content:space-between;">
             <div>
               <div class="gw-title">🪝 My Gear</div>
-              <div class="gw-subtitle">Your current kit · for reference</div>
+              <div class="gw-subtitle">Your kit · for reference</div>
             </div>
           </div>
           <div class="gw-body" id="mp-gear-ref-body"></div>
