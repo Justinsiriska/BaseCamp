@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.76 — Gear Organizer</title>
+<title>BaseCamp v8.77 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -364,6 +364,11 @@ html.dark .pack-overflow-pop{background:#0f1a0f;border-color:var(--dm-border);}
 .adm-mp-field-chip.active{background:var(--forest);color:var(--cream);border-color:var(--forest);}
 
 .mp-card-add:hover{background:#2d5a2d;}
+.mp-field-chip{font-family:'Space Mono',monospace;font-size:0.42rem;padding:1px 6px;background:rgba(184,201,163,0.18);border:1px solid rgba(184,201,163,0.4);border-radius:8px;color:var(--stone);white-space:nowrap;}
+.mp-card-fields{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+.mp-card-reviews{font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--bark);background:rgba(200,160,60,0.12);border:1.5px solid rgba(200,160,60,0.35);border-radius:6px;padding:0.2rem 0.55rem;cursor:pointer;transition:all 0.15s;}
+.mp-card-reviews:hover{background:rgba(200,160,60,0.22);}
+
 html.dark .mp-card{background:rgba(14,22,12,0.7);border-color:rgba(72,108,52,0.35);}
 
 .pack-overflow-w{font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);}
@@ -2554,7 +2559,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.76</div>
+      <div class="logo-sub">Gear Organizer · v8.77</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6083,30 +6088,31 @@ function renderMpGearWall(){
   const body = document.getElementById('mp-gearwall-body');
   if(!body) return;
 
-  // Ghost item banner at top if one is previewed
+  // Ghost item — styled like a real gear wall item but tinted blue to show "not yours"
   let ghostHtml = '';
   if(_mpGhostItem){
     const g = _mpGhostItem;
     const wStr = g.w ? (g.w>=1000?(g.w/1000).toFixed(2)+'kg':g.w+'g') : '—';
     ghostHtml = `
-      <div style="margin:0.5rem 0.5rem 0;padding:0.6rem 0.75rem;background:rgba(74,143,168,0.08);border:1.5px dashed rgba(74,143,168,0.4);border-radius:10px;position:relative;">
-        <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--water);opacity:0.8;margin-bottom:0.3rem;">🛒 Marketplace Preview — not yours yet</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
-          <div>
-            <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:0.82rem;color:var(--bark);">${escH(g.name)}</div>
-            <div style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);">${escH(g.brand)}</div>
+      <div style="margin:0.5rem 0.5rem 0.2rem;">
+        <div style="font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:1px;color:var(--water);opacity:0.75;padding:0 0.2rem 0.2rem;">🛒 Marketplace preview</div>
+        <div class="gw-item" style="background:rgba(74,143,168,0.08);border:1.5px dashed rgba(74,143,168,0.45);border-radius:10px;padding:0.5rem 0.65rem;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;position:relative;">
+          <div class="gw-item-left" style="min-width:0;flex:1;">
+            ${g.image_url?`<img src="${escH(g.image_url)}" style="width:28px;height:28px;object-fit:cover;border-radius:5px;flex-shrink:0;" onerror="this.style.display='none'">`:
+              `<div class="gw-item-dot" style="background:var(--water);opacity:0.6;"></div>`}
+            <span class="gw-item-name" style="color:var(--bark);">${escH(g.name)}</span>
+            <span style="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);opacity:0.6;margin-left:2px;">${escH(g.brand)}</span>
           </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:0.88rem;color:var(--bark);">${wStr}</div>
-            ${g.price?`<div style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);">${escH(g.price)}</div>`:''}
+          <div class="gw-item-right" style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+            <span class="gw-item-weight">${wStr}</span>
+            ${g.price?`<span style="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);">${escH(g.price)}</span>`:''}
           </div>
+          <button onclick="_mpGhostItem=null;renderMpGearWall()" style="position:absolute;top:3px;right:4px;background:none;border:none;cursor:pointer;font-size:0.6rem;color:var(--stone);opacity:0.4;line-height:1;">✕</button>
         </div>
-        ${g.curator_note?`<div style="font-family:'Nunito',sans-serif;font-style:italic;font-size:0.68rem;color:var(--stone);margin-top:0.35rem;opacity:0.75;">"${escH(g.curator_note)}"</div>`:''}
-        <div style="display:flex;gap:0.4rem;margin-top:0.5rem;">
-          ${g.url?`<a href="${escH(g.url)}" target="_blank" style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:white;background:var(--water);border:none;border-radius:6px;padding:0.22rem 0.65rem;cursor:pointer;text-decoration:none;">🛒 Buy</a>`:''}
-          <button onclick="mpAddToCompare('${g.mp_id}')" style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--bark);background:rgba(184,201,163,0.2);border:1.5px solid rgba(184,201,163,0.5);border-radius:6px;padding:0.22rem 0.65rem;cursor:pointer;">⚖️ Compare</button>
-          <button onclick="mpAddToKit('${g.mp_id}')" style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:white;background:var(--forest);border:none;border-radius:6px;padding:0.22rem 0.65rem;cursor:pointer;">＋ Add to Kit</button>
-          <button onclick="_mpGhostItem=null;renderMpGearWall()" style="position:absolute;top:0.4rem;right:0.5rem;background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--stone);opacity:0.5;">✕</button>
+        <div style="display:flex;gap:0.3rem;margin-top:0.3rem;padding:0 0.1rem;">
+          ${g.url?`<a href="${escH(g.url)}" target="_blank" class="mp-card-buy" style="font-size:0.58rem;padding:0.18rem 0.5rem;" onclick="event.stopPropagation()">🛒 Buy</a>`:''}
+          <button onclick="mpAddToCompare('${g.mp_id}')" class="mp-card-compare" style="font-size:0.58rem;padding:0.18rem 0.5rem;">⚖️ Compare</button>
+          <button onclick="mpAddToKit('${g.mp_id}')" class="mp-card-add" style="font-size:0.58rem;padding:0.18rem 0.5rem;">＋ Add to Kit</button>
         </div>
       </div>`;
   }
@@ -8129,6 +8135,7 @@ async function mpFetchItems(){
       price:        row.product?.price || '',
       url:          row.product?.url || '',
       image_url:    row.product?.image_url || '',
+      custom_fields: row.product?.custom_fields || {},
       category_hint: row.product?.category || '',
     }));
     renderMarketplace();
@@ -8185,14 +8192,26 @@ function renderMarketplace(){
 
 function mpCardHtml(item){
   const wStr = item.w ? (item.w >= 1000 ? (item.w/1000).toFixed(2)+'kg' : item.w+'g') : '—';
+  // Custom fields chips
+  const cf = item.custom_fields || {};
+  const fieldChips = Object.entries(cf).filter(([,v])=>v!=null&&v!=='').map(([k,v])=>{
+    const labels = {r_value:'R',volume_l:'L',temp_rating:'°',length_cm:'cm',fill_power:'fp',denier:'D',seasons:'s'};
+    const lbl = labels[k] || k;
+    return `<span class="mp-field-chip">${lbl} ${escH(String(v))}</span>`;
+  }).join('');
+
   return `
-    <div class="mp-card" onclick="mpPreviewGhost('${item.mp_id}')" title="Preview in gear wall">
+    <div class="mp-card" draggable="true"
+      ondragstart="mpCardDragStart(event,'${item.mp_id}')"
+      ondragend="mpCardDragEnd(event)"
+      onclick="mpPreviewGhost('${item.mp_id}')" title="Click to preview · drag to compare">
       ${item.image_url ? `<img class="mp-card-img" src="${escH(item.image_url)}" alt="${escH(item.name)}" onerror="this.style.display='none'">` : ''}
       <div class="mp-card-body">
         <div class="mp-card-top">
-          <div>
+          <div style="min-width:0;">
             <div class="mp-card-name">${escH(item.name)}</div>
             <div class="mp-card-brand">${escH(item.brand)}</div>
+            ${fieldChips ? `<div class="mp-card-fields">${fieldChips}</div>` : ''}
           </div>
           <div class="mp-card-meta">
             <span class="mp-card-weight">${wStr}</span>
@@ -8204,10 +8223,134 @@ function mpCardHtml(item){
           ${item.url ? `<a class="mp-card-buy" href="${escH(item.url)}" target="_blank" onclick="event.stopPropagation()">🛒 Buy</a>` : ''}
           <button class="mp-card-compare" onclick="event.stopPropagation();mpAddToCompare('${item.mp_id}')">⚖️ Compare</button>
           <button class="mp-card-add" onclick="event.stopPropagation();mpAddToKit('${item.mp_id}')">＋ Add to Kit</button>
+          <button class="mp-card-reviews" onclick="event.stopPropagation();mpOpenReviews('${item.mp_id}')">⭐ Reviews</button>
         </div>
       </div>
     </div>
   `;
+}
+
+function mpCardDragStart(e, mpId){
+  const item = _mpData.find(i=>i.mp_id===mpId);
+  if(!item) return;
+  labDrag = {
+    type: 'mkt',
+    catId: 'uncategorised',
+    item: {
+      id: 'mp_'+item.mp_id,
+      name: item.name, brand: item.brand,
+      w: item.w, price: item.price,
+      url: item.url, image_url: item.image_url,
+      _mpId: item.mp_id,
+    }
+  };
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', item.name);
+}
+
+function mpCardDragEnd(e){
+  labDrag = null;
+}
+
+
+async function mpOpenReviews(mpId){
+  const item = _mpData.find(i=>i.mp_id===mpId);
+  if(!item) return;
+
+  // Remove any existing modal
+  document.getElementById('mp-reviews-modal')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'mp-reviews-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;';
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+
+  overlay.innerHTML = `
+    <div style="background:var(--cream);border-radius:18px;padding:0;max-width:760px;width:calc(100vw - 2rem);max-height:80vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);border:1.5px solid rgba(184,201,163,0.4);display:flex;flex-direction:column;">
+      <!-- Header -->
+      <div style="padding:1.1rem 1.3rem 0.8rem;border-bottom:1.5px solid rgba(184,201,163,0.35);display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-shrink:0;">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--forest);">${escH(item.name)}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);margin-top:2px;">${escH(item.brand)}${item.w?' · '+(item.w>=1000?(item.w/1000).toFixed(2)+'kg':item.w+'g'):''}${item.price?' · '+escH(item.price):''}</div>
+        </div>
+        <button onclick="document.getElementById('mp-reviews-modal').remove()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--stone);opacity:0.5;flex-shrink:0;line-height:1;">✕</button>
+      </div>
+      <!-- Two column body -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;min-height:0;">
+        <!-- Reviews col -->
+        <div style="padding:0.9rem 1rem;overflow-y:auto;border-right:1.5px solid rgba(184,201,163,0.25);">
+          <div style="font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.65rem;">⭐ Reviews</div>
+          <div id="mp-reviews-list" style="display:flex;flex-direction:column;gap:0.65rem;">
+            <div style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);opacity:0.5;">Loading reviews…</div>
+          </div>
+        </div>
+        <!-- Owners col -->
+        <div style="padding:0.9rem 1rem;overflow-y:auto;">
+          <div style="font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.65rem;">🎒 BaseCamp Members Who Own This</div>
+          <div id="mp-owners-list" style="display:flex;flex-direction:column;gap:0.5rem;">
+            <div style="font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);opacity:0.5;">Loading owners…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Load reviews and owners in parallel
+  mpLoadReviews(mpId, item.product_id);
+  mpLoadOwners(item.product_id);
+}
+
+async function mpLoadReviews(mpId, productId){
+  const list = document.getElementById('mp-reviews-list');
+  if(!list) return;
+  // Placeholder — reviews table not yet built, show coming soon
+  list.innerHTML = `
+    <div style="text-align:center;padding:1.5rem 0.5rem;font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--stone);opacity:0.45;">
+      Reviews coming soon
+    </div>
+  `;
+}
+
+async function mpLoadOwners(productId){
+  const list = document.getElementById('mp-owners-list');
+  if(!list || !productId) return;
+  try {
+    await waitForSupabase();
+    const sb = sbClient();
+    // Find profiles where gear_data contains this product_id
+    const { data } = await sb.from('profiles')
+      .select('id, username, full_name, avatar_url, gear_data')
+      .not('gear_data', 'is', null)
+      .limit(50);
+    if(!data || data.length === 0){ list.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:0.5rem;color:var(--stone);opacity:0.45;">No members found with this item yet</div>'; return; }
+    // Filter to members who actually have this productId in their gear
+    const owners = data.filter(p => {
+      try {
+        const gd = typeof p.gear_data === 'string' ? JSON.parse(p.gear_data) : p.gear_data;
+        const cats = gd?.cats || [];
+        return cats.some(cat => cat.items?.some(item => item.productId === productId));
+      } catch(e){ return false; }
+    });
+    if(owners.length === 0){
+      list.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:0.5rem;color:var(--stone);opacity:0.45;">No BaseCamp members own this item yet — be the first!</div>';
+      return;
+    }
+    list.innerHTML = owners.map(p=>`
+      <div style="display:flex;align-items:center;gap:0.6rem;padding:0.4rem 0;border-bottom:1px solid rgba(184,201,163,0.2);">
+        ${p.avatar_url
+          ? `<img src="${escH(p.avatar_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`
+          : `<div style="width:28px;height:28px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;">${escH((p.full_name||p.username||'?')[0].toUpperCase())}</div>`
+        }
+        <div style="min-width:0;">
+          <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:0.72rem;color:var(--bark);">${escH(p.full_name||p.username||'Anonymous')}</div>
+          ${p.username?`<div style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);opacity:0.6;">@${escH(p.username)}</div>`:''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e){
+    list.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:0.5rem;color:var(--stone);opacity:0.45;">Could not load owners</div>';
+  }
 }
 
 function mpSetCat(catId){
@@ -8236,14 +8379,18 @@ function mpAddToCompare(mpId){
   const item = _mpData.find(i=>i.mp_id===mpId);
   if(!item) return;
   const entry = {
-    id: 'mp_'+item.mp_id,
-    name: item.name,
-    brand: item.brand,
-    w: item.w,
-    price: item.price,
-    url: item.url,
-    _type: 'marketplace',
-    _mpId: item.mp_id,
+    type: 'mkt',
+    catId: 'uncategorised',
+    item: {
+      id: 'mp_'+item.mp_id,
+      name: item.name,
+      brand: item.brand,
+      w: item.w,
+      price: item.price,
+      url: item.url,
+      image_url: item.image_url,
+      _mpId: item.mp_id,
+    }
   };
   cmpAddItem(entry);
 }
@@ -8251,18 +8398,20 @@ function mpAddToCompare(mpId){
 function mpAddToKit(mpId){
   const item = _mpData.find(i=>i.mp_id===mpId);
   if(!item) return;
-  // Add as an unverified item to uncategorised — user can move/link later
   const cat = CATS.find(c=>c.id==='uncategorised');
   if(!cat) return;
+  // Check not already added
+  if(cat.items.find(i=>i._mpId===mpId)){ toast('Already in your kit'); return; }
   const newItem = {
     id: uid(), name: item.name, w: item.w, s:[season],
-    link:'', extra:'', gwCatId:'uncategorised',
+    link: item.url||'', extra:'', gwCatId:'uncategorised',
     productId: item.product_id || null,
+    _mpId: mpId,
     _fromMarketplace: true,
   };
   cat.items.push(newItem);
   scheduleSave(); renderAll();
-  toast('✅ '+item.name+' added to Uncategorised');
+  toast('✅ '+item.name+' added to your kit');
 }
 
 let _mpGwCollapsed = false;
