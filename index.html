@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.74 — Gear Organizer</title>
+<title>BaseCamp v8.75 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2550,7 +2550,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.74</div>
+      <div class="logo-sub">Gear Organizer · v8.75</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -16391,11 +16391,6 @@ let _admMpSelectedProduct = null;
 
 function admMpSetCat(catId){
   _admMpCat = catId;
-  _admMpSelectedProduct = null;
-  document.getElementById('adm-mp-selected') && (document.getElementById('adm-mp-selected').textContent = '');
-  document.getElementById('adm-mp-search') && (document.getElementById('adm-mp-search').value = '');
-  document.getElementById('adm-mp-search-results') && (document.getElementById('adm-mp-search-results').innerHTML = '');
-  // Update active pill
   MP_CATEGORIES.forEach(cat => {
     const btn = document.getElementById('adm-mp-cat-'+cat.id);
     if(btn) btn.classList.toggle('active', cat.id === catId);
@@ -16403,55 +16398,64 @@ function admMpSetCat(catId){
   admMpLoadList();
 }
 
-async function admMpSearch(q){
-  const results = document.getElementById('adm-mp-search-results');
-  if(!results) return;
-  if(q.length < 2){ results.innerHTML = ''; return; }
-  await waitForSupabase();
-  const sb = sbClient();
-  const { data } = await sb.from('gear_products').select('id,name,brand,weight_g').ilike('name','%'+q+'%').limit(8);
-  if(!data || data.length === 0){ results.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:0.45rem;color:var(--stone);padding:4px;">No results</div>'; return; }
-  results.innerHTML = data.map(p=>`
-    <div onclick="admMpSelectProduct('${p.id}','${escH(p.name)}','${escH(p.brand||'')}',${p.weight_g||0})"
-      style="padding:5px 8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.72rem;border-radius:6px;transition:background 0.1s;"
-      onmouseover="this.style.background='rgba(184,201,163,0.2)'" onmouseout="this.style.background=''">
-      <strong>${escH(p.name)}</strong> <span style="opacity:0.6;font-size:0.62rem;">${escH(p.brand||'')} · ${p.weight_g||0}g</span>
-    </div>
-  `).join('');
-}
-
-function admMpSelectProduct(id, name, brand, w){
-  _admMpSelectedProduct = { id, name, brand, w };
-  const sel = document.getElementById('adm-mp-selected');
-  if(sel) sel.textContent = '✓ Selected: '+name+' ('+brand+')';
-  const results = document.getElementById('adm-mp-search-results');
-  if(results) results.innerHTML = '';
-  const inp = document.getElementById('adm-mp-search');
-  if(inp) inp.value = name;
+function admMpClearForm(){
+  ['adm-mp-name','adm-mp-brand','adm-mp-weight','adm-mp-price','adm-mp-url',
+   'adm-mp-amazon-url','adm-mp-image-url','adm-mp-tags','adm-mp-note'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  const order = document.getElementById('adm-mp-order');
+  if(order) order.value = '0';
 }
 
 async function admMpAddItem(){
-  if(!_admMpSelectedProduct){ toast('⚠️ Select a product first'); return; }
-  const tags = (document.getElementById('adm-mp-tags')?.value||'').split(',').map(t=>t.trim()).filter(Boolean);
-  const note = document.getElementById('adm-mp-note')?.value.trim()||'';
+  const name  = document.getElementById('adm-mp-name')?.value.trim();
+  const brand = document.getElementById('adm-mp-brand')?.value.trim();
+  if(!name || !brand){ toast('⚠️ Name and brand are required'); return; }
+
+  const tags  = (document.getElementById('adm-mp-tags')?.value||'').split(',').map(t=>t.trim()).filter(Boolean);
+  const note  = document.getElementById('adm-mp-note')?.value.trim()||'';
   const order = parseInt(document.getElementById('adm-mp-order')?.value)||0;
+  const weightRaw = document.getElementById('adm-mp-weight');
+  const weight_g  = weightRaw ? (getWeightInGrams(weightRaw)||null) : null;
+  const price     = document.getElementById('adm-mp-price')?.value.trim()||null;
+  const url       = document.getElementById('adm-mp-url')?.value.trim()||null;
+  const affiliate_url = document.getElementById('adm-mp-amazon-url')?.value.trim()||null;
+  const image_url = document.getElementById('adm-mp-image-url')?.value.trim()||null;
+
   await waitForSupabase();
   const sb = sbClient();
-  const { error } = await sb.from('marketplace_items').insert({
-    product_id: _admMpSelectedProduct.id,
+
+  // 1. Insert into gear_products first
+  const { data: prodData, error: prodErr } = await sb.from('gear_products').insert([{
+    name, brand,
+    category: _admMpCat,
+    weight_g,
+    price,
+    url,
+    affiliate_url,
+    image_url,
+    source: 'curated',
+    verified: true,
+    custom_fields: {},
+  }]).select('id').single();
+
+  if(prodErr){ toast('❌ Product error: '+prodErr.message); return; }
+
+  // 2. Insert into marketplace_items linking to the new product
+  const { error: mpErr } = await sb.from('marketplace_items').insert({
+    product_id: prodData.id,
     category: _admMpCat,
     tags,
     curator_note: note,
     featured_order: order,
   });
-  if(error){ toast('❌ '+error.message); return; }
-  toast('✅ Added to Marketplace');
-  _admMpSelectedProduct = null;
-  document.getElementById('adm-mp-search') && (document.getElementById('adm-mp-search').value='');
-  document.getElementById('adm-mp-tags') && (document.getElementById('adm-mp-tags').value='');
-  document.getElementById('adm-mp-note') && (document.getElementById('adm-mp-note').value='');
-  document.getElementById('adm-mp-selected') && (document.getElementById('adm-mp-selected').textContent='');
-  _mpData = []; // force refresh on next MP view
+
+  if(mpErr){ toast('❌ Marketplace error: '+mpErr.message); return; }
+
+  toast('✅ Added to Marketplace & gear database');
+  admMpClearForm();
+  _mpData = [];
   admMpLoadList();
 }
 
@@ -16736,35 +16740,42 @@ async function renderAdminPage(){
     <!-- MARKETPLACE EDITOR -->
     <div class="admin-section" id="adm-mp-section">
       <div class="admin-section-title"><span>🛒</span> Marketplace Editor</div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+
+      <!-- Category selector -->
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
         ${MP_CATEGORIES.map(cat=>`
           <button class="mp-cat-pill" id="adm-mp-cat-${cat.id}" onclick="admMpSetCat('${cat.id}')">${cat.icon} ${cat.label}</button>
         `).join('')}
       </div>
-      <div style="margin-bottom:0.75rem;padding:0.75rem;background:rgba(184,201,163,0.06);border-radius:10px;border:1.5px solid rgba(184,201,163,0.3);">
-        <div style="font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.5rem;">Add item to selected category</div>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">
-          <div style="flex:2;min-width:180px;">
-            <div style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-bottom:3px;">Search gear_products</div>
-            <input class="gw-field-inp" id="adm-mp-search" type="text" placeholder="Search by name…" autocomplete="off" oninput="admMpSearch(this.value)" style="width:100%;box-sizing:border-box;">
-            <div id="adm-mp-search-results" style="margin-top:4px;"></div>
+
+      <!-- Full item add form -->
+      <div style="margin-bottom:1rem;padding:0.9rem 1rem;background:rgba(184,201,163,0.06);border-radius:12px;border:1.5px solid rgba(184,201,163,0.3);">
+        <div style="font-family:'Space Mono',monospace;font-size:0.48rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.75rem;">➕ Add New Item to Marketplace</div>
+        <div class="admin-add-form">
+          <div class="full"><input class="gw-field-inp" id="adm-mp-name" type="text" autocomplete="off" placeholder="Product name *" style="width:100%;box-sizing:border-box;"></div>
+          <input class="gw-field-inp" id="adm-mp-brand" type="text" autocomplete="off" placeholder="Brand *">
+          <div style="display:flex;gap:0.4rem;align-items:center;">
+            <input class="gw-field-inp mono" id="adm-mp-weight" type="number" placeholder="Weight" data-weight-unit="g" style="flex:1;">
+            ${_weightUnitSel('adm-mp-weight','g')}
           </div>
-          <div style="flex:1;min-width:120px;">
-            <div style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-bottom:3px;">Tags (comma separated)</div>
-            <input class="gw-field-inp" id="adm-mp-tags" type="text" placeholder="ultralight,budget" style="width:100%;box-sizing:border-box;">
+          <input class="gw-field-inp" id="adm-mp-price" type="text" placeholder="Price e.g. $149">
+          <div class="full"><input class="gw-field-inp" id="adm-mp-url" type="text" autocomplete="off" placeholder="Product URL (brand site)" style="width:100%;box-sizing:border-box;"></div>
+          <div class="full"><input class="gw-field-inp" id="adm-mp-amazon-url" type="text" autocomplete="off" placeholder="Amazon / affiliate URL (optional)" style="width:100%;box-sizing:border-box;"></div>
+          <div class="full"><input class="gw-field-inp" id="adm-mp-image-url" type="text" autocomplete="off" placeholder="Image URL (optional)" style="width:100%;box-sizing:border-box;"></div>
+          <input class="gw-field-inp" id="adm-mp-tags" type="text" placeholder="Tags: ultralight,budget,new">
+          <div style="display:flex;gap:0.4rem;align-items:center;">
+            <input class="gw-field-inp" id="adm-mp-order" type="number" value="0" style="width:70px;" placeholder="Order">
+            <span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);">Featured order</span>
           </div>
-          <div style="flex:2;min-width:200px;">
-            <div style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-bottom:3px;">Curator note</div>
-            <input class="gw-field-inp" id="adm-mp-note" type="text" placeholder="Why this item is great…" style="width:100%;box-sizing:border-box;">
-          </div>
-          <div style="flex-shrink:0;">
-            <div style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--stone);margin-bottom:3px;">Order</div>
-            <input class="gw-field-inp" id="adm-mp-order" type="number" value="0" style="width:60px;">
+          <div class="full"><input class="gw-field-inp" id="adm-mp-note" type="text" placeholder="Curator note — why this item is great…" style="width:100%;box-sizing:border-box;"></div>
+          <div class="full" style="display:flex;justify-content:flex-end;gap:0.5rem;">
+            <button class="gw-cancel-btn" onclick="admMpClearForm()" style="font-size:0.65rem;">✕ Clear</button>
+            <button class="gw-confirm-btn" onclick="admMpAddItem()" style="font-size:0.65rem;">＋ Add to Marketplace</button>
           </div>
         </div>
-        <div id="adm-mp-selected" style="margin-top:0.4rem;font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--water);"></div>
-        <button class="gw-confirm-btn" onclick="admMpAddItem()" style="margin-top:0.5rem;font-size:0.6rem;">＋ Add to Marketplace</button>
       </div>
+
+      <!-- Existing items list -->
       <div id="adm-mp-list" style="display:flex;flex-direction:column;gap:0.4rem;">
         <div style="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);opacity:0.5;">Select a category above to see items</div>
       </div>
