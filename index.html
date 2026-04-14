@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.57 — Gear Organizer</title>
+<title>BaseCamp v8.58 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -974,7 +974,7 @@ overflow:hidden;}
 .panel-hd{padding:0.55rem 0.8rem 0.35rem;border-bottom:2px solid var(--lichen);}
 .panel-title{font-family:'Playfair Display',serif;font-size:0.78rem;color:var(--forest);}
 .panel-bd{padding:0.15rem 0.6rem 0.25rem;}
-.chart-wrap{position:relative;width:100%;aspect-ratio:1/1;}
+.chart-wrap{position:relative;width:100%;aspect-ratio:1/1;z-index:50;}
 .fb-chart-wrap{position:relative;width:100%;aspect-ratio:7/5;overflow:hidden;}
 .fb-divider{height:1px;background:rgba(184,201,163,0.3);margin:0.15rem 0;}
 .fb-chart-lbl{display:none;}
@@ -7679,6 +7679,7 @@ function closeModal(){
 let activeChartCat = null;
 
 function renderChart(){
+  if(typeof Chart !== 'undefined') Chart.defaults.plugins.tooltip.z = 9999;
   const ctx = document.getElementById('weightChart').getContext('2d');
   if(wChart) wChart.destroy();
 
