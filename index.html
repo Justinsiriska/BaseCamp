@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.71 — Gear Organizer</title>
+<title>BaseCamp v8.72 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1030,15 +1030,17 @@ overflow:hidden;}
 .p2{max-width:1900px;margin:0 auto;padding:1.2rem 2rem 2rem;display:grid;grid-template-columns:1.4fr 1.3fr 1.8fr;gap:1.2rem;align-items:start;}
 /* Marketplace collapsible gear wall */
 .p2{transition:grid-template-columns 0.25s ease;}
-.p2.gw-collapsed{grid-template-columns:40px 1.3fr 1.8fr;}
+.p2.gw-collapsed{grid-template-columns:40px 3fr 1.8fr;}
 .p2-left{transition:all 0.25s ease;overflow:hidden;}
-.mp-gw-toggle{position:absolute;top:0.6rem;right:-14px;width:26px;height:26px;background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--stone);z-index:10;transition:all 0.18s;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
-.mp-gw-toggle:hover{background:rgba(184,201,163,0.25);color:var(--bark);}
+.mp-gw-toggle{width:26px;height:26px;background:rgba(184,201,163,0.15);border:1.5px solid rgba(184,201,163,0.4);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--stone);transition:all 0.18s;flex-shrink:0;}
+.mp-gw-toggle:hover{background:rgba(184,201,163,0.3);color:var(--bark);}
 .p2-left{position:relative;}
 .mp-gw-inner{transition:opacity 0.2s ease;}
-.p2.gw-collapsed .mp-gw-inner{opacity:0;pointer-events:none;}
-.mp-gw-collapsed-label{display:none;writing-mode:vertical-rl;font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);opacity:0.45;white-space:nowrap;margin:auto;}
-.p2.gw-collapsed .mp-gw-collapsed-label{display:flex;align-items:center;justify-content:center;height:100%;padding-top:2.5rem;}
+.p2.gw-collapsed .mp-gw-inner{opacity:0;pointer-events:none;height:0;overflow:hidden;}
+.mp-gw-expand-tab{display:none;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;width:100%;min-height:160px;background:rgba(184,201,163,0.06);border:1.5px dashed rgba(184,201,163,0.35);border-radius:14px;cursor:pointer;padding:0.8rem 0.2rem;color:var(--stone);}
+.mp-gw-expand-tab:hover{background:rgba(184,201,163,0.13);border-color:rgba(184,201,163,0.55);}
+.mp-gw-tab-label{writing-mode:vertical-rl;font-family:'Space Mono',monospace;font-size:0.4rem;text-transform:uppercase;letter-spacing:1.5px;opacity:0.5;white-space:nowrap;}
+.p2.gw-collapsed .mp-gw-expand-tab{display:flex;}
 
 .p2-left{position:sticky;top:80px;}
 .p2-mid{position:sticky;top:80px;}
@@ -2523,7 +2525,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.71</div>
+      <div class="logo-sub">Gear Organizer · v8.72</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3904,8 +3906,6 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   <div class="p2">
     <!-- LEFT — Gear Wall reference -->
     <div class="p2-left" style="position:relative;">
-      <button class="mp-gw-toggle" id="mp-gw-toggle" onclick="toggleMpGearWall()" title="Collapse gear wall">◀</button>
-      <span class="mp-gw-collapsed-label">My Gear Wall</span>
       <div class="mp-gw-inner">
         <div class="gw-panel" style="border-radius:16px;overflow:hidden;max-height:calc(100vh - 100px);display:flex;flex-direction:column;">
           <div class="gw-hd" style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
@@ -3913,10 +3913,15 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
               <div class="gw-title">🪝 My Gear Wall</div>
               <div class="gw-subtitle">Everything you own · for reference</div>
             </div>
+            <button class="mp-gw-toggle" id="mp-gw-toggle" onclick="toggleMpGearWall()" title="Collapse gear wall">◀</button>
           </div>
           <div class="gw-body" id="mp-gearwall-body" style="overflow-y:auto;flex:1;"></div>
         </div>
       </div>
+      <button class="mp-gw-expand-tab" onclick="toggleMpGearWall()" title="Expand My Gear Wall">
+        <span style="font-size:0.9rem;">🪝</span>
+        <span class="mp-gw-tab-label">My Gear Wall</span>
+      </button>
     </div>
         <!-- MIDDLE — Marketplace with filters -->
     <div class="p2-mid">
