@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.70 — Gear Organizer</title>
+<title>BaseCamp v8.71 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1028,6 +1028,18 @@ overflow:hidden;}
 
 /* PAGE 2 — two-panel browser + comparison */
 .p2{max-width:1900px;margin:0 auto;padding:1.2rem 2rem 2rem;display:grid;grid-template-columns:1.4fr 1.3fr 1.8fr;gap:1.2rem;align-items:start;}
+/* Marketplace collapsible gear wall */
+.p2{transition:grid-template-columns 0.25s ease;}
+.p2.gw-collapsed{grid-template-columns:40px 1.3fr 1.8fr;}
+.p2-left{transition:all 0.25s ease;overflow:hidden;}
+.mp-gw-toggle{position:absolute;top:0.6rem;right:-14px;width:26px;height:26px;background:var(--cream);border:1.5px solid rgba(184,201,163,0.5);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--stone);z-index:10;transition:all 0.18s;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+.mp-gw-toggle:hover{background:rgba(184,201,163,0.25);color:var(--bark);}
+.p2-left{position:relative;}
+.mp-gw-inner{transition:opacity 0.2s ease;}
+.p2.gw-collapsed .mp-gw-inner{opacity:0;pointer-events:none;}
+.mp-gw-collapsed-label{display:none;writing-mode:vertical-rl;font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);opacity:0.45;white-space:nowrap;margin:auto;}
+.p2.gw-collapsed .mp-gw-collapsed-label{display:flex;align-items:center;justify-content:center;height:100%;padding-top:2.5rem;}
+
 .p2-left{position:sticky;top:80px;}
 .p2-mid{position:sticky;top:80px;}
 .p2-right{position:sticky;top:80px;}
@@ -2511,7 +2523,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.70</div>
+      <div class="logo-sub">Gear Organizer · v8.71</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -3891,15 +3903,19 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
 <div id="page-lab" class="page">
   <div class="p2">
     <!-- LEFT — Gear Wall reference -->
-    <div class="p2-left">
-      <div class="gw-panel" style="border-radius:16px;overflow:hidden;max-height:calc(100vh - 100px);display:flex;flex-direction:column;">
-        <div class="gw-hd" style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-          <div>
-            <div class="gw-title">🪝 My Gear Wall</div>
-            <div class="gw-subtitle">Everything you own · for reference</div>
+    <div class="p2-left" style="position:relative;">
+      <button class="mp-gw-toggle" id="mp-gw-toggle" onclick="toggleMpGearWall()" title="Collapse gear wall">◀</button>
+      <span class="mp-gw-collapsed-label">My Gear Wall</span>
+      <div class="mp-gw-inner">
+        <div class="gw-panel" style="border-radius:16px;overflow:hidden;max-height:calc(100vh - 100px);display:flex;flex-direction:column;">
+          <div class="gw-hd" style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <div>
+              <div class="gw-title">🪝 My Gear Wall</div>
+              <div class="gw-subtitle">Everything you own · for reference</div>
+            </div>
           </div>
+          <div class="gw-body" id="mp-gearwall-body" style="overflow-y:auto;flex:1;"></div>
         </div>
-        <div class="gw-body" id="mp-gearwall-body" style="overflow-y:auto;flex:1;"></div>
       </div>
     </div>
         <!-- MIDDLE — Marketplace with filters -->
@@ -3907,38 +3923,10 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
       <div class="lab-panel">
         <div class="lab-panel-hd">
           <div class="lab-panel-title">🛒 Marketplace</div>
-          <div class="lab-panel-sub">Browse &amp; filter · click or drag to compare →</div>
+          <div class="lab-panel-sub">Coming soon</div>
         </div>
-        <div style="padding:0.5rem 0.65rem 0;">
-          <input class="lm-search" id="lm-search" type="text" placeholder="Search gear…" oninput="renderLabMktFiltered()">
-        </div>
-        <div class="lm-quick" id="lm-quick"><span class="lm-quick-lbl">Quick:</span><button class="lm-qs-chip">granite gear</button><button class="lm-qs-chip">MSR international</button><button class="lm-qs-chip">test</button><button class="lm-qs-chip">merino wool</button><button class="lm-qs-chip">sleeping bag</button><button class="lm-qs-chip">Tshirt</button></div>
-        <div class="lm-filter-bar">
-          <div class="lm-filter-row">
-            <span class="lm-filter-lbl">Sort</span>
-            <div class="lm-filter-btns">
-              <button class="lm-fb active" onclick="setLmSort('name',this)">A–Z</button>
-              <button class="lm-fb" onclick="setLmSort('weight',this)">Weight ↑</button>
-              <button class="lm-fb" onclick="setLmSort('price',this)">Price ↑</button>
-            </div>
-          </div>
-          <div class="lm-filter-row">
-            <span class="lm-filter-lbl">Max weight</span>
-            <input class="lm-range" id="lm-wt-range" type="range" min="0" max="2500" step="50" value="2500" oninput="lmWtVal=+this.value;document.getElementById('lm-wt-disp').textContent=this.value&gt;2400?'Any':this.value+'g';renderLabMktFiltered()">
-            <span class="lm-range-val" id="lm-wt-disp">Any</span>
-          </div>
-          <div class="lm-filter-row">
-            <span class="lm-filter-lbl">Max price</span>
-            <input class="lm-range" id="lm-px-range" type="range" min="0" max="700" step="10" value="700" oninput="lmPxVal=+this.value;document.getElementById('lm-px-disp').textContent=this.value&gt;690?'Any':'$'+this.value;renderLabMktFiltered()">
-            <span class="lm-range-val" id="lm-px-disp">Any</span>
-          </div>
-        </div>
-        <div class="lab-panel-scroll" id="lm-body">
-          <div class="lm-idle">
-            <div class="lm-idle-icon">🛒</div>
-            <div class="lm-idle-lbl">Browse the marketplace</div>
-            <div class="lm-idle-sub">Use quick-select or search above.<br>Filter by weight &amp; price.</div>
-          </div>
+        <div id="mp-body" style="padding:2rem;text-align:center;opacity:0.45;font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--stone);">
+          Marketplace content goes here
         </div>
       </div>
     </div>
@@ -8035,86 +8023,31 @@ let cmpSort = 'weight';
 let cmpCatFilter = 'all';
 let labDrag = null;
 
+
+let _mpGwCollapsed = false;
+function toggleMpGearWall(){
+  _mpGwCollapsed = !_mpGwCollapsed;
+  const p2 = document.querySelector('#page-lab .p2');
+  const btn = document.getElementById('mp-gw-toggle');
+  if(!p2) return;
+  if(_mpGwCollapsed){
+    p2.classList.add('gw-collapsed');
+    if(btn){ btn.innerHTML = '▶'; btn.title = 'Expand gear wall'; }
+  } else {
+    p2.classList.remove('gw-collapsed');
+    if(btn){ btn.innerHTML = '◀'; btn.title = 'Collapse gear wall'; }
+  }
+}
 function renderLab(){
-  renderLabGear();
-  renderLabMktQuick();
   renderCmpCatBar();
   renderCmpPanel();
   renderMpGearWall();
 }
 
 // ── LEFT: My Gear — full cat-card format mirroring My Kit ──
-function renderLabGear(){
-  const body = document.getElementById('lg-body');
-  if(!body) return;
-  body.innerHTML = '';
-  const cmpIds = new Set(CMP.map(c=>c.item.id));
+function renderLabGear(){ /* removed */ }
 
-  CATS.forEach(cat=>{
-    const isCollapsed = labCatCollapsed[cat.id];
-    const card = document.createElement('div');
-    card.className = `lg-cat-card ${cat.cc||''} ${isCollapsed?'lg-collapsed':''}`;
-
-    const extraTh = cat.hasExtra ? `<th>${cat.extraLabel||'Spec'}</th>` : '';
-    const rows = cat.items.map(item=>{
-      const inCmp = cmpIds.has(item.id);
-      const eTd = cat.hasExtra ? `<td><span style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--stone)">${escH(item.extra||'—')}</span></td>` : '';
-      return `<tr class="lg-row${inCmp?' in-cmp':''}" draggable="true"
-        data-iid="${item.id}" data-cid="${cat.id}"
-        onclick="lgRowClick('${cat.id}','${item.id}')">
-        <td><div class="lg-row-name">
-          <span class="lg-dot" style="background:${cat.color}"></span>
-          <span class="lg-name-txt">${escH(item.name)}</span>
-        </div></td>
-        <td><span class="lg-w">${dw(item.w)}</span></td>
-        ${eTd}
-        <td><span class="lg-drag">⠿</span></td>
-      </tr>`;
-    }).join('');
-
-    card.innerHTML = `
-      <div class="lg-cat-head" onclick="labCatCollapsed['${cat.id}']=!labCatCollapsed['${cat.id}'];renderLabGear()">
-        <div class="lg-cat-head-l">
-          <span class="lg-cat-icon">${cat.icon}</span>
-          <div>
-            <div class="lg-cat-name">${cat.name}</div>
-            <div class="lg-cat-meta">${cat.items.length} items</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:0.3rem">
-          <span class="lg-cat-pill ${cat.pc}">${dw(cat.items.reduce((s,i)=>s+(i.w||0),0))}</span>
-          <button class="lg-caret">▼</button>
-        </div>
-      </div>
-      <div class="lg-cat-body">
-        ${cat.items.length===0
-          ? `<p class="lg-empty">No items yet</p>`
-          : `<table class="lg-tbl">
-              <thead><tr><th>Item</th><th>Weight</th>${extraTh}<th></th></tr></thead>
-              <tbody>${rows}</tbody>
-             </table>`
-        }
-      </div>`;
-
-    // Attach drag listeners after innerHTML
-    body.appendChild(card);
-    card.querySelectorAll('.lg-row').forEach(row=>{
-      const iid = row.dataset.iid, cid = row.dataset.cid;
-      const item = CATS.find(c=>c.id===cid)?.items.find(i=>i.id===iid);
-      if(!item) return;
-      row.addEventListener('dragstart', e=>{
-        labDrag={type:'owned',catId:cid,item};
-        e.dataTransfer.effectAllowed='copy';
-      });
-    });
-  });
-}
-
-function lgRowClick(cid, iid){
-  const cat = CATS.find(c=>c.id===cid);
-  const item = cat?.items.find(i=>i.id===iid);
-  if(item) cmpAddItem({type:'owned',catId:cid,item});
-}
+function lgRowClick(cid, iid){ /* removed */ }
 
 // ── Marketplace filter state ──
 let lmSort = 'name';
@@ -8122,118 +8055,16 @@ let lmWtVal = 2500;
 let lmPxVal = 700;
 let lmActiveChip = null;
 
-function setLmSort(s, btn){
-  lmSort = s;
-  document.querySelectorAll('.lm-fb').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderLabMktFiltered();
-}
+function setLmSort(s, btn){ /* removed */ }
 
 // ── Quick-select chips (from gear wall items) ──
-function renderLabMktQuick(){
-  const bar = document.getElementById('lm-quick');
-  if(!bar) return;
-  const seen = new Set();
-  const chips = [];
-  CATS.forEach(cat=>{
-    cat.items.forEach(item=>{
-      const clean = item.name.replace(/\(.*?\)/g,'').trim();
-      const label = clean.split(/\s+/).filter(w=>w.length>2).slice(0,2).join(' ');
-      if(label && !seen.has(label.toLowerCase())){
-        seen.add(label.toLowerCase());
-        chips.push(label);
-      }
-    });
-  });
-  bar.innerHTML = '<span class="lm-quick-lbl">Quick:</span>';
-  chips.slice(0,16).forEach(label=>{
-    const chip = document.createElement('button');
-    chip.className = 'lm-qs-chip' + (lmActiveChip===label?' active':'');
-    chip.textContent = label;
-    chip.onclick = ()=>{
-      lmActiveChip = lmActiveChip===label ? null : label;
-      const inp = document.getElementById('lm-search');
-      if(inp) inp.value = lmActiveChip||'';
-      renderLabMktQuick();
-      renderLabMktFiltered();
-    };
-    bar.appendChild(chip);
-  });
-}
+function renderLabMktQuick(){ /* removed */ }
 
 // ── Main filtered render ──
-function renderLabMktFiltered(){
-  const body = document.getElementById('lm-body');
-  if(!body) return;
-  const q = (document.getElementById('lm-search')?.value||'').toLowerCase().trim();
-  const maxW = lmWtVal > 2400 ? Infinity : lmWtVal;
-  const maxP = lmPxVal > 690 ? Infinity : lmPxVal;
-  const cmpIds = new Set(CMP.map(c=>c.item.id));
-
-  // If nothing entered, show idle
-  if(!q && maxW===Infinity && maxP===Infinity){
-    body.innerHTML = `<div class="lm-idle"><div class="lm-idle-icon">🛒</div><div class="lm-idle-lbl">Browse the marketplace</div><div class="lm-idle-sub">Use quick-select or search above.<br>Filter by weight &amp; price.</div></div>`;
-    return;
-  }
-
-  let results = MKT.filter(m=>{
-    const price = parseFloat((m.price||'').replace(/[^0-9.]/g,''))||0;
-    if(m.w > maxW) return false;
-    if(price && price > maxP) return false;
-    if(q && !m.name.toLowerCase().includes(q) && !m.brand.toLowerCase().includes(q) && !(m.note||'').toLowerCase().includes(q) && !(m.tags||[]).some(t=>t.includes(q))) return false;
-    return true;
-  });
-
-  // Sort
-  results = [...results].sort((a,b)=>{
-    if(lmSort==='weight') return (a.w||0)-(b.w||0);
-    if(lmSort==='price'){
-      const pa=parseFloat((a.price||'').replace(/[^0-9.]/g,''))||0;
-      const pb=parseFloat((b.price||'').replace(/[^0-9.]/g,''))||0;
-      return pa-pb;
-    }
-    return a.name.localeCompare(b.name);
-  });
-
-  body.innerHTML = '';
-  if(!results.length){
-    body.innerHTML = `<div class="lm-none">No results — try adjusting filters</div>`;
-    return;
-  }
-
-  const pad = document.createElement('div');
-  pad.className = 'lm-body-pad';
-  const meta = document.createElement('div');
-  meta.className = 'lm-result-meta';
-  meta.textContent = `${results.length} item${results.length!==1?'s':''} found`;
-  pad.appendChild(meta);
-
-  results.forEach(m=>{
-    const cat = CATS.find(c=>c.id===m.cid)||CATS[0];
-    const card = document.createElement('div');
-    card.className = 'lm-card' + (cmpIds.has(m.id)?' in-cmp':'');
-    card.draggable = true;
-    card.innerHTML = `
-      <div class="lm-card-left">
-        <div class="lm-card-name">${escH(m.name)}</div>
-        <div class="lm-card-brand">${escH(m.brand)}</div>
-        <div class="lm-card-note">${escH(m.note||'')}</div>
-      </div>
-      <div class="lm-card-right">
-        <div class="lm-card-weight">${dw(m.w)}</div>
-        <div class="lm-card-price">${m.price||''}</div>
-        <a class="lm-card-buy" href="https://www.google.com/search?q=${encodeURIComponent(m.brand+' '+m.name)}&tbm=shop" target="_blank" onclick="event.stopPropagation()">↗ Shop</a>
-      </div>
-      <span class="lm-card-drag">⠿</span>`;
-    card.addEventListener('dragstart', e=>{ labDrag={type:'mkt',catId:cat.id,item:m}; e.dataTransfer.effectAllowed='copy'; });
-    card.addEventListener('click', ()=>cmpAddItem({type:'mkt',catId:cat.id,item:m}));
-    pad.appendChild(card);
-  });
-  body.appendChild(pad);
-}
+function renderLabMktFiltered(){ /* removed */ }
 
 // Keep renderLabMkt as alias
-function renderLabMkt(){ renderLabMktFiltered(); }
+function renderLabMkt(){ /* removed */ }
 
 
 // ── Comparison drop ──
@@ -8363,13 +8194,7 @@ function renderCmpPanel(){
   </tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-function addMktToKit(mkt,cid){
-  if(!mkt) return;
-  const cat=CATS.find(c=>c.id===cid);
-  cat.items.push({id:uid(),name:mkt.name+' ⭐',w:mkt.w,extra:mkt.extra||'',link:mkt.url||'',s:['winter','shoulder','summer']});
-  renderAll();
-  toast(`🎉 Added ${mkt.name} to ${cat.name}`);
-}
+function addMktToKit(mkt,cid){ /* removed */ }
 
 // stubs
 function renderLabBrowser(){}
