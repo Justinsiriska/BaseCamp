@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.62 — Gear Organizer</title>
+<title>BaseCamp v8.63 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2511,7 +2511,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.62</div>
+      <div class="logo-sub">Gear Organizer · v8.63</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6570,7 +6570,7 @@ function renderCats(){
       ucCard.appendChild(ucEmpty);
     }
     // add button now in ucHdr above
-    cont.appendChild(ucCard);
+    cont.insertBefore(ucCard, cont.firstChild);
   }
 
   const hiddenBar = document.getElementById('hidden-cats-bar');
