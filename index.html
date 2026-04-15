@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.91 — Gear Organizer</title>
+<title>BaseCamp v8.93 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -1286,6 +1286,24 @@ overflow:hidden;}
    ============================================================ */
 #page-demo{ background:transparent; }
 
+/* Demo panel dark mode overrides */
+html.dark #demo-inner > div,
+html.dark #demo-gw-panel,
+html.dark #demo-trip-panel,
+html.dark #demo-crew-panel {
+  background:rgba(14,22,12,0.92) !important;
+  border-color:rgba(60,90,50,0.5) !important;
+}
+html.dark #demo-right-col > div,
+html.dark #demo-cats {
+  background:rgba(18,28,16,0.88) !important;
+  border-color:rgba(60,90,50,0.5) !important;
+}
+html.dark #demo-header-strip { color:var(--dm-text); }
+html.dark #demo-food-meals, html.dark #demo-food-fridge { background:transparent; }
+html.dark .demo-fridge-list span { color:var(--dm-text) !important; }
+
+
 
 .food-cat-card{background:var(--paper);border-radius:13px;border:1.5px solid rgba(184,201,163,0.5);box-shadow:0 2px 10px rgba(45,74,45,0.07);overflow:hidden;margin-bottom:0.9rem;transition:border-color 0.2s;}
 html.dark .food-cat-card{background:rgba(10,18,8,0.88);border-color:rgba(55,85,40,0.45);}
@@ -2569,7 +2587,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.91</div>
+      <div class="logo-sub">Gear Organizer · v8.93</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4848,253 +4866,436 @@ function startWeightEdit(span, cid, iid){
 // ============================================================
 
 // ── Demo data (separate from user's real data) ──
+// ================================================================
+// DEMO DATA — Alex Rivera's fake account
+// ================================================================
+const DEMO_USER = { name:'Alex Rivera', color:'#4a8fa8', initials:'AR' };
+const DEMO_CREW = [
+  { id:'dc1', name:'Maya Chen',     color:'#7a4fa8', initials:'MC', role:'Navigator' },
+  { id:'dc2', name:'Jake Torres',   color:'#c85a2a', initials:'JT', role:'Cook'      },
+  { id:'dc3', name:'Sam Okafor',    color:'#4a6741', initials:'SO', role:'First Aid' },
+];
+const DEMO_FOLLOWERS = [
+  { id:'df1', name:'Priya Nair',    color:'#a85a7a' },
+  { id:'df2', name:'Finn Walsh',    color:'#3a7a9a' },
+  { id:'df3', name:'Lena Kovač',    color:'#7a9a3a' },
+];
+
 const DEMO_PACKS = [
-  {id:'winter',  name:'Winter', icon:'❄️'},
-  {id:'shoulder',name:'Shoulder Season',icon:'🍂'},
-  {id:'summer',  name:'Summer',   icon:'☀️'},
+  { id:'weekend', name:'Weekend Warrior', icon:'⛺' },
+  { id:'ultra',   name:'Ultralight',      icon:'🪶' },
+  { id:'alpine',  name:'Winter Alpine',   icon:'❄️' },
 ];
+
+// Gear wall — everything Alex owns
 const DEMO_CATS = [
-  {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', pc:'pill-sleep', cc:'cc-sleep', hasExtra:true, extraLabel:'Temp Rating',
-   items:[
-    {id:'d1', name:'Tent',               w:1200, extra:'', s:['winter','shoulder','summer']},
-    {id:'d2', name:'Sleeping Bag (-7°C)',w:850,  extra:'-7°C', s:['winter','shoulder']},
-    {id:'d3', name:'Sleeping Bag (10°C)',w:560,  extra:'10°C', s:['summer']},
-    {id:'d4', name:'Sleeping Pad',       w:430,  extra:'R4.2', s:['winter','shoulder','summer']},
-  ]},
-  {id:'pack', name:'Pack', icon:'🎒', color:'#8b7355', pc:'pill-pack', cc:'cc-pack', hasExtra:true, extraLabel:'Volume (L)',
-   items:[
-    {id:'d5', name:'Backpack',   w:1100, extra:'65L', s:['winter','shoulder','summer']},
-    {id:'d6', name:'Rain Cover', w:180,  extra:'',    s:['winter','shoulder','summer']},
-  ]},
-  {id:'cooking', name:'Cooking & Water', icon:'🔥', color:'#c85a2a', pc:'pill-cooking', cc:'cc-cooking', hasExtra:false,
-   items:[
-    {id:'d7', name:'Stove',        w:100, extra:'', s:['winter','shoulder','summer']},
-    {id:'d8', name:'Water Filter', w:85,  extra:'', s:['winter','shoulder','summer']},
-    {id:'d9', name:'Pot',          w:110, extra:'', s:['winter','shoulder','summer']},
-  ]},
-  {id:'general', name:'General', icon:'🏕️', color:'#3a7a9a', pc:'pill-general', cc:'cc-general', hasExtra:false,
-   items:[
-    {id:'d10', name:'Headlamp',      w:90,  extra:'', s:['winter','shoulder','summer']},
-    {id:'d11', name:'Trekking Poles',w:440, extra:'', s:['winter','shoulder','summer']},
-  ]},
+  { id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', pc:'pill-sleep', cc:'cc-sleep',
+    items:[
+      { id:'d1',  name:'Big Agnes Copper Spur HV UL2', w:1060, s:['weekend','alpine'] },
+      { id:'d2',  name:'Zpacks Duplex Tent',           w:510,  s:['ultra'] },
+      { id:'d3',  name:'WM Megalite -7°C',             w:737,  s:['alpine'] },
+      { id:'d4',  name:'Enlightened Eq. Revelation 10°C', w:482, s:['weekend','ultra'] },
+      { id:'d5',  name:'Therm-a-Rest NeoAir XLite',   w:354,  s:['weekend','ultra','alpine'] },
+      { id:'d6',  name:'Sea to Summit Liner',          w:130,  s:['weekend'] },
+    ]},
+  { id:'cook', name:'Cook System', icon:'🔥', color:'#c85a2a', pc:'pill-cooking', cc:'cc-cooking',
+    items:[
+      { id:'d7',  name:'MSR PocketRocket 2',   w:73,  s:['weekend','alpine'] },
+      { id:'d8',  name:'Jetboil Flash',         w:371, s:['alpine'] },
+      { id:'d9',  name:'Snow Peak 700 Pot',     w:115, s:['weekend','alpine'] },
+      { id:'d10', name:'Esbit Stove',           w:25,  s:['ultra'] },
+      { id:'d11', name:'BeFree 1L Filter',      w:67,  s:['weekend','ultra','alpine'] },
+      { id:'d12', name:'Toaks 550ml Cup',       w:54,  s:['ultra'] },
+    ]},
+  { id:'clothes', name:'Clothing', icon:'🧥', color:'#7ba7bc', pc:'pill-clothes', cc:'cc-clothes',
+    items:[
+      { id:'d13', name:'Patagonia Houdini Jacket', w:102, s:['weekend','ultra'] },
+      { id:'d14', name:'Arc\'teryx Atom LT',       w:318, s:['alpine'] },
+      { id:'d15', name:'Icebreaker 200 Base Layer',w:174, s:['weekend','alpine'] },
+      { id:'d16', name:'Black Diamond Gloves',     w:96,  s:['alpine'] },
+      { id:'d17', name:'Buff Merino Neck Gaiter',  w:42,  s:['weekend','alpine'] },
+      { id:'d18', name:'Darn Tough Socks ×3',      w:189, s:['weekend','alpine'] },
+    ]},
+  { id:'nav', name:'Navigation & Safety', icon:'🧭', color:'#8b7355', pc:'pill-nav', cc:'cc-nav',
+    items:[
+      { id:'d19', name:'Petzl Actik Core Headlamp', w:85,  s:['weekend','ultra','alpine'] },
+      { id:'d20', name:'Garmin inReach Mini 2',     w:100, s:['weekend','alpine'] },
+      { id:'d21', name:'Adventure Medical Kit',     w:198, s:['weekend','alpine'] },
+      { id:'d22', name:'Suunto A-10 Compass',       w:38,  s:['weekend','ultra','alpine'] },
+      { id:'d23', name:'Trekking Poles (pair)',      w:440, s:['weekend','alpine'] },
+    ]},
 ];
-let demoSeason = 'winter';
+
+// Which gear wall items start OUT of pack (not in active pack) for drag demo
+const DEMO_GEARWALL_BENCHED = new Set(['d6','d8','d16','d20','d23']);
+
+// Food fridge
+const DEMO_FRIDGE = [
+  { id:'f1', name:'Instant Oatmeal',      kcal:150, w:45,  cat:'breakfast' },
+  { id:'f2', name:'Peanut Butter Packet', kcal:190, w:32,  cat:'breakfast' },
+  { id:'f3', name:'Clif Bar',             kcal:240, w:68,  cat:'snack' },
+  { id:'f4', name:'Beef Jerky',           kcal:116, w:35,  cat:'snack' },
+  { id:'f5', name:'Backpacker\'s Pantry Pad Thai', kcal:530, w:149, cat:'dinner' },
+  { id:'f6', name:'Mountain House Chili', kcal:470, w:132, cat:'dinner' },
+  { id:'f7', name:'Tortilla',             kcal:120, w:35,  cat:'lunch' },
+  { id:'f8', name:'Tuna Packet',          kcal:100, w:74,  cat:'lunch' },
+  { id:'f9', name:'Nuun Electrolyte Tab', kcal:15,  w:5,   cat:'snack' },
+  { id:'f10',name:'Honey Stinger Waffle', kcal:160, w:30,  cat:'snack' },
+];
+
+// Starting meal plan (some items already placed)
+const DEMO_MEALS = {
+  breakfast: [ { ...DEMO_FRIDGE[0], qty:1 } ],
+  lunch:     [ { ...DEMO_FRIDGE[6], qty:2 }, { ...DEMO_FRIDGE[7], qty:1 } ],
+  dinner:    [ { ...DEMO_FRIDGE[4], qty:1 } ],
+  snacks:    [ { ...DEMO_FRIDGE[2], qty:2 } ],
+};
+
+// Trip
+const DEMO_TRIP = {
+  name:'John Muir Trail — Section 4',
+  dates:'Aug 12–16, 2025',
+  trail:'Reds Meadow → Vermilion Valley',
+  miles:'29.4 mi',
+  members:[
+    { id:'me',  name:'Alex Rivera', color:'#4a8fa8', initials:'AR',
+      gear:['Big Agnes Copper Spur', 'Therm-a-Rest NeoAir', 'MSR PocketRocket', 'BeFree Filter', 'Petzl Headlamp', 'Patagonia Houdini'],
+      totalW:6240, role:'Navigator & Tent' },
+    { id:'dc1', name:'Maya Chen',   color:'#7a4fa8', initials:'MC',
+      gear:['Zpacks Duplex Tent', 'Sea to Summit Liner', 'Esbit Stove', 'Toaks Cup', 'Suunto Compass'],
+      totalW:4820, role:'Co-navigator' },
+    { id:'dc2', name:'Jake Torres', color:'#c85a2a', initials:'JT',
+      gear:['Jetboil Flash', 'Snow Peak Pot', 'Group Meals ×3', 'Bear Canister', 'Rope & Rigging'],
+      totalW:7380, role:'Group Cook' },
+    { id:'dc3', name:'Sam Okafor',  color:'#4a6741', initials:'SO',
+      gear:['WM Megalite Bag', 'NeoAir XLite', 'Medical Kit', 'inReach Mini', 'Trekking Poles'],
+      totalW:5910, role:'First Aid Lead' },
+  ],
+};
+
+let demoSeason = 'weekend';
 let demoCatCollapsed = {};
 let demoStepIdx = 0;
-let demoUnlisten = null; // cleanup fn for current step's listener
+let demoUnlisten = null;
+// Items dragged into pack during demo
+let demoBenchedItems = new Set(DEMO_GEARWALL_BENCHED);
+// Food items dragged in during demo
+let demoMeals = JSON.parse(JSON.stringify(DEMO_MEALS));
+// Which fridge items have been added this session
+let demoDraggedFood = new Set();
 
 // ── Step definitions ──
 const DEMO_STEPS = [
+  // ── STEP 0: Welcome splash ──
   {
     id:'welcome',
     title:'Welcome to BaseCamp 🏕️',
-    body:'This tour will walk you through all the features — from building your gear list to planning trips with your crew. Each step highlights something to try.',
-    hint:'👆 Click "Skip →" to advance, or interact with the highlighted element',
-    targetId:'demo-p1',
-    arrow:'top',
-    complete: el => new Promise(resolve=>{
-      const btn=document.getElementById('demo-skip-btn');
-      const h=()=>resolve();
-      btn.addEventListener('click',h,{once:true});
-      demoUnlisten=()=>btn.removeEventListener('click',h);
-    })
+    body:'Meet Alex Rivera\'s kit — a real ultralight setup across three custom pack configs. This tour shows you the best features in about 2 minutes.',
+    hint:'👆 Click Next to begin',
+    targetId:'demo-welcome-card',
+    arrow:'bottom',
+    skipOnly: true,
   },
+  // ── STEP 1: Pack configs ──
   {
     id:'packs',
-    title:'Pack Configurations',
-    body:'Each pill is a different gear loadout — Winter, Shoulder Season, Summer, or a custom trip. Switch between them to see how your pack weight changes.',
-    hint:'👆 Tap a different pack configuration pill',
+    title:'Three Pack Configs, One Gear Wall',
+    body:'Alex has gear sorted into Weekend Warrior, Ultralight, and Winter Alpine configs. Each pill shows live pack weight. Switch configs and watch the weight update instantly.',
+    hint:'👆 Tap a different pack config pill to switch',
     targetId:'demo-pills',
     arrow:'bottom',
     complete: el => new Promise(resolve=>{
-      const pills=document.querySelectorAll('#demo-pills .s-pill:not(.active)');
-      const h=()=>resolve();
+      const pills = document.querySelectorAll('#demo-pills .s-pill:not(.active)');
+      const h = ()=>resolve();
       pills.forEach(p=>p.addEventListener('click',h,{once:true}));
-      demoUnlisten=()=>pills.forEach(p=>p.removeEventListener('click',h));
-    })
+      demoUnlisten = ()=>pills.forEach(p=>p.removeEventListener('click',h));
+    }),
   },
-  {
-    id:'collapse',
-    title:'Category Cards',
-    body:'Your gear is organized into categories — Sleep, Cook, Navigation etc. Tap a category header to collapse or expand it. The weight pill shows the total for that category.',
-    hint:'👆 Tap any category header to collapse it',
-    targetId:'demo-cats',
-    arrow:'right',
-    complete: el => new Promise(resolve=>{
-      const heads=document.querySelectorAll('#demo-cats .cat-head');
-      const h=()=>resolve();
-      heads.forEach(p=>p.addEventListener('click',h,{once:true}));
-      demoUnlisten=()=>heads.forEach(p=>p.removeEventListener('click',h));
-    })
-  },
-  {
-    id:'weight',
-    title:'Edit Item Weights',
-    body:'Click any weight value in the pack list to edit it inline. Type a new value in grams (or oz if you switched units) and press Enter to save. The chart updates instantly.',
-    hint:'👆 Click any weight number in the pack list',
-    targetId:'demo-cats',
-    arrow:'right',
-    complete: el => new Promise(resolve=>{
-      const weights=document.querySelectorAll('#demo-cats .item-weight-display');
-      const h=()=>resolve();
-      weights.forEach(w=>w.addEventListener('click',h,{once:true}));
-      demoUnlisten=()=>weights.forEach(w=>w.removeEventListener('click',h));
-    })
-  },
+  // ── STEP 2: Gear wall drag ──
   {
     id:'gearwall',
-    title:'Gear Wall',
-    body:'The Gear Wall on the right holds everything you own — not just what\'s in your active pack. Drag items in or out of your pack, or click ⊕/⊖ to toggle them.',
-    hint:'👆 Click ⊕ on a Gear Wall item to add it to your pack',
-    targetId:'demo-gw-body',
+    title:'Drag From Gear Wall → Pack',
+    body:'The Gear Wall holds everything you own. Items dimmed out aren\'t in this config. Click ⊕ to add an item to your active pack — the weight chart updates live.',
+    hint:'👆 Click ⊕ on any benched item in the Gear Wall',
+    targetId:'demo-gw-panel',
     arrow:'left',
     complete: el => new Promise(resolve=>{
-      const btns=document.querySelectorAll('#demo-gw-body .gw-toggle-btn');
-      const h=()=>resolve();
+      const btns = document.querySelectorAll('.demo-gw-add-btn');
+      const h = (e)=>{
+        const iid = e.currentTarget.dataset.iid;
+        demoBenchedItems.delete(iid);
+        renderDemoPage();
+        resolve();
+      };
       btns.forEach(b=>b.addEventListener('click',h,{once:true}));
-      demoUnlisten=()=>btns.forEach(b=>b.removeEventListener('click',h));
-    })
+      demoUnlisten = ()=>btns.forEach(b=>b.removeEventListener('click',h));
+    }),
   },
+  // ── STEP 3: Add new item ──
   {
-    id:'chart',
-    title:'Weight Breakdown Chart',
-    body:'The donut chart shows how your pack weight is distributed across categories. Hover a slice to see details. The stats below show your heaviest categories at a glance.',
-    hint:'👆 Hover over the donut chart',
-    targetId:'demo-right-col',
+    id:'additem',
+    title:'Add a New Item to Your Gear Wall',
+    body:'Got a new piece of kit? Hit "+ Add Item" to log it with name, weight, and which pack configs it belongs in. Your gear wall grows with you.',
+    hint:'👆 Click "+ Add Item" to try adding a piece of gear',
+    targetId:'demo-add-item-btn',
     arrow:'left',
-    complete: el => new Promise(resolve=>{
-      const canvas=document.getElementById('demoWeightChart');
-      if(!canvas){ resolve(); return; }
-      canvas.addEventListener('mousemove',resolve,{once:true});
-      demoUnlisten=()=>canvas.removeEventListener('mousemove',resolve);
-    })
-  },
-  {
-    id:'units',
-    title:'Switch Units',
-    body:'The "g" button in the top-right toggles between metric (g/kg) and imperial (oz/lb). Every weight display — pack list, gear wall, chart, and trips — updates instantly.',
-    hint:'👆 Click the "g" button in the header to switch to oz/lb',
-    targetId:'unit-btn',
-    arrow:'bottom',
     complete: el => new Promise(resolve=>{
       if(!el){ resolve(); return; }
       el.addEventListener('click',resolve,{once:true});
-      demoUnlisten=()=>el.removeEventListener('click',resolve);
-    })
+      demoUnlisten = ()=>el.removeEventListener('click',resolve);
+    }),
   },
+  // ── STEP 4: Food bag ──
   {
-    id:'foodbag',
-    title:'Food Bag',
-    body:'The Food Bag tab lets you plan meals by pack configuration. You have a Fridge of ingredients — drag them into Breakfast, Lunch, Dinner or Snacks categories. Calories and weight auto-calculate.',
-    hint:'👆 Click "Food Bag" in the nav to explore it',
-    targetId:'unit-btn',
-    arrow:'bottom',
+    id:'food',
+    title:'Food Bag — Plan Your Meals',
+    body:'Drag items from your Fridge into Breakfast, Lunch, Dinner, or Snacks. Calories and pack weight auto-calculate per day. Alex\'s current plan is ' + _demoTotalKcal() + ' kcal/day.',
+    hint:'👆 Drag a fridge item into a meal slot — or click ⊕',
+    targetId:'demo-food-fridge',
+    arrow:'left',
     complete: el => new Promise(resolve=>{
-      const foodTab=document.querySelector('.nav-tab[onclick*="food"]');
-      if(!foodTab){ resolve(); return; }
-      foodTab.addEventListener('click',resolve,{once:true});
-      demoUnlisten=()=>foodTab.removeEventListener('click',resolve);
-    })
+      const btns = document.querySelectorAll('.demo-food-add-btn');
+      const h = (e)=>{
+        const fid = e.currentTarget.dataset.fid;
+        const item = DEMO_FRIDGE.find(f=>f.id===fid);
+        if(item && !demoDraggedFood.has(fid)){
+          demoDraggedFood.add(fid);
+          demoMeals[item.cat] = demoMeals[item.cat] || [];
+          demoMeals[item.cat].push({...item, qty:1});
+          renderDemoFoodPanel();
+        }
+        resolve();
+      };
+      btns.forEach(b=>b.addEventListener('click',h,{once:true}));
+      demoUnlisten = ()=>btns.forEach(b=>b.removeEventListener('click',h));
+    }),
   },
-  {
-    id:'gearlab',
-    title:'Gear Lab',
-    body:'Gear Lab is your research tool. Browse a marketplace of gear, compare items side-by-side by weight, price and thermal rating. Drag any item into your Comparison panel.',
-    hint:'👆 Click "Gear Lab" in the nav to explore it',
-    targetId:'unit-btn',
-    arrow:'bottom',
-    complete: el => new Promise(resolve=>{
-      const labTab=document.querySelector('.nav-tab[onclick*="lab"]');
-      if(!labTab){ resolve(); return; }
-      labTab.addEventListener('click',resolve,{once:true});
-      demoUnlisten=()=>labTab.removeEventListener('click',resolve);
-    })
-  },
+  // ── STEP 5: Trips — auto-play cinematic ──
   {
     id:'trips',
-    title:'Trips — Coordinate Your Crew',
-    body:'The Trips tab lets you plan gear distribution across your whole group. See everyone\'s pack weight side by side, spot who\'s carrying too much, and check for shared gear coverage.',
-    hint:'👆 Click "Trips" in the nav to see the crew view',
-    targetId:'unit-btn',
-    arrow:'bottom',
+    title:'Trips — Gear Across Your Whole Crew',
+    body:'Watch how BaseCamp distributes gear across Alex\'s crew for the JMT Section 4 trip. See pack weights, roles, and shared gear at a glance — no more "who\'s got the tent?" moments.',
+    hint:'▶ Watch the crew load in…',
+    targetId:'demo-trip-panel',
+    arrow:'top',
+    autoPlay: true,
     complete: el => new Promise(resolve=>{
-      const tripsTab=document.querySelector('.nav-tab[onclick*="trips"]');
-      if(!tripsTab){ resolve(); return; }
-      tripsTab.addEventListener('click',resolve,{once:true});
-      demoUnlisten=()=>tripsTab.removeEventListener('click',resolve);
-    })
+      demoRunTripCinematic(resolve);
+    }),
   },
+  // ── STEP 6: Crew page ──
   {
-    id:'mykit',
-    title:'Ready to Build Your Kit! 🎒',
-    body:'You\'ve seen all the core features. Click "My Kit" to start adding your own gear — create categories, add items with weights, and build out your perfect ultralight setup.',
-    hint:'👆 Click "My Kit" to start with your real gear',
-    targetId:'unit-btn',
-    arrow:'bottom',
-    complete: el => new Promise(resolve=>{
-      const kitTab=document.querySelector('.nav-tab[onclick*="kit"]');
-      if(!kitTab){ resolve(); return; }
-      kitTab.addEventListener('click',resolve,{once:true});
-      demoUnlisten=()=>kitTab.removeEventListener('click',resolve);
-    })
+    id:'crew',
+    title:'Your Crew & Followers',
+    body:'Alex has 3 crew members and 3 followers. Crew members can share gear lists and plan trips together. Public profiles let hikers discover each other.',
+    hint:'👆 Click Next to finish the tour',
+    targetId:'demo-crew-panel',
+    arrow:'top',
+    skipOnly: true,
   },
 ];
 
-// ── Render demo My Kit layout ──
+function _demoTotalKcal(){
+  let k=0;
+  Object.values(DEMO_MEALS).forEach(arr=>arr.forEach(i=>k+=i.kcal*(i.qty||1)));
+  return k;
+}
+
+// ── Render full demo page ──
 function renderDemoPage(){
-  // Pills
+  const root = document.getElementById('page-demo');
+  if(!root) return;
+  // Build layout if not present
+  if(!document.getElementById('demo-inner')){
+    _buildDemoLayout(root);
+  }
+  _renderDemoHeader();
   renderDemoPills();
-  // Cat cards
   renderDemoCats();
-  // Gear wall
   renderDemoGearWall();
-  // Chart
   renderDemoChart();
+  renderDemoFoodPanel();
+  renderDemoCrewPanel();
+  renderDemoTripPanel();
+}
+
+function _buildDemoLayout(root){
+  root.innerHTML = `
+  <!-- Welcome card (shown on step 0) -->
+  <div id="demo-welcome-card" style="display:none;position:fixed;inset:0;z-index:350;display:flex;align-items:center;justify-content:center;pointer-events:none;"></div>
+
+  <div id="demo-inner" style="max-width:1300px;margin:0 auto;padding:1.2rem 1.5rem;">
+
+    <!-- Header strip -->
+    <div id="demo-header-strip" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:1rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div id="demo-avatar" style="width:42px;height:42px;border-radius:50%;background:#4a8fa8;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;color:white;flex-shrink:0;">AR</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--forest);">Alex Rivera</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);letter-spacing:1px;text-transform:uppercase;">Demo Account · Ultralight Hiker</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <div style="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);opacity:0.7;">This is a demo account.</div>
+        <button onclick="demoExitToKit()" style="background:var(--tan);border:none;border-radius:100px;color:var(--bark);padding:0.3rem 0.9rem;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.65rem;cursor:pointer;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='var(--sun)'" onmouseout="this.style.background='var(--tan)'">Start Building My Kit →</button>
+      </div>
+    </div>
+
+    <!-- Pack config pills -->
+    <div id="demo-pills" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.1rem;"></div>
+
+    <!-- Main 3-col layout: breakdown | pack list | gear wall -->
+    <div style="display:grid;grid-template-columns:220px minmax(0,1fr) 260px;gap:0.75rem;align-items:start;margin-bottom:1.5rem;">
+
+      <!-- Left: chart + stats -->
+      <div id="demo-right-col" style="position:sticky;top:76px;">
+        <div style="background:rgba(250,247,242,0.85);border:1.5px solid rgba(184,201,163,0.45);border-radius:16px 0 0 16px;border-right:none;padding:0.85rem 0.75rem;backdrop-filter:blur(8px);">
+          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);margin-bottom:0.5rem;">Weight Breakdown</div>
+          <div style="position:relative;height:150px;margin-bottom:0.6rem;">
+            <canvas id="demoWeightChart"></canvas>
+          </div>
+          <div id="demo-stats-row" style="display:flex;gap:0.4rem;justify-content:space-around;margin-bottom:0.6rem;"></div>
+          <div id="demo-leg-list" style="font-family:'Nunito',sans-serif;font-size:0.58rem;"></div>
+        </div>
+      </div>
+
+      <!-- Center: category pack list -->
+      <div id="demo-cats" style="background:rgba(255,255,255,0.3);border:1.5px solid rgba(184,201,163,0.4);border-radius:0 16px 16px 0;border-left:none;padding:0.75rem 0.6rem;backdrop-filter:blur(6px);"></div>
+
+      <!-- Right: gear wall -->
+      <div id="demo-gw-panel" style="background:rgba(250,247,242,0.88);border:1.5px solid rgba(184,201,163,0.45);border-radius:16px;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.75rem;border-bottom:1px solid rgba(184,201,163,0.35);">
+          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);">Gear Wall</div>
+          <button id="demo-add-item-btn" onclick="demoShowAddItemModal()" style="background:var(--forest);color:var(--cream);border:none;border-radius:100px;padding:0.18rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.58rem;font-weight:700;cursor:pointer;">+ Add Item</button>
+        </div>
+        <div id="demo-gw-body" style="max-height:340px;overflow-y:auto;padding:0.3rem 0;"></div>
+      </div>
+    </div>
+
+    <!-- Food + Crew + Trip row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;align-items:start;">
+
+      <!-- Food bag -->
+      <div style="background:rgba(250,247,242,0.88);border:1.5px solid rgba(184,201,163,0.45);border-radius:16px;overflow:hidden;">
+        <div style="padding:0.6rem 0.75rem;border-bottom:1px solid rgba(184,201,163,0.35);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);">🍽️ Food Bag</div>
+          <div id="demo-food-total" style="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--ember);font-weight:700;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;min-height:220px;">
+          <div id="demo-food-meals" style="padding:0.5rem;border-right:1px solid rgba(184,201,163,0.25);overflow-y:auto;max-height:280px;"></div>
+          <div id="demo-food-fridge" style="padding:0.5rem;overflow-y:auto;max-height:280px;">
+            <div style="font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.35rem;">Fridge</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trip panel -->
+      <div id="demo-trip-panel" style="background:rgba(250,247,242,0.88);border:1.5px solid rgba(184,201,163,0.45);border-radius:16px;overflow:hidden;">
+        <div style="padding:0.6rem 0.75rem;border-bottom:1px solid rgba(184,201,163,0.35);">
+          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);">🏕️ Trips</div>
+        </div>
+        <div id="demo-trip-body" style="padding:0.6rem 0.75rem;"></div>
+      </div>
+
+      <!-- Crew panel -->
+      <div id="demo-crew-panel" style="background:rgba(250,247,242,0.88);border:1.5px solid rgba(184,201,163,0.45);border-radius:16px;overflow:hidden;">
+        <div style="padding:0.6rem 0.75rem;border-bottom:1px solid rgba(184,201,163,0.35);">
+          <div style="font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);">👥 Crew & Followers</div>
+        </div>
+        <div id="demo-crew-body" style="padding:0.5rem 0.75rem;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Floating overlay + tooltip (shared, injected by JS) -->
+  `;
+  _ensureDemoOverlay();
+}
+
+function _ensureDemoOverlay(){
+  if(document.getElementById('demo-overlay')) return;
+  const ov = document.createElement('div');
+  ov.id = 'demo-overlay';
+  ov.innerHTML = `
+    <div id="demo-spotlight"></div>
+    <div id="demo-tooltip">
+      <div id="demo-tt-step"></div>
+      <div id="demo-tt-title"></div>
+      <div id="demo-tt-body"></div>
+      <div id="demo-tt-hint"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.6rem;gap:0.5rem;">
+        <div id="demo-tt-dots"></div>
+        <div style="display:flex;gap:0.4rem;flex-shrink:0;">
+          <button id="demo-exit-btn" onclick="demoExitToKit()" style="background:transparent;border:1px solid rgba(184,201,163,0.5);border-radius:8px;color:var(--stone);padding:0.28rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.58rem;cursor:pointer;">✕ Exit</button>
+          <button id="demo-skip-btn">Next →</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('demo-skip-btn').onclick = demoSkip;
+}
+
+function _renderDemoHeader(){
+  // dark mode tint
+  const strip = document.getElementById('demo-header-strip');
+  if(strip && document.documentElement.classList.contains('dark')){
+    strip.querySelectorAll('[style]').forEach(el=>{/* handled via CSS vars */});
+  }
 }
 
 function renderDemoPills(){
   const row = document.getElementById('demo-pills');
   if(!row) return;
-  row.innerHTML='';
+  row.innerHTML = '';
   DEMO_PACKS.forEach(p=>{
-    const w = DEMO_CATS.reduce((s,c)=>s+c.items.filter(i=>i.s.includes(p.id)).reduce((ss,i)=>ss+(i.w||0),0),0);
+    const w = _demoPackWeight(p.id);
     const btn = document.createElement('button');
-    btn.className='s-pill'+(demoSeason===p.id?' active':'');
-    btn.dataset.s=p.id;
-    btn.innerHTML=`${p.icon} <span class="s-pill-name">${p.name}</span><span class="s-pill-weight">${w}g</span>`;
-    btn.addEventListener('click',()=>{ demoSeason=p.id; renderDemoPage(); });
+    btn.className = 's-pill' + (demoSeason===p.id?' active':'');
+    btn.innerHTML = `${p.icon} <span class="s-pill-name">${p.name}</span><span class="s-pill-weight">${w}g</span>`;
+    btn.addEventListener('click',()=>{ demoSeason=p.id; renderDemoPills(); renderDemoCats(); renderDemoGearWall(); renderDemoChart(); });
     row.appendChild(btn);
   });
+}
+
+function _demoPackWeight(packId){
+  let w=0;
+  DEMO_CATS.forEach(cat=>{
+    cat.items.forEach(item=>{
+      if(item.s.includes(packId) && !demoBenchedItems.has(item.id)) w+=item.w;
+    });
+  });
+  return w;
 }
 
 function renderDemoCats(){
   const cont = document.getElementById('demo-cats');
   if(!cont) return;
-  cont.innerHTML='';
+  cont.innerHTML = '';
+  const packTotal = _demoPackWeight(demoSeason);
+
   DEMO_CATS.forEach(cat=>{
-    const items = cat.items.filter(i=>i.s.includes(demoSeason));
+    const items = cat.items.filter(i=>i.s.includes(demoSeason) && !demoBenchedItems.has(i.id));
     const w = items.reduce((s,i)=>s+(i.w||0),0);
-    const tot = DEMO_CATS.reduce((s,c)=>s+c.items.filter(i=>i.s.includes(demoSeason)).reduce((ss,i)=>ss+(i.w||0),0),0);
-    const pct = tot>0?Math.round(w/tot*100):0;
+    const pct = packTotal>0 ? Math.round(w/packTotal*100) : 0;
     const collapsed = demoCatCollapsed[cat.id];
+
     const card = document.createElement('div');
-    card.className=`cat-card ${cat.cc||''} ${collapsed?'collapsed':''}`;
-    card.dataset.cid=cat.id;
-    const extraTh = cat.hasExtra?`<th style="width:90px">${cat.extraLabel}</th>`:'';
-    const rows = items.map(item=>{
-      const eTd=cat.hasExtra?`<td><span style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--stone)">${item.extra||'—'}</span></td>`:'';
-      return `<tr class="g-row">
-        <td><div class="name-cell"><div class="g-dot" style="background:${cat.color}"></div><span style="font-family:'Nunito',sans-serif;font-size:0.8rem;color:var(--bark)">${item.name}</span></div></td>
-        <td style="width:100px"><span class="item-weight-display" data-iid="${item.id}" style="font-family:'Nunito',sans-serif;font-weight:800;font-size:0.75rem;color:var(--bark);cursor:pointer;padding:2px 4px;border-radius:4px;" onclick="demoPretendWeightEdit(this,'${item.id}')">${item.w}g</span></td>
-        ${eTd}
-        <td style="width:30px"><button class="del-btn">✕</button></td>
-      </tr>`;
-    }).join('');
-    card.innerHTML=`
+    card.className = 'cat-card' + (collapsed?' collapsed':'');
+    card.dataset.cid = cat.id;
+
+    const rows = items.map(item=>`
+      <tr class="g-row">
+        <td><div class="name-cell"><div class="g-dot" style="background:${cat.color}"></div><span style="font-family:'Nunito',sans-serif;font-size:0.78rem;">${item.name}</span></div></td>
+        <td style="width:90px"><span class="item-weight-display" style="font-family:'Space Mono',monospace;font-size:0.72rem;font-weight:700;cursor:pointer;" onclick="demoPretendWeightEdit(this,'${item.id}')">${item.w}g</span></td>
+        <td style="width:28px"><button class="del-btn" title="Remove from pack" onclick="demoBenchItem('${item.id}')">−</button></td>
+      </tr>`).join('');
+
+    card.innerHTML = `
       <div class="cat-head" onclick="demoCatCollapsed['${cat.id}']=!demoCatCollapsed['${cat.id}'];renderDemoCats()">
         <div class="cat-head-l">
           <span class="cat-icon">${cat.icon}</span>
-          <div><div class="cat-name">${cat.name}</div><div class="cat-meta">${items.length} items · ${pct}% of total</div></div>
+          <div><div class="cat-name">${cat.name}</div><div class="cat-meta">${items.length} items · ${pct}%</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:0.3rem">
           <div class="cat-pill ${cat.pc}">${w}g</div>
@@ -5102,56 +5303,86 @@ function renderDemoCats(){
         </div>
       </div>
       <div class="cat-body">
-        ${items.length===0?`<p style="color:var(--stone);font-size:0.76rem;padding:0.5rem 0;opacity:0.65;">No items in this configuration.</p>`
-          :`<table class="gear-tbl"><thead><tr><th>Item</th><th>Weight</th>${extraTh}<th></th></tr></thead><tbody>${rows}</tbody></table>`}
+        ${items.length===0
+          ? `<p style="color:var(--stone);font-size:0.7rem;padding:0.4rem 0;opacity:0.6;font-style:italic;">No items in this config.</p>`
+          : `<table class="gear-tbl"><thead><tr><th>Item</th><th>Weight</th><th></th></tr></thead><tbody>${rows}</tbody></table>`}
       </div>`;
     cont.appendChild(card);
   });
 }
 
-function demoPretendWeightEdit(span, iid){
-  // Fake inline weight edit for demo
-  const inp = document.createElement('input');
-  inp.type='number'; inp.min='0'; inp.value=span.textContent.replace('g','');
-  inp.style.cssText='font-family:Space Mono,monospace;font-size:0.75rem;width:70px;border:1.5px solid var(--sage);border-radius:4px;padding:1px 4px;outline:none;';
-  span.replaceWith(inp); inp.focus(); inp.select();
-  const commit=()=>{
-    const cat = DEMO_CATS.find(c=>c.items.find(i=>i.id===iid));
-    const item = cat?.items.find(i=>i.id===iid);
-    if(item) item.w = parseFloat(inp.value)||item.w;
-    renderDemoPage();
-  };
-  inp.addEventListener('blur',commit);
-  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){inp.blur();} });
+function demoBenchItem(iid){
+  demoBenchedItems.add(iid);
+  renderDemoCats(); renderDemoGearWall(); renderDemoChart(); renderDemoPills();
 }
 
 function renderDemoGearWall(){
   const body = document.getElementById('demo-gw-body');
   if(!body) return;
-  body.innerHTML='';
+  body.innerHTML = '';
+
   DEMO_CATS.forEach(cat=>{
     const hd = document.createElement('div');
-    hd.className='gw-cat-hd';
-    hd.style.borderLeftColor=cat.color;
-    if(cat.color) hd.style.backgroundColor = cat.color.startsWith('#') ? _hexToRgba(cat.color,0.12) : cat.color.replace('rgb(','rgba(').replace(')',',0.12)');
-    hd.innerHTML=`<div class="gw-cat-label"><span class="gw-cat-icon">${cat.icon}</span>${cat.name}</div><span class="gw-cat-count">${cat.items.length} items</span>`;
+    hd.className = 'gw-cat-hd';
+    hd.style.borderLeftColor = cat.color;
+    hd.style.backgroundColor = cat.color + '22';
+    hd.innerHTML = `<div class="gw-cat-label"><span class="gw-cat-icon">${cat.icon}</span>${cat.name}</div><span class="gw-cat-count">${cat.items.length}</span>`;
     body.appendChild(hd);
+
     cat.items.forEach(item=>{
+      const inPack = item.s.includes(demoSeason) && !demoBenchedItems.has(item.id);
+      const inConfig = item.s.includes(demoSeason);
       const wrap = document.createElement('div');
-      wrap.className='gw-item-wrap';
-      wrap.dataset.iid=item.id;
+      wrap.className = 'gw-item-wrap';
+      wrap.style.opacity = inConfig ? '1' : '0.4';
+
       const chip = document.createElement('div');
-      chip.className='gw-item';
-      chip.innerHTML=`<span class="gw-drag-handle">⠿</span><span class="gw-item-name">${item.name}</span><span class="gw-item-weight">${item.w}g</span>`;
-      chip.addEventListener('click',()=>{
-        wrap.classList.toggle('open');
-        if(wrap.classList.contains('open') && !wrap.querySelector('.gw-drawer')){
-          const drawer=document.createElement('div');
-          drawer.className='gw-drawer';
-          drawer.innerHTML=`<div class="gw-field"><span class="gw-field-lbl">Name</span><input class="gw-field-inp" value="${item.name}" readonly/></div><div class="gw-field"><span class="gw-field-lbl">Weight</span><input class="gw-field-inp mono" value="${item.w}" readonly/><span class="gw-field-unit">g</span></div>`;
-          wrap.appendChild(drawer);
-        }
-      });
+      chip.className = 'gw-item';
+      chip.style.display = 'flex';
+      chip.style.alignItems = 'center';
+      chip.style.gap = '0.35rem';
+
+      const handle = document.createElement('span');
+      handle.className = 'gw-drag-handle';
+      handle.textContent = '⠿';
+
+      const name = document.createElement('span');
+      name.className = 'gw-item-name';
+      name.textContent = item.name;
+      name.style.flex = '1';
+
+      const wt = document.createElement('span');
+      wt.className = 'gw-item-weight';
+      wt.textContent = item.w + 'g';
+
+      const btn = document.createElement('button');
+      btn.className = 'demo-gw-add-btn';
+      btn.dataset.iid = item.id;
+      btn.style.cssText = 'border:none;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;cursor:pointer;flex-shrink:0;font-weight:700;transition:all 0.15s;';
+      if(inPack){
+        btn.style.background = 'rgba(74,103,65,0.15)';
+        btn.style.color = 'var(--moss)';
+        btn.textContent = '−';
+        btn.title = 'Remove from pack';
+        btn.addEventListener('click',()=>{ demoBenchedItems.add(item.id); renderDemoCats(); renderDemoGearWall(); renderDemoChart(); renderDemoPills(); });
+      } else if(inConfig){
+        btn.style.background = 'rgba(74,143,168,0.15)';
+        btn.style.color = 'var(--water)';
+        btn.textContent = '⊕';
+        btn.title = 'Add to pack';
+        // listener added externally per step
+      } else {
+        btn.style.background = 'rgba(139,115,85,0.1)';
+        btn.style.color = 'var(--stone)';
+        btn.textContent = '+';
+        btn.title = 'Not in this config';
+        btn.disabled = true;
+      }
+
+      chip.appendChild(handle);
+      chip.appendChild(name);
+      chip.appendChild(wt);
+      chip.appendChild(btn);
       wrap.appendChild(chip);
       body.appendChild(wrap);
     });
@@ -5163,69 +5394,311 @@ function renderDemoChart(){
   const canvas = document.getElementById('demoWeightChart');
   if(!canvas || typeof Chart==='undefined') return;
   const totals = DEMO_CATS.map(cat=>({
-    label:cat.name,
-    color:cat.color,
-    w:cat.items.filter(i=>i.s.includes(demoSeason)).reduce((s,i)=>s+(i.w||0),0)
+    label: cat.name,
+    color: cat.color,
+    w: cat.items.filter(i=>i.s.includes(demoSeason)&&!demoBenchedItems.has(i.id)).reduce((s,i)=>s+(i.w||0),0),
   })).filter(c=>c.w>0);
   if(_demoChart) _demoChart.destroy();
   _demoChart = new Chart(canvas,{
     type:'doughnut',
-    data:{
-      labels:totals.map(t=>t.label),
-      datasets:[{data:totals.map(t=>t.w),backgroundColor:totals.map(t=>t.color),borderWidth:2,borderColor:'#faf7f2'}]
-    },
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw}g`}}}}
+    data:{ labels:totals.map(t=>t.label), datasets:[{ data:totals.map(t=>t.w), backgroundColor:totals.map(t=>t.color), borderWidth:2, borderColor:'#faf7f2' }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw}g`}} } }
   });
-  // Stats
   const statsRow = document.getElementById('demo-stats-row');
   const total = totals.reduce((s,t)=>s+t.w,0);
-  if(statsRow) statsRow.innerHTML=`
-    <div class="stat"><div class="stat-val">${(total/1000).toFixed(1)}kg</div><div class="stat-lbl">Total</div></div>
-    <div class="stat"><div class="stat-val">${DEMO_CATS.reduce((s,c)=>s+c.items.filter(i=>i.s.includes(demoSeason)).length,0)}</div><div class="stat-lbl">Items</div></div>
-    <div class="stat"><div class="stat-val">${totals[0]?.label.split(' ')[0]||'—'}</div><div class="stat-lbl">Heaviest</div></div>`;
+  if(statsRow) statsRow.innerHTML = totals.slice(0,3).map(t=>`
+    <div class="stat-block" style="text-align:center;flex:1;">
+      <div class="stat-val">${(t.w/1000).toFixed(1)}kg</div>
+      <div class="stat-lbl" style="font-size:0.38rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.label.split(' ')[0]}</div>
+    </div>`).join('');
   const legList = document.getElementById('demo-leg-list');
-  if(legList) legList.innerHTML=totals.map(t=>`<div class="leg-row"><div class="leg-l"><div class="leg-dot" style="background:${t.color}"></div>${t.label}</div><span class="leg-pct">${total>0?Math.round(t.w/total*100):0}%</span></div>`).join('');
+  if(legList) legList.innerHTML = totals.map(t=>`
+    <div class="leg-row" style="display:flex;align-items:center;justify-content:space-between;padding:1px 0;">
+      <div style="display:flex;align-items:center;gap:5px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${t.color};flex-shrink:0;"></div>
+        <span style="font-size:0.55rem;color:var(--body-text);opacity:0.8;">${t.label}</span>
+      </div>
+      <span style="font-family:'Space Mono',monospace;font-size:0.48rem;color:var(--stone);">${total>0?Math.round(t.w/total*100):0}%</span>
+    </div>`).join('');
 }
 
-// ── Overlay / spotlight system ──
+function renderDemoFoodPanel(){
+  const mealsEl = document.getElementById('demo-food-meals');
+  const fridgeEl = document.getElementById('demo-food-fridge');
+  const totalEl  = document.getElementById('demo-food-total');
+  if(!mealsEl||!fridgeEl) return;
+
+  // Total kcal
+  let totalKcal=0, totalW=0;
+  Object.values(demoMeals).forEach(arr=>arr.forEach(i=>{ totalKcal+=i.kcal*(i.qty||1); totalW+=i.w*(i.qty||1); }));
+  if(totalEl) totalEl.textContent = totalKcal + ' kcal · ' + totalW + 'g';
+
+  // Meal slots
+  const MEAL_DEFS = [
+    { key:'breakfast', icon:'🌅', label:'Breakfast' },
+    { key:'lunch',     icon:'☀️',  label:'Lunch'     },
+    { key:'dinner',    icon:'🌙',  label:'Dinner'    },
+    { key:'snacks',    icon:'🍬',  label:'Snacks'    },
+  ];
+  mealsEl.innerHTML = '';
+  MEAL_DEFS.forEach(m=>{
+    const items = demoMeals[m.key]||[];
+    const secKcal = items.reduce((s,i)=>s+i.kcal*(i.qty||1),0);
+    const sec = document.createElement('div');
+    sec.style.marginBottom='0.5rem';
+    sec.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:3px;">${m.icon} ${m.label} <span style="color:var(--ember);">${secKcal>0?secKcal+'kcal':''}</span></div>`;
+    if(!items.length){
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-size:0.55rem;color:var(--stone);opacity:0.4;padding:3px 0;font-style:italic;';
+      empty.textContent = 'Drop food here…';
+      sec.appendChild(empty);
+    }
+    items.forEach(item=>{
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:2px 4px;border-radius:5px;background:rgba(184,201,163,0.12);margin-bottom:2px;';
+      row.innerHTML = `<span style="font-size:0.55rem;font-family:'Nunito',sans-serif;color:var(--bark);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</span><span style="font-family:'Space Mono',monospace;font-size:0.45rem;color:var(--ember);flex-shrink:0;margin-left:4px;">${item.kcal}kcal</span>`;
+      sec.appendChild(row);
+    });
+    mealsEl.appendChild(sec);
+  });
+
+  // Fridge items (not yet added)
+  const fridgeDiv = fridgeEl.querySelector('#demo-fridge-items') || fridgeEl;
+  // Rebuild fridge list portion
+  const existing = fridgeEl.querySelector('.demo-fridge-list');
+  if(existing) existing.remove();
+  const list = document.createElement('div');
+  list.className = 'demo-fridge-list';
+  DEMO_FRIDGE.forEach(item=>{
+    const added = demoDraggedFood.has(item.id);
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:4px;padding:3px 4px;border-radius:5px;margin-bottom:2px;opacity:${added?'0.35':'1'};transition:opacity 0.2s;`;
+    row.innerHTML = `<span style="font-size:0.55rem;font-family:'Nunito',sans-serif;color:var(--bark);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</span><span style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--ember);flex-shrink:0;">${item.kcal}k</span>`;
+    if(!added){
+      const btn = document.createElement('button');
+      btn.className = 'demo-food-add-btn';
+      btn.dataset.fid = item.id;
+      btn.style.cssText = 'border:none;border-radius:50%;width:16px;height:16px;background:rgba(74,143,168,0.15);color:var(--water);font-size:0.65rem;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+      btn.textContent = '⊕';
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  });
+  fridgeEl.appendChild(list);
+}
+
+function renderDemoCrewPanel(){
+  const body = document.getElementById('demo-crew-body');
+  if(!body) return;
+  body.innerHTML = '';
+
+  // Crew members
+  const crewTitle = document.createElement('div');
+  crewTitle.style.cssText = "font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin-bottom:0.4rem;";
+  crewTitle.textContent = 'My Crew';
+  body.appendChild(crewTitle);
+
+  DEMO_CREW.forEach(m=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.4rem;border-radius:10px;margin-bottom:0.25rem;background:rgba(184,201,163,0.08);';
+    const av = document.createElement('div');
+    av.style.cssText = `width:28px;height:28px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:800;color:white;flex-shrink:0;`;
+    av.textContent = m.initials;
+    const info = document.createElement('div');
+    info.style.flex='1';
+    info.innerHTML = `<div style="font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;color:var(--forest);">${m.name}</div><div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);">${m.role}</div>`;
+    row.appendChild(av);
+    row.appendChild(info);
+    body.appendChild(row);
+  });
+
+  // Followers
+  const fTitle = document.createElement('div');
+  fTitle.style.cssText = "font-family:'Space Mono',monospace;font-size:0.38rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);margin:0.6rem 0 0.4rem;";
+  fTitle.textContent = '👣 Followers';
+  body.appendChild(fTitle);
+
+  DEMO_FOLLOWERS.forEach(f=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.22rem 0.4rem;';
+    const av = document.createElement('div');
+    av.style.cssText = `width:22px;height:22px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:0.45rem;font-weight:800;color:white;flex-shrink:0;`;
+    av.textContent = f.name[0];
+    const nm = document.createElement('span');
+    nm.style.cssText = "font-family:'Nunito',sans-serif;font-size:0.6rem;color:var(--body-text);";
+    nm.textContent = f.name;
+    row.appendChild(av);
+    row.appendChild(nm);
+    body.appendChild(row);
+  });
+}
+
+function renderDemoTripPanel(){
+  const body = document.getElementById('demo-trip-body');
+  if(!body) return;
+  // Static initial state — cinematic will animate this
+  if(body.dataset.animated) return;
+  const t = DEMO_TRIP;
+  body.innerHTML = `
+    <div style="font-family:'Playfair Display',serif;font-size:0.85rem;font-weight:700;color:var(--forest);margin-bottom:0.25rem;">${t.name}</div>
+    <div style="font-family:'Space Mono',monospace;font-size:0.4rem;color:var(--stone);margin-bottom:0.7rem;">${t.dates} · ${t.miles}</div>
+    <div id="demo-trip-members"></div>
+  `;
+  // Render blank member rows
+  const membersEl = document.getElementById('demo-trip-members');
+  t.members.forEach(m=>{
+    const row = document.createElement('div');
+    row.id = 'demo-trip-member-' + m.id;
+    row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid rgba(184,201,163,0.2);opacity:0.3;transition:opacity 0.5s;';
+    const av = document.createElement('div');
+    av.style.cssText = `width:26px;height:26px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:800;color:white;flex-shrink:0;`;
+    av.textContent = m.initials;
+    const info = document.createElement('div');
+    info.style.flex='1';
+    info.innerHTML = `<div style="font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--forest);">${m.name}</div><div style="font-family:'Space Mono',monospace;font-size:0.35rem;color:var(--stone);">${m.role}</div>`;
+    const wBadge = document.createElement('div');
+    wBadge.id = 'demo-trip-w-' + m.id;
+    wBadge.style.cssText = 'font-family:Space Mono,monospace;font-size:0.45rem;font-weight:700;color:var(--moss);opacity:0;transition:opacity 0.4s;white-space:nowrap;';
+    wBadge.textContent = (m.totalW/1000).toFixed(1)+'kg';
+    row.appendChild(av); row.appendChild(info); row.appendChild(wBadge);
+    membersEl.appendChild(row);
+  });
+}
+
+function demoRunTripCinematic(onDone){
+  const t = DEMO_TRIP;
+  const body = document.getElementById('demo-trip-body');
+  if(body) body.dataset.animated = '1';
+
+  // Animate each member fading in with their weight
+  t.members.forEach((m,i)=>{
+    setTimeout(()=>{
+      const row = document.getElementById('demo-trip-member-'+m.id);
+      if(row){ row.style.opacity='1'; }
+      setTimeout(()=>{
+        const wb = document.getElementById('demo-trip-w-'+m.id);
+        if(wb) wb.style.opacity='1';
+      }, 300);
+    }, i*600);
+  });
+
+  // After all members loaded, show gear distribution bar
+  const totalDelay = t.members.length*600 + 500;
+  setTimeout(()=>{
+    const body = document.getElementById('demo-trip-body');
+    if(!body) return;
+    const totalW = t.members.reduce((s,m)=>s+m.totalW,0);
+    const bar = document.createElement('div');
+    bar.style.cssText = 'margin-top:0.75rem;';
+    bar.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.35rem;">Group Load Distribution</div>`;
+    const barRow = document.createElement('div');
+    barRow.style.cssText = 'display:flex;border-radius:6px;overflow:hidden;height:14px;';
+    t.members.forEach(m=>{
+      const seg = document.createElement('div');
+      const pct = Math.round(m.totalW/totalW*100);
+      seg.style.cssText = `width:0%;background:${m.color};transition:width 0.8s ease;display:flex;align-items:center;justify-content:center;`;
+      seg.title = `${m.name}: ${(m.totalW/1000).toFixed(1)}kg`;
+      barRow.appendChild(seg);
+      setTimeout(()=>{ seg.style.width=pct+'%'; }, 100);
+    });
+    bar.appendChild(barRow);
+    const legend = document.createElement('div');
+    legend.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.3rem;';
+    t.members.forEach(m=>{
+      const chip = document.createElement('div');
+      chip.style.cssText = `display:flex;align-items:center;gap:3px;`;
+      chip.innerHTML = `<div style="width:7px;height:7px;border-radius:50%;background:${m.color};"></div><span style="font-family:'Space Mono',monospace;font-size:0.38rem;color:var(--stone);">${m.name.split(' ')[0]} ${(m.totalW/1000).toFixed(1)}kg</span>`;
+      legend.appendChild(chip);
+    });
+    bar.appendChild(legend);
+    body.appendChild(bar);
+    setTimeout(onDone, 1400);
+  }, totalDelay);
+}
+
+// ── Add item modal (demo) ──
+function demoShowAddItemModal(){
+  // Advance the step if we're on it
+  const existing = document.getElementById('demo-add-modal');
+  if(existing){ existing.remove(); return; }
+  const modal = document.createElement('div');
+  modal.id = 'demo-add-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;background:rgba(20,35,20,0.55);backdrop-filter:blur(2px);';
+  modal.innerHTML = `
+    <div style="background:var(--paper);border:2px solid var(--sage);border-radius:18px;padding:1.4rem 1.5rem;width:320px;box-shadow:0 16px 48px rgba(0,0,0,0.22);">
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--forest);margin-bottom:0.25rem;">➕ Add to Gear Wall</div>
+      <div style="font-family:'Space Mono',monospace;font-size:0.42rem;color:var(--stone);margin-bottom:1rem;">This is a demo — nothing will be saved.</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;">
+        <input placeholder="Item name (e.g. Trekking Poles)" style="width:100%;background:var(--cream);border:1.5px solid var(--lichen);border-radius:8px;padding:0.4rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.72rem;color:var(--bark);outline:none;box-sizing:border-box;">
+        <input placeholder="Weight in grams (e.g. 420)" type="number" style="width:100%;background:var(--cream);border:1.5px solid var(--lichen);border-radius:8px;padding:0.4rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.72rem;color:var(--bark);outline:none;box-sizing:border-box;">
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <button onclick="document.getElementById('demo-add-modal').remove();demoRunStep(demoStepIdx+1);" style="flex:1;background:var(--forest);color:var(--cream);border:none;border-radius:100px;padding:0.4rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.68rem;cursor:pointer;">✓ Add Item</button>
+        <button onclick="document.getElementById('demo-add-modal').remove();" style="background:transparent;border:1.5px solid var(--lichen);border-radius:100px;padding:0.4rem 0.75rem;font-family:'Nunito',sans-serif;font-size:0.68rem;cursor:pointer;color:var(--stone);">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+// ── Inline weight edit (demo) ──
+function demoPretendWeightEdit(span, iid){
+  const inp = document.createElement('input');
+  inp.type='number'; inp.min='0';
+  inp.value = parseInt(span.textContent)||0;
+  inp.style.cssText='font-family:Space Mono,monospace;font-size:0.72rem;width:70px;border:1.5px solid var(--sage);border-radius:4px;padding:1px 4px;outline:none;';
+  span.replaceWith(inp); inp.focus(); inp.select();
+  const commit=()=>{
+    const cat=DEMO_CATS.find(c=>c.items.find(i=>i.id===iid));
+    const item=cat?.items.find(i=>i.id===iid);
+    if(item) item.w=parseFloat(inp.value)||item.w;
+    renderDemoPage();
+  };
+  inp.addEventListener('blur',commit);
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape') inp.blur(); });
+}
+
+// ── Spotlight system ──
 function demoSpotlight(targetId){
-  const overlay = document.getElementById('demo-overlay');
-  const spotlight = document.getElementById('demo-spotlight');
-  const el = document.getElementById(targetId);
-  if(!el){ spotlight.style.background='rgba(20,35,20,0.55)'; return; }
-  const r = el.getBoundingClientRect();
-  const pad = 8;
-  const x1=r.left-pad, y1=r.top-pad, x2=r.right+pad, y2=r.bottom+pad;
-  // Use clip-path with polygon cutout
-  const W=window.innerWidth, H=window.innerHeight;
-  spotlight.style.clipPath=`polygon(0 0,${W}px 0,${W}px ${H}px,0 ${H}px,0 ${y1}px,${x1}px ${y1}px,${x1}px ${y2}px,${x2}px ${y2}px,${x2}px ${y1}px,0 ${y1}px)`;
-  el.classList.add('demo-target-ring');
+  const spotlight=document.getElementById('demo-spotlight');
+  if(!spotlight) return;
+  const el=document.getElementById(targetId);
+  if(!el){ spotlight.style.clipPath='none'; spotlight.style.background='rgba(15,26,14,0.55)'; return; }
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  setTimeout(()=>{
+    const r=el.getBoundingClientRect();
+    const pad=10, W=window.innerWidth, H=window.innerHeight;
+    const x1=r.left-pad, y1=r.top-pad, x2=r.right+pad, y2=r.bottom+pad;
+    spotlight.style.clipPath=`polygon(0 0,${W}px 0,${W}px ${H}px,0 ${H}px,0 ${y1}px,${x1}px ${y1}px,${x1}px ${y2}px,${x2}px ${y2}px,${x2}px ${y1}px,0 ${y1}px)`;
+    el.classList.add('demo-target-ring');
+  }, 300);
 }
 
 function demoClearSpotlight(){
-  document.getElementById('demo-spotlight').style.clipPath='none';
+  const s=document.getElementById('demo-spotlight');
+  if(s) s.style.clipPath='none';
   document.querySelectorAll('.demo-target-ring').forEach(el=>el.classList.remove('demo-target-ring'));
 }
 
 function demoPositionTooltip(targetId, arrow){
-  const tt = document.getElementById('demo-tooltip');
-  const el = document.getElementById(targetId);
-  tt.className = 'arrow-'+arrow;
+  const tt=document.getElementById('demo-tooltip');
+  if(!tt) return;
+  const el=document.getElementById(targetId);
+  tt.className='arrow-'+(arrow||'bottom');
   if(!el){ tt.style.left='50%'; tt.style.top='50%'; return; }
-  const r = el.getBoundingClientRect();
+  const r=el.getBoundingClientRect();
   const TW=300, pad=18;
-  let left, top;
-  if(arrow==='right'){ left=r.left-TW-pad; top=r.top+12; }
-  else if(arrow==='left'){ left=r.right+pad; top=r.top+12; }
-  else if(arrow==='bottom'){ left=r.left; top=r.bottom+pad; }
-  else { left=r.left; top=r.top-160-pad; }
-  left = Math.max(12, Math.min(left, window.innerWidth-TW-12));
-  top  = Math.max(12, Math.min(top,  window.innerHeight-200));
+  let left,top;
+  if(arrow==='right')     { left=r.left-TW-pad; top=r.top+12; }
+  else if(arrow==='left') { left=r.right+pad;   top=r.top+12; }
+  else if(arrow==='bottom'){ left=r.left;        top=r.bottom+pad; }
+  else                    { left=r.left;         top=r.top-190; }
+  left=Math.max(12,Math.min(left,window.innerWidth-TW-12));
+  top =Math.max(12,Math.min(top, window.innerHeight-240));
   tt.style.left=left+'px'; tt.style.top=top+'px';
 }
 
 function demoUpdateDots(){
-  const dots = document.getElementById('demo-tt-dots');
+  const dots=document.getElementById('demo-tt-dots');
   if(!dots) return;
   dots.innerHTML='';
   DEMO_STEPS.forEach((_,i)=>{
@@ -5239,33 +5712,44 @@ async function demoRunStep(idx){
   if(idx>=DEMO_STEPS.length){ demoFinish(); return; }
   demoStepIdx=idx;
   const step=DEMO_STEPS[idx];
+  _ensureDemoOverlay();
   const overlay=document.getElementById('demo-overlay');
   overlay.style.display='block';
   overlay.classList.add('active');
-  // Clear previous ring
   demoClearSpotlight();
-  // Update tooltip content
+
   document.getElementById('demo-tt-step').textContent=`Step ${idx+1} of ${DEMO_STEPS.length}`;
   document.getElementById('demo-tt-title').textContent=step.title;
   document.getElementById('demo-tt-body').textContent=step.body;
   document.getElementById('demo-tt-hint').textContent=step.hint;
-  document.getElementById('demo-skip-btn').textContent=idx<DEMO_STEPS.length-1?'Skip →':'Finish';
+  const skipBtn=document.getElementById('demo-skip-btn');
+  skipBtn.textContent=step.autoPlay?'Auto-playing…':(idx>=DEMO_STEPS.length-1?'Finish ✓':'Next →');
+  skipBtn.disabled=!!step.autoPlay;
+  skipBtn.style.opacity=step.autoPlay?'0.45':'1';
   demoUpdateDots();
-  // Scroll target into view
-  const el=document.getElementById(step.targetId);
-  if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
-  // Spotlight + position tooltip (slight delay for scroll)
+
   setTimeout(()=>{
     demoSpotlight(step.targetId);
     demoPositionTooltip(step.targetId, step.arrow);
-  },350);
-  // Wait for user to complete the step
+  }, 300);
+
   if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
-  await step.complete(el);
-  // Flash completion on target
+
+  if(step.skipOnly){
+    // Only skip button advances
+    await new Promise(resolve=>{
+      const h=()=>resolve();
+      skipBtn.addEventListener('click',h,{once:true});
+      demoUnlisten=()=>skipBtn.removeEventListener('click',h);
+    });
+  } else if(step.complete){
+    await step.complete(document.getElementById(step.targetId));
+  }
+
+  const el=document.getElementById(step.targetId);
   if(el){ el.classList.add('demo-complete-flash'); setTimeout(()=>el.classList.remove('demo-complete-flash'),500); }
-  // Brief pause then advance
-  setTimeout(()=>demoRunStep(idx+1), 600);
+  if(!step.autoPlay) setTimeout(()=>demoRunStep(idx+1), step.skipOnly?0:500);
+  else setTimeout(()=>demoRunStep(idx+1), 500);
 }
 
 function demoSkip(){
@@ -5277,47 +5761,51 @@ function demoSkip(){
 
 function demoFinish(){
   demoClearSpotlight();
-  // Hide the full overlay — let user interact freely with the demo kit
-  const overlay = document.getElementById('demo-overlay');
-  overlay.style.display = 'none';
-  overlay.classList.remove('active');
+  const overlay=document.getElementById('demo-overlay');
+  if(overlay){ overlay.style.display='none'; overlay.classList.remove('active'); }
 
-  // Show a small floating banner at the bottom of the demo scene
-  let banner = document.getElementById('demo-finish-banner');
-  if(!banner){
-    banner = document.createElement('div');
-    banner.id = 'demo-finish-banner';
-    banner.style.cssText = `
-      position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
-      background:var(--forest);color:var(--cream);
-      border-radius:14px;padding:0.75rem 1.2rem;
-      box-shadow:0 6px 24px rgba(0,0,0,0.22);
-      font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:600;
-      z-index:400;display:flex;align-items:center;gap:0.9rem;
-      white-space:nowrap;
-    `;
-    banner.innerHTML = `
-      <span style="opacity:0.75;font-size:0.72rem;">🎉 Feel free to explore the demo kit</span>
-      <button onclick="startDemo()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;color:white;padding:0.28rem 0.65rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.72rem;">↩ Replay</button>
-      <button onclick="document.querySelector('.nav-tab').click();document.getElementById('demo-finish-banner').remove()" style="background:var(--tan);border:none;border-radius:8px;color:var(--bark);padding:0.28rem 0.75rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.72rem;">My Kit →</button>
-    `;
-    document.body.appendChild(banner);
-  }
+  // Show floating finish banner
+  document.getElementById('demo-finish-banner')?.remove();
+  const banner=document.createElement('div');
+  banner.id='demo-finish-banner';
+  banner.style.cssText='position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--forest);color:var(--cream);border-radius:14px;padding:0.75rem 1.3rem;box-shadow:0 6px 28px rgba(0,0,0,0.28);font-family:Nunito,sans-serif;font-size:0.78rem;font-weight:600;z-index:400;display:flex;align-items:center;gap:0.9rem;white-space:nowrap;';
+  banner.innerHTML=`
+    <span style="opacity:0.75;font-size:0.7rem;">🎉 Tour complete — explore freely or start building!</span>
+    <button onclick="startDemo()" style="background:rgba(255,255,255,0.12);border:none;border-radius:8px;color:white;padding:0.28rem 0.65rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.7rem;">↩ Replay</button>
+    <button onclick="demoExitToKit()" style="background:var(--tan);border:none;border-radius:8px;color:var(--bark);padding:0.28rem 0.85rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.7rem;">Build My Kit →</button>
+  `;
+  document.body.appendChild(banner);
+  // Mark tour as seen
+  try{ localStorage.setItem('bc_demo_seen','1'); }catch(e){}
+}
+
+function demoExitToKit(){
+  document.getElementById('demo-finish-banner')?.remove();
+  document.getElementById('demo-add-modal')?.remove();
+  demoClearSpotlight();
+  const overlay=document.getElementById('demo-overlay');
+  if(overlay){ overlay.style.display='none'; overlay.classList.remove('active'); }
+  const kitTab=document.querySelector('.nav-tab[onclick*="\'kit\'"]');
+  if(kitTab){ kitTab.click(); }
+  try{ localStorage.setItem('bc_demo_seen','1'); }catch(e){}
 }
 
 function startDemo(){
   demoStepIdx=0;
-  demoSeason='winter';
+  demoSeason='weekend';
   demoCatCollapsed={};
-  // Remove finish banner if showing
+  demoBenchedItems=new Set(DEMO_GEARWALL_BENCHED);
+  demoMeals=JSON.parse(JSON.stringify(DEMO_MEALS));
+  demoDraggedFood=new Set();
   document.getElementById('demo-finish-banner')?.remove();
+  document.getElementById('demo-add-modal')?.remove();
+  // Reset trip panel animation flag
+  const tripBody=document.getElementById('demo-trip-body');
+  if(tripBody) delete tripBody.dataset.animated;
   renderDemoPage();
-  // Re-show overlay
-  const overlay = document.getElementById('demo-overlay');
-  overlay.style.display = 'block';
-  const tt=document.getElementById('demo-tooltip');
-  tt.style.transform='';
-  document.getElementById('demo-skip-btn').onclick=demoSkip;
+  _ensureDemoOverlay();
+  const skipBtn=document.getElementById('demo-skip-btn');
+  if(skipBtn) skipBtn.onclick=demoSkip;
   demoRunStep(0);
 }
 
@@ -15281,9 +15769,15 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   if(!_sbUser) sbLoadPublicUsers().then(()=>renderPubUsers());
   renderTripsPage();
 
-  // Land on My Kit by default
-  const kitTab = document.querySelector('.nav-tab[onclick*="\'kit\'"]');
-  if(kitTab) showPage('kit', kitTab);
+  // First-time visitors land on Demo; returning users land on My Kit
+  const hasSeenDemo = (()=>{ try{ return localStorage.getItem('bc_demo_seen'); }catch(e){ return true; } })();
+  if(!hasSeenDemo){
+    const demoTab = document.querySelector('.nav-tab[onclick*="demo"]');
+    if(demoTab){ showPage('demo', demoTab); renderDemoPage(); startDemo(); }
+  } else {
+    const kitTab = document.querySelector('.nav-tab[onclick*="kit"]');
+    if(kitTab) showPage('kit', kitTab);
+  }
 
   // Auto-save to file on beforeunload removed — saveToFile() now embeds
   // clean defaults only, so silently triggering it would overwrite the file with blanks.
