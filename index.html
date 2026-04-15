@@ -2583,7 +2583,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   <div class="hdr-right">
     <div class="total-badge">Total: <strong id="total-disp">2000g</strong></div>
     <button class="unit-btn" id="unit-btn" onclick="toggleUnit()">g</button>
-    <button id="auth-btn" onclick="openAuthModal()" style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(184,201,163,0.35);border-radius:8px;padding:0.22rem 0.7rem;cursor:pointer;font-size:0.62rem;font-family:'Space Mono',monospace;color:var(--lichen);transition:0.2s;flex-shrink:0;white-space:nowrap;">Sign In</button>
+    <button id="auth-btn" onclick="openAuthModal()" class="unit-btn" style="flex-shrink:0;white-space:nowrap;padding:0.25rem 0.75rem;">Sign In</button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode" style="background:rgba(255,255,255,0.08);border:2px solid rgba(184,201,163,0.35);border-radius:8px;padding:0.22rem 0.55rem;cursor:pointer;font-size:0.85rem;line-height:1.4;color:var(--lichen);transition:all 0.2s;flex-shrink:0;">☀️</button>
 
   </div>
@@ -18096,14 +18096,14 @@ function authUpdateUI(user){
   if(user){
     const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Account';
     btn.textContent = '⛰️ ' + name;
-    btn.style.background = 'rgba(74,143,168,0.2)';
-    btn.style.borderColor = 'rgba(74,143,168,0.5)';
-    btn.style.color = 'var(--lichen)';
+    btn.style.background = 'rgba(74,143,168,0.25)';
+    btn.style.borderColor = 'rgba(74,143,168,0.6)';
+    btn.style.color = 'var(--cream)';
   } else {
     btn.textContent = 'Sign In';
-    btn.style.background = 'rgba(255,255,255,0.08)';
-    btn.style.borderColor = 'rgba(184,201,163,0.35)';
-    btn.style.color = 'var(--lichen)';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
     btn.style.cssText = '';
     // Clear profile display so stale photo/name don't show when logged out
     MY_PROFILE.name = '';
