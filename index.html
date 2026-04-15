@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.85 — Gear Organizer</title>
+<title>BaseCamp v8.87 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2569,7 +2569,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.85</div>
+      <div class="logo-sub">Gear Organizer · v8.87</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -2583,7 +2583,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   <div class="hdr-right">
     <div class="total-badge">Total: <strong id="total-disp">2000g</strong></div>
     <button class="unit-btn" id="unit-btn" onclick="toggleUnit()">g</button>
-    <button id="auth-btn" onclick="openAuthModal()" style="background: rgba(255,255,255,0.08); border: 1.5px solid rgba(184,201,163,0.35); border-radius: 8px; padding: 0.22rem 0.7rem; cursor: pointer; font-size: 0.62rem; font-family: &quot;Space Mono&quot;, monospace; color: var(--lichen); transition: 0.2s; flex-shrink: 0; white-space: nowrap;">Sign In</button>
+    <button id="auth-btn" onclick="openAuthModal()" style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(184,201,163,0.35);border-radius:8px;padding:0.22rem 0.7rem;cursor:pointer;font-size:0.62rem;font-family:'Space Mono',monospace;color:var(--lichen);transition:0.2s;flex-shrink:0;white-space:nowrap;">Sign In</button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode" style="background:rgba(255,255,255,0.08);border:2px solid rgba(184,201,163,0.35);border-radius:8px;padding:0.22rem 0.55rem;cursor:pointer;font-size:0.85rem;line-height:1.4;color:var(--lichen);transition:all 0.2s;flex-shrink:0;">☀️</button>
 
   </div>
@@ -6275,7 +6275,8 @@ function renderAll(){
 function renderCats(){
   const cont=document.getElementById('cats');
   cont.innerHTML='';
-  CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised').forEach(cat=>{
+  const _catOrder = cats => { const p=cats.filter(c=>c.id==='pack'); const rest=cats.filter(c=>c.id!=='pack'); return [...p,...rest]; };
+  _catOrder(CATS.filter(cat=>catInPack(cat) && cat.id!=='uncategorised')).forEach(cat=>{
     const items=sItems(cat);
     // Auto-collapse categories with no items in this pack (user can expand)
     if(!collapsedManual.has(cat.id)) collapsed[cat.id] = items.length === 0;
@@ -6323,10 +6324,7 @@ function renderCats(){
             ${packItem ? `<button class="del-btn" style="margin-left:0.3rem;" onclick="delItem('pack','${packItem.id}')" title="Remove pack">✕</button>` : ''}
           </div>
         </div>
-        ${items.length===0
-          ? `<div style="padding:0.5rem 0.85rem;font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--stone);opacity:0.6;">No pack — drag one here from Gear Wall</div>`
-          : ''
-        }`;
+        `;
       // No body/rows for pack — the item name IS the header
     } else {
       card.innerHTML=`
@@ -6492,7 +6490,8 @@ function renderCats(){
     } else {
       const ucEmpty = document.createElement('p');
       ucEmpty.style.cssText = "color:var(--stone);font-size:0.65rem;padding:0.2rem 0.6rem 0.4rem;opacity:0.5;";
-      ucEmpty.textContent = 'No uncategorised items in this pack';
+      ucEmpty.textContent = '';
+      ucEmpty.style.minHeight = '1.5rem';
       ucCard.appendChild(ucEmpty);
     }
     // add button now in ucHdr above
