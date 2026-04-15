@@ -5670,12 +5670,11 @@ function renderCrewPage(){
 
   if(allFriends.length) crewMain.appendChild(grid);
 
-  // ── FOLLOWING LIST (people I follow) ──
-  // ── FOLLOWING LIST — only people NOT already in crew ──
+  // ── FOLLOWING LIST (people I follow) — signed-in only ──
   const crewIds = new Set((_sbUser ? _friends : []).map(f=>f.id));
-  const followingNonCrew = _following.filter(f=>!crewIds.has(f.following_id));
+  const followingNonCrew = _sbUser ? _following.filter(f=>!crewIds.has(f.following_id)) : [];
 
-  if(followingNonCrew.length){
+  if(_sbUser && followingNonCrew.length){
     const followTitle = document.createElement('div');
     followTitle.className = 'crew-section-title';
     followTitle.style.marginTop = '1.2rem';
@@ -5705,8 +5704,18 @@ function renderCrewPage(){
   }
 
   // ── RIGHT COLUMN: followers panel + public users ──
-  crewRight.appendChild(_buildFollowersPanel());
-  crewRight.appendChild(_buildPublicUsersPanel());
+  if(_sbUser){
+    crewRight.appendChild(_buildFollowersPanel());
+    crewRight.appendChild(_buildPublicUsersPanel());
+  } else {
+    const signInNudge = document.createElement('div');
+    signInNudge.style.cssText = 'background:rgba(250,247,242,0.7);border:1.5px solid rgba(184,201,163,0.4);border-radius:16px;padding:1.4rem 1.2rem;text-align:center;';
+    signInNudge.innerHTML = '<div style="font-size:1.6rem;margin-bottom:0.5rem;">👣</div>'
+      + '<div style="font-family:\'Nunito\',sans-serif;font-weight:800;font-size:0.78rem;color:var(--forest);margin-bottom:0.35rem;">See who\'s following you</div>'
+      + '<div style="font-family:\'Nunito\',sans-serif;font-size:0.65rem;color:var(--stone);margin-bottom:0.9rem;">Sign in to view your followers and discover other hikers.</div>'
+      + '<button class="unit-btn" onclick="openAuthModal()" style="width:100%;padding:0.4rem 0;font-size:0.65rem;">Sign In</button>';
+    crewRight.appendChild(signInNudge);
+  }
 
   layout.appendChild(crewMain);
   layout.appendChild(crewRight);
@@ -17946,6 +17955,9 @@ async function authSignOut(){
   _pendingIn = [];
   _pendingOut = [];
   _tripInvitesIn = [];
+  _followers = [];
+  _following = [];
+  _publicUsers = [];
   // Clear all local data so the next user starts fresh
   localStorage.removeItem(SAVE_KEY);
   _stateLoaded = false; // prevent renderAll from saving empty state
