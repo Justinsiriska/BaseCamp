@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.84 — Gear Organizer</title>
+<title>BaseCamp v8.85 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -350,7 +350,7 @@ html.dark .pack-overflow-pop{background:#0f1a0f;border-color:var(--dm-border);}
 .mp-tag-pill.active{background:rgba(74,143,168,0.12);border-color:var(--water);color:var(--water);}
 .mp-card{display:flex;gap:0;background:var(--paper);border:1.5px solid rgba(184,201,163,0.4);border-radius:12px;padding:0;cursor:pointer;transition:all 0.15s;overflow:hidden;align-items:stretch;}
 .mp-card:hover{border-color:var(--sage);box-shadow:0 2px 12px rgba(45,74,45,0.1);transform:translateY(-1px);}
-.mp-card-img{width:56px;object-fit:cover;flex-shrink:0;border-right:1px solid rgba(184,201,163,0.25);border-radius:0;align-self:stretch;display:block;}
+.mp-card-img{width:70px;min-width:70px;object-fit:cover;object-position:center;flex-shrink:0;border-right:1px solid rgba(184,201,163,0.25);border-radius:0;align-self:stretch;display:block;}
 .mp-card-body{flex:1;min-width:0;padding:0.45rem 0.65rem;}
 .mp-card-top{display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-bottom:0.15rem;}
 .mp-card-name{font-family:'Nunito',sans-serif;font-weight:700;font-size:0.75rem;color:var(--bark);line-height:1.2;}
@@ -2569,14 +2569,14 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.84</div>
+      <div class="logo-sub">Gear Organizer · v8.85</div>
     </div>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('kit',this)">🎒 My Backpacks</button>
-    <button class="nav-tab" onclick="showPage('lab',this)">🛒 Marketplace</button>
     <button class="nav-tab" onclick="showPage('trips',this);renderTripsPage()">🏕️ Trips</button>
     <button class="nav-tab" onclick="showPage('crew',this);renderCrewPage()">👥 Crew</button>
+    <button class="nav-tab" onclick="showPage('lab',this)">🛒 Marketplace</button>
     <button class="nav-tab" onclick="showPage('demo',this);renderDemoPage();startDemo()">▶ Demo</button>
     <button class="nav-tab" id="admin-nav-tab" style="display:none;" onclick="showPage('admin',this);renderAdminPage()">⚙️ Admin</button>
   </div>
@@ -8995,8 +8995,6 @@ function renderGearWall(){
     });
     ucDiv.appendChild(ucItems);
     body.insertBefore(ucDiv, body.firstChild);
-    const packCardGw = body.querySelector('.gw-cat[data-cid="pack"]');
-    if(packCardGw) packCardGw.insertAdjacentElement('afterend', ucDiv);
   }
 
   // ── Recently Deleted section ──
