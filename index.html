@@ -2041,6 +2041,8 @@ html.dark .nutr-row#nutr-kcal-row .nutr-val{color:#d8eab8;}
 #demo-tooltip{
   position:fixed;z-index:310;
   width:290px;
+  max-height:calc(100vh - 32px);
+  overflow-y:auto;
   background:var(--paper);
   border:2px solid var(--sage);
   border-radius:16px;
@@ -4977,7 +4979,7 @@ let demoSeason = 'weekend';
 let demoCatCollapsed = {};
 let demoStepIdx = 0;
 let demoUnlisten = null;
-let demoGeneration = 0; // incremented on every startDemo/exit to cancel in-flight async chains
+let demoGeneration = 0; // incremented on startDemo/exit/skip to cancel in-flight awaits
 // Items dragged into pack during demo
 let demoBenchedItems = new Set(DEMO_GEARWALL_BENCHED);
 // Food items dragged in during demo
@@ -4993,7 +4995,7 @@ const DEMO_STEPS = [
     title:'Welcome to BaseCamp 🏕️',
     body:'Meet Alex Rivera\'s kit — a real ultralight setup across three custom pack configs. This tour shows you the best features in about 2 minutes.',
     hint:'👆 Click Next to begin',
-    targetId:'demo-welcome-card',
+    targetId:'demo-pills',
     arrow:'bottom',
     skipOnly: true,
   },
@@ -5235,6 +5237,14 @@ function _ensureDemoOverlay(){
     </div>`;
   document.body.appendChild(ov);
   document.getElementById('demo-skip-btn').onclick = demoSkip;
+  // Reposition tooltip on window resize
+  window.addEventListener('resize', ()=>{
+    const step=DEMO_STEPS[demoStepIdx];
+    if(step && document.getElementById('demo-overlay')?.classList.contains('active')){
+      demoPositionTooltip(step.targetId, step.arrow);
+      demoSpotlight(step.targetId);
+    }
+  });
 }
 
 function _renderDemoHeader(){
@@ -5685,17 +5695,24 @@ function demoPositionTooltip(targetId, arrow){
   if(!tt) return;
   const el=document.getElementById(targetId);
   tt.className='arrow-'+(arrow||'bottom');
-  if(!el){ tt.style.left='50%'; tt.style.top='50%'; return; }
+  // Measure actual tooltip size (it may not have content yet, use fallback)
+  const TW=tt.offsetWidth||300;
+  const TH=tt.offsetHeight||240;
+  const pad=16;
+  const VW=window.innerWidth;
+  const VH=window.innerHeight;
+  if(!el){ tt.style.left=Math.round((VW-TW)/2)+'px'; tt.style.top=Math.round((VH-TH)/2)+'px'; return; }
   const r=el.getBoundingClientRect();
-  const TW=300, pad=18;
   let left,top;
-  if(arrow==='right')     { left=r.left-TW-pad; top=r.top+12; }
-  else if(arrow==='left') { left=r.right+pad;   top=r.top+12; }
-  else if(arrow==='bottom'){ left=r.left;        top=r.bottom+pad; }
-  else                    { left=r.left;         top=r.top-190; }
-  left=Math.max(12,Math.min(left,window.innerWidth-TW-12));
-  top =Math.max(12,Math.min(top, window.innerHeight-240));
-  tt.style.left=left+'px'; tt.style.top=top+'px';
+  if(arrow==='right')      { left=r.left-TW-pad;       top=r.top; }
+  else if(arrow==='left')  { left=r.right+pad;          top=r.top; }
+  else if(arrow==='bottom'){ left=r.left;               top=r.bottom+pad; }
+  else                     { left=r.left;               top=r.top-TH-pad; }
+  // Clamp so tooltip stays fully on screen
+  left=Math.max(pad, Math.min(left, VW-TW-pad));
+  top =Math.max(pad, Math.min(top,  VH-TH-pad));
+  tt.style.left=Math.round(left)+'px';
+  tt.style.top =Math.round(top)+'px';
 }
 
 function demoUpdateDots(){
@@ -5711,7 +5728,6 @@ function demoUpdateDots(){
 
 async function demoRunStep(idx){
   if(idx>=DEMO_STEPS.length){ demoFinish(); return; }
-  // Capture generation so we can bail out if startDemo/exit is called mid-await
   const myGen = demoGeneration;
   demoStepIdx=idx;
   const step=DEMO_STEPS[idx];
@@ -5740,7 +5756,6 @@ async function demoRunStep(idx){
   if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
 
   if(step.skipOnly){
-    // Only skip button advances
     await new Promise(resolve=>{
       const h=()=>resolve();
       skipBtn.addEventListener('click',h,{once:true});
@@ -5750,7 +5765,6 @@ async function demoRunStep(idx){
     await step.complete(document.getElementById(step.targetId));
   }
 
-  // If a newer demo run started (exit or replay), abort this chain
   if(demoGeneration!==myGen) return;
 
   const el=document.getElementById(step.targetId);
@@ -5760,7 +5774,7 @@ async function demoRunStep(idx){
 }
 
 function demoSkip(){
-  demoGeneration++; // abort any in-flight await
+  demoGeneration++;
   if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
   demoClearSpotlight();
   if(demoStepIdx>=DEMO_STEPS.length-1) demoFinish();
@@ -5768,7 +5782,7 @@ function demoSkip(){
 }
 
 function demoFinish(){
-  demoGeneration++; // stop any lingering step timers
+  demoGeneration++;
   if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
   demoClearSpotlight();
   const overlay=document.getElementById('demo-overlay');
@@ -5790,20 +5804,21 @@ function demoFinish(){
 }
 
 function demoExitToKit(){
-  demoGeneration++; // kill any in-flight demoRunStep awaits
+  demoGeneration++;
   if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
   document.getElementById('demo-finish-banner')?.remove();
   document.getElementById('demo-add-modal')?.remove();
   demoClearSpotlight();
   const overlay=document.getElementById('demo-overlay');
   if(overlay){ overlay.style.display='none'; overlay.classList.remove('active'); }
+  // Navigate to kit tab
   const kitTab=document.querySelector('.nav-tab[onclick*="\'kit\'"]');
   if(kitTab){ kitTab.click(); }
   try{ localStorage.setItem('bc_demo_seen','1'); }catch(e){}
 }
 
 function startDemo(){
-  demoGeneration++; // cancel any previous in-flight async chains
+  demoGeneration++;
   demoStepIdx=0;
   demoSeason='weekend';
   demoCatCollapsed={};
