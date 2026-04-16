@@ -4977,6 +4977,7 @@ let demoSeason = 'weekend';
 let demoCatCollapsed = {};
 let demoStepIdx = 0;
 let demoUnlisten = null;
+let demoGeneration = 0; // incremented on every startDemo/exit to cancel in-flight async chains
 // Items dragged into pack during demo
 let demoBenchedItems = new Set(DEMO_GEARWALL_BENCHED);
 // Food items dragged in during demo
@@ -5710,6 +5711,8 @@ function demoUpdateDots(){
 
 async function demoRunStep(idx){
   if(idx>=DEMO_STEPS.length){ demoFinish(); return; }
+  // Capture generation so we can bail out if startDemo/exit is called mid-await
+  const myGen = demoGeneration;
   demoStepIdx=idx;
   const step=DEMO_STEPS[idx];
   _ensureDemoOverlay();
@@ -5729,6 +5732,7 @@ async function demoRunStep(idx){
   demoUpdateDots();
 
   setTimeout(()=>{
+    if(demoGeneration!==myGen) return;
     demoSpotlight(step.targetId);
     demoPositionTooltip(step.targetId, step.arrow);
   }, 300);
@@ -5740,19 +5744,23 @@ async function demoRunStep(idx){
     await new Promise(resolve=>{
       const h=()=>resolve();
       skipBtn.addEventListener('click',h,{once:true});
-      demoUnlisten=()=>skipBtn.removeEventListener('click',h);
+      demoUnlisten=()=>{ skipBtn.removeEventListener('click',h); resolve(); };
     });
   } else if(step.complete){
     await step.complete(document.getElementById(step.targetId));
   }
 
+  // If a newer demo run started (exit or replay), abort this chain
+  if(demoGeneration!==myGen) return;
+
   const el=document.getElementById(step.targetId);
   if(el){ el.classList.add('demo-complete-flash'); setTimeout(()=>el.classList.remove('demo-complete-flash'),500); }
-  if(!step.autoPlay) setTimeout(()=>demoRunStep(idx+1), step.skipOnly?0:500);
-  else setTimeout(()=>demoRunStep(idx+1), 500);
+  if(!step.autoPlay) setTimeout(()=>{ if(demoGeneration===myGen) demoRunStep(idx+1); }, step.skipOnly?0:500);
+  else setTimeout(()=>{ if(demoGeneration===myGen) demoRunStep(idx+1); }, 500);
 }
 
 function demoSkip(){
+  demoGeneration++; // abort any in-flight await
   if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
   demoClearSpotlight();
   if(demoStepIdx>=DEMO_STEPS.length-1) demoFinish();
@@ -5760,6 +5768,8 @@ function demoSkip(){
 }
 
 function demoFinish(){
+  demoGeneration++; // stop any lingering step timers
+  if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
   demoClearSpotlight();
   const overlay=document.getElementById('demo-overlay');
   if(overlay){ overlay.style.display='none'; overlay.classList.remove('active'); }
@@ -5780,6 +5790,8 @@ function demoFinish(){
 }
 
 function demoExitToKit(){
+  demoGeneration++; // kill any in-flight demoRunStep awaits
+  if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
   document.getElementById('demo-finish-banner')?.remove();
   document.getElementById('demo-add-modal')?.remove();
   demoClearSpotlight();
@@ -5791,12 +5803,14 @@ function demoExitToKit(){
 }
 
 function startDemo(){
+  demoGeneration++; // cancel any previous in-flight async chains
   demoStepIdx=0;
   demoSeason='weekend';
   demoCatCollapsed={};
   demoBenchedItems=new Set(DEMO_GEARWALL_BENCHED);
   demoMeals=JSON.parse(JSON.stringify(DEMO_MEALS));
   demoDraggedFood=new Set();
+  if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
   document.getElementById('demo-finish-banner')?.remove();
   document.getElementById('demo-add-modal')?.remove();
   // Reset trip panel animation flag
