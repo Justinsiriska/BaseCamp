@@ -4884,74 +4884,55 @@ const DEMO_FOLLOWERS = [
 ];
 
 const DEMO_PACKS = [
-  { id:'weekend', name:'Weekend Warrior', icon:'⛺' },
-  { id:'ultra',   name:'Ultralight',      icon:'🪶' },
-  { id:'alpine',  name:'Winter Alpine',   icon:'❄️' },
+  { id:'weekend', name:'My Pack', icon:'🎒' },
 ];
 
-// Gear wall — everything Alex owns
+// Gear wall — all items start BENCHED (not in pack) so Alex begins with nothing
 const DEMO_CATS = [
   { id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', pc:'pill-sleep', cc:'cc-sleep',
     items:[
-      { id:'d1',  name:'Big Agnes Copper Spur HV UL2', w:1060, s:['weekend','alpine'] },
-      { id:'d2',  name:'Zpacks Duplex Tent',           w:510,  s:['ultra'] },
-      { id:'d3',  name:'WM Megalite -7°C',             w:737,  s:['alpine'] },
-      { id:'d4',  name:'Enlightened Eq. Revelation 10°C', w:482, s:['weekend','ultra'] },
-      { id:'d5',  name:'Therm-a-Rest NeoAir XLite',   w:354,  s:['weekend','ultra','alpine'] },
-      { id:'d6',  name:'Sea to Summit Liner',          w:130,  s:['weekend'] },
+      { id:'d1', name:'Big Agnes Copper Spur HV UL2', w:1060, s:['weekend'] },
+      { id:'d2', name:'Therm-a-Rest NeoAir XLite',   w:354,  s:['weekend'] },
+      { id:'d3', name:'Sea to Summit Spark Quilt',    w:482,  s:['weekend'] },
     ]},
   { id:'cook', name:'Cook System', icon:'🔥', color:'#c85a2a', pc:'pill-cooking', cc:'cc-cooking',
     items:[
-      { id:'d7',  name:'MSR PocketRocket 2',   w:73,  s:['weekend','alpine'] },
-      { id:'d8',  name:'Jetboil Flash',         w:371, s:['alpine'] },
-      { id:'d9',  name:'Snow Peak 700 Pot',     w:115, s:['weekend','alpine'] },
-      { id:'d10', name:'Esbit Stove',           w:25,  s:['ultra'] },
-      { id:'d11', name:'BeFree 1L Filter',      w:67,  s:['weekend','ultra','alpine'] },
-      { id:'d12', name:'Toaks 550ml Cup',       w:54,  s:['ultra'] },
+      { id:'d4', name:'MSR PocketRocket 2',  w:73,  s:['weekend'] },
+      { id:'d5', name:'Snow Peak 700ml Pot', w:115, s:['weekend'] },
+      { id:'d6', name:'BeFree 1L Filter',    w:67,  s:['weekend'] },
     ]},
   { id:'clothes', name:'Clothing', icon:'🧥', color:'#7ba7bc', pc:'pill-clothes', cc:'cc-clothes',
     items:[
-      { id:'d13', name:'Patagonia Houdini Jacket', w:102, s:['weekend','ultra'] },
-      { id:'d14', name:'Arc\'teryx Atom LT',       w:318, s:['alpine'] },
-      { id:'d15', name:'Icebreaker 200 Base Layer',w:174, s:['weekend','alpine'] },
-      { id:'d16', name:'Black Diamond Gloves',     w:96,  s:['alpine'] },
-      { id:'d17', name:'Buff Merino Neck Gaiter',  w:42,  s:['weekend','alpine'] },
-      { id:'d18', name:'Darn Tough Socks ×3',      w:189, s:['weekend','alpine'] },
+      { id:'d7', name:'Patagonia Houdini Jacket',   w:102, s:['weekend'] },
+      { id:'d8', name:'Icebreaker 200 Base Layer',  w:174, s:['weekend'] },
+      { id:'d9', name:'Darn Tough Socks ×2',        w:126, s:['weekend'] },
     ]},
   { id:'nav', name:'Navigation & Safety', icon:'🧭', color:'#8b7355', pc:'pill-nav', cc:'cc-nav',
     items:[
-      { id:'d19', name:'Petzl Actik Core Headlamp', w:85,  s:['weekend','ultra','alpine'] },
-      { id:'d20', name:'Garmin inReach Mini 2',     w:100, s:['weekend','alpine'] },
-      { id:'d21', name:'Adventure Medical Kit',     w:198, s:['weekend','alpine'] },
-      { id:'d22', name:'Suunto A-10 Compass',       w:38,  s:['weekend','ultra','alpine'] },
-      { id:'d23', name:'Trekking Poles (pair)',      w:440, s:['weekend','alpine'] },
+      { id:'d10', name:'Petzl Actik Core Headlamp', w:85,  s:['weekend'] },
+      { id:'d11', name:'Adventure Medical Kit',     w:198, s:['weekend'] },
     ]},
 ];
 
-// Which gear wall items start OUT of pack (not in active pack) for drag demo
-const DEMO_GEARWALL_BENCHED = new Set(['d6','d8','d16','d20','d23']);
+// ALL items start benched — Alex's gear wall is empty at demo start
+const DEMO_GEARWALL_BENCHED = new Set(
+  DEMO_CATS.flatMap(c => c.items.map(i => i.id))
+);
 
 // Food fridge
 const DEMO_FRIDGE = [
   { id:'f1', name:'Instant Oatmeal',      kcal:150, w:45,  cat:'breakfast' },
   { id:'f2', name:'Peanut Butter Packet', kcal:190, w:32,  cat:'breakfast' },
-  { id:'f3', name:'Clif Bar',             kcal:240, w:68,  cat:'snack' },
-  { id:'f4', name:'Beef Jerky',           kcal:116, w:35,  cat:'snack' },
+  { id:'f3', name:'Clif Bar',             kcal:240, w:68,  cat:'snacks' },
+  { id:'f4', name:'Beef Jerky',           kcal:116, w:35,  cat:'snacks' },
   { id:'f5', name:'Backpacker\'s Pantry Pad Thai', kcal:530, w:149, cat:'dinner' },
   { id:'f6', name:'Mountain House Chili', kcal:470, w:132, cat:'dinner' },
-  { id:'f7', name:'Tortilla',             kcal:120, w:35,  cat:'lunch' },
+  { id:'f7', name:'Tortilla + Cheese',    kcal:220, w:55,  cat:'lunch' },
   { id:'f8', name:'Tuna Packet',          kcal:100, w:74,  cat:'lunch' },
-  { id:'f9', name:'Nuun Electrolyte Tab', kcal:15,  w:5,   cat:'snack' },
-  { id:'f10',name:'Honey Stinger Waffle', kcal:160, w:30,  cat:'snack' },
 ];
 
-// Starting meal plan (some items already placed)
-const DEMO_MEALS = {
-  breakfast: [ { ...DEMO_FRIDGE[0], qty:1 } ],
-  lunch:     [ { ...DEMO_FRIDGE[6], qty:2 }, { ...DEMO_FRIDGE[7], qty:1 } ],
-  dinner:    [ { ...DEMO_FRIDGE[4], qty:1 } ],
-  snacks:    [ { ...DEMO_FRIDGE[2], qty:2 } ],
-};
+// Start with empty meal plan
+const DEMO_MEALS = { breakfast:[], lunch:[], dinner:[], snacks:[] };
 
 // Trip
 const DEMO_TRIP = {
@@ -4979,7 +4960,7 @@ let demoSeason = 'weekend';
 let demoCatCollapsed = {};
 let demoStepIdx = 0;
 let demoUnlisten = null;
-let demoGeneration = 0; // incremented on startDemo/exit/skip to cancel in-flight awaits
+let demoGeneration = 0;
 // Items dragged into pack during demo
 let demoBenchedItems = new Set(DEMO_GEARWALL_BENCHED);
 // Food items dragged in during demo
@@ -4989,96 +4970,100 @@ let demoDraggedFood = new Set();
 
 // ── Step definitions ──
 const DEMO_STEPS = [
-  // ── STEP 0: Welcome splash ──
+  // ── STEP 0: Welcome ──
   {
     id:'welcome',
-    title:'Welcome to BaseCamp 🏕️',
-    body:'Meet Alex Rivera\'s kit — a real ultralight setup across three custom pack configs. This tour shows you the best features in about 2 minutes.',
-    hint:'👆 Click Next to begin',
+    title:'Build Your Kit with BaseCamp 🏕️',
+    body:'Alex is starting fresh — no gear yet. In this demo you\'ll add your first gear items, plan your food, and create a trip. Takes about 2 minutes.',
+    hint:'👆 Click Next to start building',
     targetId:'demo-pills',
     arrow:'bottom',
     skipOnly: true,
   },
-  // ── STEP 1: Pack configs ──
+  // ── STEP 1: Add gear items ──
   {
-    id:'packs',
-    title:'Three Pack Configs, One Gear Wall',
-    body:'Alex has gear sorted into Weekend Warrior, Ultralight, and Winter Alpine configs. Each pill shows live pack weight. Switch configs and watch the weight update instantly.',
-    hint:'👆 Tap a different pack config pill to switch',
-    targetId:'demo-pills',
-    arrow:'bottom',
-    complete: el => new Promise(resolve=>{
-      const pills = document.querySelectorAll('#demo-pills .s-pill:not(.active)');
-      const h = ()=>resolve();
-      pills.forEach(p=>p.addEventListener('click',h,{once:true}));
-      demoUnlisten = ()=>pills.forEach(p=>p.removeEventListener('click',h));
-    }),
-  },
-  // ── STEP 2: Gear wall drag ──
-  {
-    id:'gearwall',
-    title:'Drag From Gear Wall → Pack',
-    body:'The Gear Wall holds everything you own. Items dimmed out aren\'t in this config. Click ⊕ to add an item to your active pack — the weight chart updates live.',
-    hint:'👆 Click ⊕ on any benched item in the Gear Wall',
+    id:'addgear',
+    title:'Add Items to Your Gear Wall',
+    body:'Your Gear Wall holds everything you own. Click ⊕ to add items to your pack — the weight chart updates live as you go.',
+    hint:'👆 Click ⊕ on 3 items to add them to your pack',
     targetId:'demo-gw-panel',
     arrow:'left',
     complete: el => new Promise(resolve=>{
-      const btns = document.querySelectorAll('.demo-gw-add-btn');
-      const h = (e)=>{
-        const iid = e.currentTarget.dataset.iid;
-        demoBenchedItems.delete(iid);
-        renderDemoPage();
-        resolve();
+      let added = 0;
+      const needed = 3;
+      const attach = () => {
+        const btns = document.querySelectorAll('.demo-gw-add-btn');
+        btns.forEach(b=>{
+          if(b._demoListened) return;
+          b._demoListened = true;
+          b.addEventListener('click', (e)=>{
+            const iid = e.currentTarget.dataset.iid;
+            if(demoBenchedItems.has(iid)){
+              demoBenchedItems.delete(iid);
+              added++;
+              renderDemoCats(); renderDemoGearWall(); renderDemoChart(); renderDemoPills();
+              // Update hint
+              const remaining = needed - added;
+              const hint = document.getElementById('demo-tt-hint');
+              if(hint) hint.textContent = remaining > 0
+                ? `👆 ${remaining} more item${remaining>1?'s':''} to go!`
+                : '✅ Great! Click Next to continue';
+              const skipBtn = document.getElementById('demo-skip-btn');
+              if(skipBtn) skipBtn.textContent = added >= needed ? 'Next →' : 'Skip';
+              if(added >= needed) resolve();
+            }
+          }, {once:false});
+        });
       };
-      btns.forEach(b=>b.addEventListener('click',h,{once:true}));
-      demoUnlisten = ()=>btns.forEach(b=>b.removeEventListener('click',h));
+      attach();
+      demoUnlisten = () => {};
     }),
   },
-  // ── STEP 3: Add new item ──
-  {
-    id:'additem',
-    title:'Add a New Item to Your Gear Wall',
-    body:'Got a new piece of kit? Hit "+ Add Item" to log it with name, weight, and which pack configs it belongs in. Your gear wall grows with you.',
-    hint:'👆 Click "+ Add Item" to try adding a piece of gear',
-    targetId:'demo-add-item-btn',
-    arrow:'left',
-    complete: el => new Promise(resolve=>{
-      if(!el){ resolve(); return; }
-      el.addEventListener('click',resolve,{once:true});
-      demoUnlisten = ()=>el.removeEventListener('click',resolve);
-    }),
-  },
-  // ── STEP 4: Food bag ──
+  // ── STEP 2: Plan food ──
   {
     id:'food',
-    title:'Food Bag — Plan Your Meals',
-    body:'Drag items from your Fridge into Breakfast, Lunch, Dinner, or Snacks. Calories and pack weight auto-calculate per day. Alex\'s current plan is ' + _demoTotalKcal() + ' kcal/day.',
-    hint:'👆 Drag a fridge item into a meal slot — or click ⊕',
+    title:'Plan Your Food Bag 🍽️',
+    body:'Your Fridge holds your go-to trail foods. Click ⊕ to add meals — calories and total food weight calculate automatically.',
+    hint:'👆 Add 2 food items from the fridge',
     targetId:'demo-food-fridge',
     arrow:'left',
     complete: el => new Promise(resolve=>{
-      const btns = document.querySelectorAll('.demo-food-add-btn');
-      const h = (e)=>{
-        const fid = e.currentTarget.dataset.fid;
-        const item = DEMO_FRIDGE.find(f=>f.id===fid);
-        if(item && !demoDraggedFood.has(fid)){
-          demoDraggedFood.add(fid);
-          demoMeals[item.cat] = demoMeals[item.cat] || [];
-          demoMeals[item.cat].push({...item, qty:1});
-          renderDemoFoodPanel();
-        }
-        resolve();
+      let added = 0;
+      const needed = 2;
+      const tryAttach = () => {
+        const btns = document.querySelectorAll('.demo-food-add-btn');
+        btns.forEach(b=>{
+          if(b._demoListened) return;
+          b._demoListened = true;
+          b.addEventListener('click', (e)=>{
+            const fid = e.currentTarget.dataset.fid;
+            const item = DEMO_FRIDGE.find(f=>f.id===fid);
+            if(item && !demoDraggedFood.has(fid)){
+              demoDraggedFood.add(fid);
+              demoMeals[item.cat] = demoMeals[item.cat] || [];
+              demoMeals[item.cat].push({...item, qty:1});
+              renderDemoFoodPanel();
+              added++;
+              const remaining = needed - added;
+              const hint = document.getElementById('demo-tt-hint');
+              if(hint) hint.textContent = remaining > 0
+                ? `👆 ${remaining} more item${remaining>1?'s':''} to go!`
+                : '✅ Looking good! Click Next';
+              if(added >= needed) resolve();
+            }
+          }, {once:false});
+        });
       };
-      btns.forEach(b=>b.addEventListener('click',h,{once:true}));
-      demoUnlisten = ()=>btns.forEach(b=>b.removeEventListener('click',h));
+      tryAttach();
+      demoUnlisten = () => {};
     }),
   },
-  // ── STEP 5: Trips — auto-play cinematic ──
+  // ── STEP 3: Create trip ──
   {
-    id:'trips',
-    title:'Trips — Gear Across Your Whole Crew',
-    body:'Watch how BaseCamp distributes gear across Alex\'s crew for the JMT Section 4 trip. See pack weights, roles, and shared gear at a glance — no more "who\'s got the tent?" moments.',
-    hint:'▶ Watch the crew load in…',
+    id:'trip',
+    title:'Create Your First Trip 🗺️',
+    body:'Trips let you plan gear distribution across your whole crew. BaseCamp shows everyone\'s pack weight and who\'s carrying what — no more "who has the tent?" moments.',
+    hint:'👆 Click "Create Trip" to plan your adventure',
     targetId:'demo-trip-panel',
     arrow:'top',
     autoPlay: true,
@@ -5086,14 +5071,14 @@ const DEMO_STEPS = [
       demoRunTripCinematic(resolve);
     }),
   },
-  // ── STEP 6: Crew page ──
+  // ── STEP 4: Done ──
   {
-    id:'crew',
-    title:'Your Crew & Followers',
-    body:'Alex has 3 crew members and 3 followers. Crew members can share gear lists and plan trips together. Public profiles let hikers discover each other.',
-    hint:'👆 Click Next to finish the tour',
-    targetId:'demo-crew-panel',
-    arrow:'top',
+    id:'done',
+    title:'You\'re Ready to Pack! 🎒',
+    body:'That\'s the core of BaseCamp — add gear, plan food, organize trips. Sign up to save your kit and sync across devices.',
+    hint:'👆 Click "Start Building My Kit" to get started',
+    targetId:'demo-header-strip',
+    arrow:'bottom',
     skipOnly: true,
   },
 ];
@@ -5237,7 +5222,6 @@ function _ensureDemoOverlay(){
     </div>`;
   document.body.appendChild(ov);
   document.getElementById('demo-skip-btn').onclick = demoSkip;
-  // Reposition tooltip on window resize
   window.addEventListener('resize', ()=>{
     const step=DEMO_STEPS[demoStepIdx];
     if(step && document.getElementById('demo-overlay')?.classList.contains('active')){
@@ -5644,7 +5628,7 @@ function demoShowAddItemModal(){
         <input placeholder="Weight in grams (e.g. 420)" type="number" style="width:100%;background:var(--cream);border:1.5px solid var(--lichen);border-radius:8px;padding:0.4rem 0.6rem;font-family:'Nunito',sans-serif;font-size:0.72rem;color:var(--bark);outline:none;box-sizing:border-box;">
       </div>
       <div style="display:flex;gap:0.5rem;">
-        <button onclick="document.getElementById('demo-add-modal').remove();demoRunStep(demoStepIdx+1);" style="flex:1;background:var(--forest);color:var(--cream);border:none;border-radius:100px;padding:0.4rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.68rem;cursor:pointer;">✓ Add Item</button>
+        <button onclick="document.getElementById('demo-add-modal').remove();demoSkip();" style="flex:1;background:var(--forest);color:var(--cream);border:none;border-radius:100px;padding:0.4rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.68rem;cursor:pointer;">✓ Add Item</button>
         <button onclick="document.getElementById('demo-add-modal').remove();" style="background:transparent;border:1.5px solid var(--lichen);border-radius:100px;padding:0.4rem 0.75rem;font-family:'Nunito',sans-serif;font-size:0.68rem;cursor:pointer;color:var(--stone);">Cancel</button>
       </div>
     </div>`;
@@ -5695,8 +5679,7 @@ function demoPositionTooltip(targetId, arrow){
   if(!tt) return;
   const el=document.getElementById(targetId);
   tt.className='arrow-'+(arrow||'bottom');
-  // Measure actual tooltip size (it may not have content yet, use fallback)
-  const TW=tt.offsetWidth||300;
+  const TW=tt.offsetWidth||290;
   const TH=tt.offsetHeight||240;
   const pad=16;
   const VW=window.innerWidth;
@@ -5704,11 +5687,10 @@ function demoPositionTooltip(targetId, arrow){
   if(!el){ tt.style.left=Math.round((VW-TW)/2)+'px'; tt.style.top=Math.round((VH-TH)/2)+'px'; return; }
   const r=el.getBoundingClientRect();
   let left,top;
-  if(arrow==='right')      { left=r.left-TW-pad;       top=r.top; }
-  else if(arrow==='left')  { left=r.right+pad;          top=r.top; }
-  else if(arrow==='bottom'){ left=r.left;               top=r.bottom+pad; }
-  else                     { left=r.left;               top=r.top-TH-pad; }
-  // Clamp so tooltip stays fully on screen
+  if(arrow==='right')      { left=r.left-TW-pad;  top=r.top; }
+  else if(arrow==='left')  { left=r.right+pad;     top=r.top; }
+  else if(arrow==='bottom'){ left=r.left;           top=r.bottom+pad; }
+  else                     { left=r.left;           top=r.top-TH-pad; }
   left=Math.max(pad, Math.min(left, VW-TW-pad));
   top =Math.max(pad, Math.min(top,  VH-TH-pad));
   tt.style.left=Math.round(left)+'px';
@@ -5742,7 +5724,7 @@ async function demoRunStep(idx){
   document.getElementById('demo-tt-body').textContent=step.body;
   document.getElementById('demo-tt-hint').textContent=step.hint;
   const skipBtn=document.getElementById('demo-skip-btn');
-  skipBtn.textContent=step.autoPlay?'Auto-playing…':(idx>=DEMO_STEPS.length-1?'Finish ✓':'Next →');
+  skipBtn.textContent=step.autoPlay?'Auto-playing…':(idx>=DEMO_STEPS.length-1?'Finish ✓':'Skip →');
   skipBtn.disabled=!!step.autoPlay;
   skipBtn.style.opacity=step.autoPlay?'0.45':'1';
   demoUpdateDots();
@@ -5769,7 +5751,7 @@ async function demoRunStep(idx){
 
   const el=document.getElementById(step.targetId);
   if(el){ el.classList.add('demo-complete-flash'); setTimeout(()=>el.classList.remove('demo-complete-flash'),500); }
-  if(!step.autoPlay) setTimeout(()=>{ if(demoGeneration===myGen) demoRunStep(idx+1); }, step.skipOnly?0:500);
+  if(!step.autoPlay) setTimeout(()=>{ if(demoGeneration===myGen) demoRunStep(idx+1); }, step.skipOnly?0:600);
   else setTimeout(()=>{ if(demoGeneration===myGen) demoRunStep(idx+1); }, 500);
 }
 
@@ -5811,7 +5793,6 @@ function demoExitToKit(){
   demoClearSpotlight();
   const overlay=document.getElementById('demo-overlay');
   if(overlay){ overlay.style.display='none'; overlay.classList.remove('active'); }
-  // Navigate to kit tab
   const kitTab=document.querySelector('.nav-tab[onclick*="\'kit\'"]');
   if(kitTab){ kitTab.click(); }
   try{ localStorage.setItem('bc_demo_seen','1'); }catch(e){}
@@ -5822,7 +5803,7 @@ function startDemo(){
   demoStepIdx=0;
   demoSeason='weekend';
   demoCatCollapsed={};
-  demoBenchedItems=new Set(DEMO_GEARWALL_BENCHED);
+  demoBenchedItems=new Set(DEMO_CATS.flatMap(c=>c.items.map(i=>i.id)));
   demoMeals=JSON.parse(JSON.stringify(DEMO_MEALS));
   demoDraggedFood=new Set();
   if(demoUnlisten){ demoUnlisten(); demoUnlisten=null; }
