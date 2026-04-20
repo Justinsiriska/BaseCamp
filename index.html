@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.93 — Gear Organizer</title>
+<title>BaseCamp v8.98 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -394,8 +394,9 @@ html.dark .pack-overflow-item{color:#c8e8b0;}
   border:1.5px solid var(--lichen);
 }
 html.dark .gw-add-modal{background:#0f1a0f;border-color:var(--dm-border);}
-.gw-add-modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;}
-.gw-add-modal-title{font-family:'Space Mono',monospace;font-size:0.55rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--stone);}
+.gw-add-modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;}
+.gw-add-modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--forest);letter-spacing:-0.01em;}
+html.dark .gw-add-modal-title{color:#a8d89a;}
 /* Sibling results panel — floats to the right of the add modal */
 .gw-add-results-panel{
   position:fixed;
@@ -407,6 +408,224 @@ html.dark .gw-add-modal{background:#0f1a0f;border-color:var(--dm-border);}
   box-shadow:0 8px 24px rgba(45,74,45,0.18);
 }
 html.dark .gw-add-results-panel{background:#0f1a0f;border-color:var(--dm-border);}
+
+/* ── Item type selector (compact label + dropdown trigger) ── */
+.gw-type-row{
+  display:flex;align-items:center;gap:0.5rem;
+  margin-bottom:0.5rem;padding:0.1rem 0.1rem;
+  position:relative;
+}
+.gw-type-row-lbl{
+  font-family:'Space Mono',monospace;font-size:0.48rem;
+  text-transform:uppercase;letter-spacing:1px;color:var(--stone);
+  flex-shrink:0;
+}
+.gw-type-trigger{
+  display:inline-flex;align-items:center;gap:0.35rem;
+  font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;
+  padding:0.3rem 0.7rem 0.3rem 0.55rem;
+  border-radius:16px;
+  background:var(--paper);
+  border:1.5px solid rgba(184,201,163,0.55);
+  color:var(--stone);
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.gw-type-trigger:hover{
+  background:rgba(184,201,163,0.2);
+  border-color:var(--moss);
+  color:var(--forest);
+}
+.gw-type-trigger.has-value{
+  background:rgba(74,103,65,0.12);
+  border-color:var(--moss);
+  color:var(--forest);
+}
+.gw-type-trigger-icon{font-size:0.8rem;line-height:1;opacity:0.8;}
+.gw-type-trigger.has-value .gw-type-trigger-icon{opacity:1;}
+.gw-type-trigger-caret{font-size:0.5rem;opacity:0.6;}
+html.dark .gw-type-trigger{
+  background:rgba(15,25,12,0.7);
+  border-color:var(--dm-border);
+  color:#7a9f6a;
+}
+html.dark .gw-type-trigger:hover{
+  background:rgba(30,50,25,0.8);
+  border-color:rgba(110,160,80,0.6);
+  color:#b8dea8;
+}
+html.dark .gw-type-trigger.has-value{
+  background:rgba(40,80,35,0.55);
+  border-color:rgba(110,160,80,0.7);
+  color:#c8eab8;
+}
+
+/* Dropdown menu */
+.gw-type-dropdown{
+  position:absolute;top:100%;left:0;margin-top:4px;
+  z-index:2100;
+  background:var(--paper);
+  border:1.5px solid var(--lichen);
+  border-radius:10px;
+  padding:0.35rem;
+  min-width:180px;
+  box-shadow:0 6px 20px rgba(45,74,45,0.18);
+  display:flex;flex-direction:column;gap:2px;
+}
+html.dark .gw-type-dropdown{
+  background:#0f1a0f;
+  border-color:var(--dm-border);
+  box-shadow:0 6px 20px rgba(0,0,0,0.5);
+}
+.gw-type-dropdown-item{
+  display:flex;align-items:center;gap:0.5rem;
+  padding:0.4rem 0.55rem;
+  border-radius:7px;border:none;background:transparent;
+  font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;
+  color:var(--bark);cursor:pointer;text-align:left;
+  transition:background 0.12s;
+}
+.gw-type-dropdown-item:hover{background:rgba(184,201,163,0.22);}
+.gw-type-dropdown-item.selected{
+  background:rgba(74,103,65,0.15);
+  color:var(--forest);
+}
+.gw-type-dropdown-item .gw-type-dropdown-icon{font-size:0.95rem;line-height:1;}
+.gw-type-dropdown-item .gw-type-dropdown-check{margin-left:auto;color:var(--moss);font-size:0.75rem;}
+html.dark .gw-type-dropdown-item{color:#c0d8a8;}
+html.dark .gw-type-dropdown-item:hover{background:rgba(30,50,25,0.7);}
+html.dark .gw-type-dropdown-item.selected{
+  background:rgba(50,95,40,0.5);
+  color:#c8eab8;
+}
+html.dark .gw-type-dropdown-item .gw-type-dropdown-check{color:#8adf78;}
+.gw-type-dropdown-divider{height:1px;background:rgba(184,201,163,0.35);margin:4px 2px;}
+html.dark .gw-type-dropdown-divider{background:var(--dm-border);}
+.gw-type-dropdown-clear{
+  font-family:'Space Mono',monospace;font-size:0.48rem;
+  text-transform:uppercase;letter-spacing:0.8px;
+  color:var(--stone);
+}
+.gw-type-dropdown-clear:hover{color:var(--ember);}
+
+/* Item type chip shown inline on items (gear wall & pack rows) */
+.item-type-chip{
+  display:inline-flex;align-items:center;gap:3px;
+  font-family:'Space Mono',monospace;font-size:0.5rem;font-weight:700;
+  padding:1px 7px;border-radius:10px;
+  background:rgba(122,167,188,0.18);
+  color:var(--water);
+  border:1px solid rgba(122,167,188,0.35);
+  white-space:nowrap;flex-shrink:0;
+  text-transform:lowercase;letter-spacing:0.3px;
+}
+html.dark .item-type-chip{
+  background:rgba(74,143,168,0.2);
+  color:#7fbad0;
+  border-color:rgba(74,143,168,0.4);
+}
+
+/* ── Selected product card in add modal (replaces the name input once linked) ── */
+.gw-selected-product{
+  display:flex;align-items:center;gap:0.55rem;
+  padding:0.5rem 0.6rem;margin-bottom:0.5rem;
+  background:linear-gradient(135deg, rgba(122,158,110,0.15), rgba(184,201,163,0.2));
+  border:1.5px solid var(--sage);
+  border-radius:12px;
+  position:relative;
+}
+html.dark .gw-selected-product{
+  background:linear-gradient(135deg, rgba(60,110,50,0.35), rgba(40,80,35,0.4));
+  border-color:rgba(110,160,80,0.6);
+}
+.gw-selected-product-img{
+  width:42px;height:42px;border-radius:8px;
+  background:var(--cream);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+  font-size:1.2rem;
+  border:1px solid rgba(184,201,163,0.4);
+}
+html.dark .gw-selected-product-img{
+  background:rgba(8,14,8,0.8);
+  border-color:var(--dm-border);
+}
+.gw-selected-product-img img{width:100%;height:100%;object-fit:cover;}
+.gw-selected-product-info{flex:1;min-width:0;}
+.gw-selected-product-name{
+  font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:800;
+  color:var(--forest);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:0.3rem;
+}
+html.dark .gw-selected-product-name{color:#b8e6a8;}
+.gw-selected-product-meta{
+  font-family:'Space Mono',monospace;font-size:0.46rem;
+  text-transform:uppercase;letter-spacing:0.8px;
+  color:var(--stone);margin-top:2px;
+}
+html.dark .gw-selected-product-meta{color:#7a9f6a;}
+.gw-selected-product-clear{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--stone);font-size:0.9rem;padding:4px 6px;
+  border-radius:6px;transition:all 0.15s;flex-shrink:0;
+}
+.gw-selected-product-clear:hover{
+  background:rgba(200,90,42,0.15);
+  color:var(--ember);
+}
+.gw-selected-verified-icon{
+  color:var(--moss);font-size:0.75rem;flex-shrink:0;
+}
+html.dark .gw-selected-verified-icon{color:#8adf78;}
+
+/* ── Persistent "Find exact product" row in main add modal ── */
+.gw-find-exact-persistent{
+  display:flex;align-items:center;gap:0.5rem;
+  padding:0.45rem 0.6rem;margin-bottom:0.6rem;
+  background:rgba(122,167,188,0.08);
+  border:1.5px dashed rgba(122,167,188,0.45);
+  border-radius:10px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-family:'Nunito',sans-serif;
+}
+.gw-find-exact-persistent:hover{
+  background:rgba(122,167,188,0.15);
+  border-color:var(--water);
+}
+html.dark .gw-find-exact-persistent{
+  background:rgba(40,70,85,0.25);
+  border-color:rgba(100,150,175,0.4);
+}
+html.dark .gw-find-exact-persistent:hover{
+  background:rgba(50,90,110,0.35);
+  border-color:rgba(130,180,200,0.6);
+}
+.gw-find-exact-persistent-icon{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid rgba(122,167,188,0.4);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;color:var(--water);font-size:0.9rem;font-weight:800;
+}
+html.dark .gw-find-exact-persistent-icon{
+  background:rgba(10,20,25,0.8);
+  border-color:rgba(100,150,175,0.5);
+  color:#7fbad0;
+}
+.gw-find-exact-persistent-text{flex:1;min-width:0;}
+.gw-find-exact-persistent-title{
+  font-size:0.68rem;font-weight:700;color:var(--water);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+html.dark .gw-find-exact-persistent-title{color:#8fc0d8;}
+.gw-find-exact-persistent-sub{
+  font-family:'Space Mono',monospace;font-size:0.42rem;
+  color:var(--stone);margin-top:1px;
+  text-transform:uppercase;letter-spacing:0.8px;
+}
+html.dark .gw-find-exact-persistent-sub{color:#7a9f7a;}
 
 /* ── Find exact product overlay ── */
 .find-exact-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;}
@@ -441,16 +660,41 @@ html.dark .find-exact-thankyou h3{color:#a8d890;}
 .gw-active-field-remove:hover{opacity:0.9;}
 /* Add field toggle row */
 .gw-add-field-toggle{
-  display:flex;align-items:center;gap:0.4rem;
-  font-family:'Space Mono',monospace;font-size:0.42rem;
-  text-transform:uppercase;letter-spacing:1px;color:var(--stone);
-  opacity:0.6;cursor:pointer;padding:0.3rem 0 0.15rem;
-  border:none;background:none;width:100%;text-align:left;
-  transition:opacity 0.15s;
+  display:inline-flex;align-items:center;gap:0.4rem;
+  font-family:'Space Mono',monospace;font-size:0.52rem;
+  text-transform:uppercase;letter-spacing:1px;color:var(--moss);
+  cursor:pointer;padding:0.35rem 0.7rem;
+  border:1.5px solid rgba(184,201,163,0.55);
+  background:rgba(184,201,163,0.13);
+  border-radius:20px;
+  width:auto;text-align:left;
+  margin:0.35rem 0 0.2rem;
+  font-weight:700;
+  transition:all 0.15s;
 }
-.gw-add-field-toggle:hover{opacity:1;}
-.gw-add-field-toggle::before{content:'＋';font-size:0.65rem;line-height:1;}
+.gw-add-field-toggle:hover{
+  background:rgba(184,201,163,0.25);
+  border-color:var(--moss);
+  color:var(--forest);
+}
+.gw-add-field-toggle::before{content:'＋';font-size:0.75rem;line-height:1;font-weight:800;}
+.gw-add-field-toggle.open{
+  background:rgba(184,201,163,0.3);
+  border-color:var(--moss);
+  color:var(--forest);
+}
 .gw-add-field-toggle.open::before{content:'－';}
+html.dark .gw-add-field-toggle{
+  background:rgba(40,70,35,0.35);
+  border-color:rgba(80,120,55,0.5);
+  color:#8ac878;
+}
+html.dark .gw-add-field-toggle:hover,
+html.dark .gw-add-field-toggle.open{
+  background:rgba(55,95,45,0.5);
+  border-color:rgba(110,160,80,0.7);
+  color:#b8dea8;
+}
 /* Chips panel - hidden until toggle opened */
 .gw-field-chips-panel{display:none;padding:0.3rem 0 0.2rem;}
 .gw-field-chips-panel.open{display:block;}
@@ -2633,7 +2877,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.93</div>
+      <div class="logo-sub">Gear Organizer · v8.98</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5141,6 +5385,126 @@ function tourRemoveSampleData(){
   tourSeedIds = { catIds:[], itemIds:[], fridgeIds:[], packIds:[] };
 }
 
+// ── One-time cleanup of legacy tour-seeded data (v8.95+) ──
+// Older versions of BaseCamp seeded sample gear/food during the tour and stored
+// it in the user's cloud payload. Since the new app no longer seeds, that data
+// is now orphaned ghost data. This runs once per browser (flag: bc_legacy_clean_v2)
+// and removes items by exact name match, plus any empty categories it created.
+function cleanupLegacyTourSeed(){
+  try{
+    if(localStorage.getItem('bc_legacy_clean_v2') === '1') return;
+  }catch(e){ return; }
+
+  // If nothing is loaded yet (brand new user, or waiting on cloud pull),
+  // skip without setting the flag so we can run again after data arrives.
+  const hasCatsData   = (typeof CATS !== 'undefined' && Array.isArray(CATS) && CATS.some(c=>c.items && c.items.length>0));
+  const hasExtraCats  = (typeof CATS !== 'undefined' && Array.isArray(CATS) && CATS.some(c=>{
+    const def = ['sleep','pack','cooking','clothes','uncategorised'].includes(c.id);
+    return !def;
+  }));
+  const hasFridgeData = (typeof FRIDGE !== 'undefined' && Array.isArray(FRIDGE) && FRIDGE.length > 0);
+  if(!hasCatsData && !hasExtraCats && !hasFridgeData) return;
+
+  // Known names seeded by older versions (stable identifiers — don't change)
+  const LEGACY_GEAR_NAMES = new Set([
+    'Big Agnes Copper Spur HV UL2',
+    'Therm-a-Rest NeoAir XLite',
+    'MSR PocketRocket 2',
+    'BeFree 1L Filter',
+    'Patagonia Houdini Jacket',
+    'Petzl Actik Core Headlamp',
+  ]);
+  const LEGACY_FRIDGE_NAMES = new Set([
+    'Instant Oatmeal',
+    'Clif Bar',
+    'Beef Jerky',
+    'Tortilla + Cheese',
+    'Mountain House Chili',
+  ]);
+  // Categories that older tours created (likely duplicates of user defaults)
+  const LEGACY_CAT_NAMES = new Set([
+    'Cook System',
+    'Clothing',
+    'Navigation & Safety',
+  ]);
+
+  let removed = 0;
+  let movedToUncat = 0;
+
+  try{
+    // 1. Strip items by name match + items with ids starting with 'i_tour_'
+    if(typeof CATS !== 'undefined' && Array.isArray(CATS)){
+      CATS.forEach(c=>{
+        if(!Array.isArray(c.items)) return;
+        const before = c.items.length;
+        c.items = c.items.filter(it=>{
+          const isSeededById   = typeof it.id === 'string' && it.id.startsWith('i_tour_');
+          const isSeededByName = LEGACY_GEAR_NAMES.has(it.name);
+          return !(isSeededById || isSeededByName);
+        });
+        removed += (before - c.items.length);
+      });
+
+      // 2. Remove legacy/tour-created duplicate categories.
+      //    Defaults (ids: sleep, pack, cooking, clothes, uncategorised) are
+      //    ALWAYS protected. For any other cat whose name or id marks it as
+      //    tour-seeded, we move its remaining user items into Uncategorised
+      //    before deleting the cat — so we never orphan real user data.
+      const DEFAULT_IDS = new Set(['sleep','pack','cooking','clothes','uncategorised']);
+      // Ensure Uncategorised exists (should always, but be safe)
+      let uncat = CATS.find(c => c.id === 'uncategorised');
+      if(!uncat){
+        uncat = {id:'uncategorised', name:'Uncategorised', icon:'📦', color:'#8b8b8b',
+                 pc:'pill-uncategorised', cc:'cc-uncategorised', hasExtra:false,
+                 extraLabel:'', items:[], packs:null, onGearWall:true};
+        CATS.push(uncat);
+      }
+      for(let i = CATS.length - 1; i >= 0; i--){
+        const c = CATS[i];
+        if(DEFAULT_IDS.has(c.id)) continue; // never touch defaults
+        const idIsTourCreated = typeof c.id === 'string' && c.id.startsWith('cat_tour_');
+        const nameIsLegacy    = LEGACY_CAT_NAMES.has(c.name);
+        if(idIsTourCreated || nameIsLegacy){
+          // Move any remaining user items to Uncategorised
+          if(Array.isArray(c.items) && c.items.length > 0){
+            c.items.forEach(it=>{
+              it.gwCatId = 'uncategorised';
+              uncat.items.push(it);
+              movedToUncat++;
+            });
+          }
+          CATS.splice(i, 1);
+        }
+      }
+    }
+
+    // 3. Strip fridge by name match + ids starting with 'fr_tour_'
+    if(typeof FRIDGE !== 'undefined' && Array.isArray(FRIDGE)){
+      for(let i = FRIDGE.length - 1; i >= 0; i--){
+        const f = FRIDGE[i];
+        const byId   = typeof f.id === 'string' && f.id.startsWith('fr_tour_');
+        const byName = LEGACY_FRIDGE_NAMES.has(f.name);
+        if(byId || byName) FRIDGE.splice(i, 1);
+      }
+    }
+  }catch(e){ console.warn('Legacy cleanup failed:', e); }
+
+  // Flag this cleanup as done so it never runs again on this browser
+  try{ localStorage.setItem('bc_legacy_clean_v2', '1'); }catch(e){}
+
+  if(removed > 0 || movedToUncat > 0){
+    console.log(`[BaseCamp] Legacy cleanup: removed ${removed} seeded items, moved ${movedToUncat} user items to Uncategorised`);
+    // Persist & re-render
+    try{ scheduleSave?.(); }catch(e){}
+    try{ saveState?.(); }catch(e){}
+    try{ renderAll?.(); }catch(e){}
+    try{ renderFridge?.(); }catch(e){}
+    // Push to cloud if signed in so the cleanup sticks across devices
+    try{ if(typeof _sbUser !== 'undefined' && _sbUser && typeof sbPushData === 'function') sbPushData(); }catch(e){}
+    try{ toast?.('🧹 Cleaned up old demo data from previous sessions'); }catch(e){}
+  }
+}
+
 // ── Helper: wait for a click on any element matching selector, with timeout fallback ──
 function tourWaitForClick(selector, opts){
   opts = opts || {};
@@ -5222,7 +5586,7 @@ const TOUR_STEPS = [
         try{ kitTab.click(); }catch(e){}
         await new Promise(r=>setTimeout(r, 300));
       }
-      tourSeedSampleData();
+      // No longer seeds sample data — tour runs against user's real kit
     },
   },
   {
@@ -5237,7 +5601,7 @@ const TOUR_STEPS = [
   {
     id: 'addgear',
     title: 'Add Gear to Your Wall 🪝',
-    body: 'The Gear Wall holds everything you own. Click "+ Add Item" to add a new piece of gear, or drag items into your pack on the left.',
+    body: 'The Gear Wall holds everything you own. Click "+ Add Item" to add your first piece of gear — then you can drag items into your pack on the left.',
     hint: '👆 Click "+ Add Item" (or Skip to continue)',
     target: () => document.querySelector('.gw-add-item-btn'),
     arrow: 'left',
@@ -5415,8 +5779,7 @@ function tourExit(){
   document.getElementById('tour-sample-banner')?.classList.remove('active');
   document.getElementById('demo-finish-banner')?.remove();
   try{ localStorage.setItem('bc_demo_seen','1'); }catch(e){}
-  // If user exits mid-tour, offer the same keep/fresh choice
-  if(tourSeeded) tourShowEndChoice(true);
+  // Silent exit — no end modal needed since nothing is seeded anymore
 }
 
 function tourFinish(){
@@ -5429,7 +5792,7 @@ function tourFinish(){
   tourShowEndChoice(false);
 }
 
-// ── End-of-tour choice modal (seed vs fresh) ──
+// ── End-of-tour confirmation modal (Close or Replay) ──
 function tourShowEndChoice(wasExited){
   let modal = document.getElementById('tour-end-modal');
   if(!modal){
@@ -5439,20 +5802,15 @@ function tourShowEndChoice(wasExited){
   }
   const title = wasExited ? 'Tour ended' : '🎉 Tour complete!';
   const body = wasExited
-    ? 'Before you go — we added a few sample gear & food items so the tour had content to show. Want to keep them, or start with an empty kit?'
-    : 'Nice work. We added a few sample gear & food items during the tour. Want to keep them as a starting point, or clear them out and build your own kit from scratch?';
+    ? 'You can relaunch the tour anytime from the Help menu.'
+    : 'Nice work. You can relaunch the tour anytime from the Help menu.';
 
   modal.innerHTML = `
     <div class="te-card">
       <div class="te-title">${title}</div>
       <div class="te-body">${body}</div>
-      <button class="te-btn te-btn-primary" onclick="tourEndChoice('keep')">
-        ✓ Keep sample data
-        <span class="te-btn-sub">Starts you with a basic pack &amp; fridge — edit or delete items anytime</span>
-      </button>
-      <button class="te-btn te-btn-secondary" onclick="tourEndChoice('fresh')">
-        🧹 Start fresh
-        <span class="te-btn-sub">Clear the sample items and build your kit from scratch</span>
+      <button class="te-btn te-btn-primary" onclick="tourEndChoice('close')">
+        ✓ Got it
       </button>
       <button class="te-btn te-btn-secondary" onclick="tourEndChoice('replay')" style="margin-top:0.75rem;">
         ↩ Replay tour
@@ -5463,21 +5821,12 @@ function tourShowEndChoice(wasExited){
 
 function tourEndChoice(choice){
   const modal = document.getElementById('tour-end-modal');
-  if(choice === 'keep'){
-    // Keep everything as-is; just hide UI
+  if(choice === 'close'){
     if(modal) modal.classList.remove('active');
     document.getElementById('tour-sample-banner')?.classList.remove('active');
-    tourSeeded = false; // so a future "Replay" seeds again cleanly without duplicating
-    if(typeof toast === 'function') try{ toast('✓ Sample kit saved — edit it to make it yours'); }catch(e){}
-  } else if(choice === 'fresh'){
-    tourRemoveSampleData();
-    if(modal) modal.classList.remove('active');
-    document.getElementById('tour-sample-banner')?.classList.remove('active');
-    if(typeof toast === 'function') try{ toast('🧹 Fresh start — your kit is empty and ready'); }catch(e){}
+    tourSeeded = false;
   } else if(choice === 'replay'){
     if(modal) modal.classList.remove('active');
-    // Remove current seed before re-seeding, so we don't pile up duplicates
-    tourRemoveSampleData();
     setTimeout(()=>startTour(), 200);
   }
 }
@@ -6486,6 +6835,7 @@ function renderCats(){
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
           <span class="pack-item-name">${escH(item.name)}${_renderOwnerVerifiedBadge(item,'pack-item-verified')}</span>
+          ${renderItemTypeChip(item)}
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${buyBtn}${extraTag}<span class="pack-item-name-pills">${renderItemFieldPills(item)}</span>
         </div>
@@ -6531,16 +6881,13 @@ function renderCats(){
               <span class="cat-meta">(${items.length})</span>
             </div>
             <div style="display:flex;align-items:center;gap:0.3rem">
-              <button onclick="event.stopPropagation();addItemFromPack('${cat.id}')"
-                style="background:none;border:1px solid rgba(184,201,163,0.4);border-radius:5px;padding:0px 5px;font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:400;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.5;transition:opacity 0.15s;"
-                onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='0.5'">+ Add</button>
               <div class="cat-pill ${cat.pc}" data-cid="${cat.id}">${dw(w)}</div>
               <button class="caret">▼</button>
             </div>
           </div>
           <div class="cat-body">
             ${items.length===0
-              ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or click ＋ Add</p>`
+              ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall to add</p>`
               :`<div class="pack-items-list">${rows}</div>`
             }
           </div>
@@ -6660,7 +7007,7 @@ function renderCats(){
     // Always show label if cat is visible, items list if any in season
     const ucHdr = document.createElement('div');
     ucHdr.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.55;padding:0.4rem 0.6rem 0.2rem;display:flex;align-items:center;justify-content:space-between;";
-    ucHdr.innerHTML = '<span>Uncategorised</span><button onclick="addItemFromPack(&apos;uncategorised&apos;)" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:Nunito,sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity=&apos;1&apos;" onmouseout="this.style.opacity=&apos;0.7&apos;">＋ Add</button>';
+    ucHdr.innerHTML = '<span>Uncategorised</span>';
     ucCard.appendChild(ucHdr);
     if(ucItems.length > 0){
       const rows = ucItems.map(item=>`<div class="pack-item-row" data-pack-cid="uncategorised" data-pack-iid="${item.id}">
@@ -6668,6 +7015,7 @@ function renderCats(){
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
           <span class="pack-item-name">${escH(item.name)}${_renderOwnerVerifiedBadge(item,'pack-item-verified')}</span>
+          ${renderItemTypeChip(item)}
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${renderItemFieldPills(item)}
         </div>
@@ -9054,6 +9402,7 @@ function renderGearWall(){
           <div class="gw-item-left">
             <div class="gw-item-dot" style="background:${cat.color};flex-shrink:0;"></div>
             <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
+            ${renderItemTypeChip(item)}
             ${extraTag}
           </div>
           <div class="gw-item-right">
@@ -9163,6 +9512,7 @@ function renderGearWall(){
         <div class="gw-item-left">
           <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
           <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
+          ${renderItemTypeChip(item)}
           ${ucExtraTag}
         </div>
         <div class="gw-item-right">
@@ -9245,6 +9595,81 @@ function gwPromptCategory(){
   if(defaultCat) openAddItemModal(defaultCat.id);
 }
 
+// ── Item types (tent, sleeping bag, etc.) ──
+// Used by the add-item modal and rendered as a chip wherever the item shows.
+const ITEM_TYPES = [
+  {id:'tent',         label:'Tent',         icon:'⛺'},
+  {id:'sleeping_bag', label:'Sleeping Bag', icon:'🛌'},
+  {id:'sleeping_pad', label:'Sleeping Pad', icon:'🟫'},
+  {id:'pack',         label:'Pack',         icon:'🎒'},
+  {id:'stove',        label:'Stove',        icon:'🔥'},
+];
+function getItemType(id){ return ITEM_TYPES.find(t=>t.id===id) || null; }
+function renderItemTypeChip(item){
+  if(!item || !item.itemType) return '';
+  const t = getItemType(item.itemType);
+  if(!t) return '';
+  return `<span class="item-type-chip" title="Item type: ${escH(t.label)}">${t.icon} ${escH(t.label)}</span>`;
+}
+function gamToggleTypeDropdown(iid, evt){
+  if(evt) evt.stopPropagation();
+  const row = document.getElementById(`gam-type-selector-${iid}`);
+  if(!row) return;
+  // If already open, close it
+  const existing = row.querySelector('.gw-type-dropdown');
+  if(existing){ existing.remove(); _gamTypeCloseHandler && document.removeEventListener('click', _gamTypeCloseHandler); _gamTypeCloseHandler=null; return; }
+  const currentType = row.dataset.selectedType || '';
+  const dd = document.createElement('div');
+  dd.className = 'gw-type-dropdown';
+  dd.innerHTML = ITEM_TYPES.map(t=>`
+    <button type="button" class="gw-type-dropdown-item${currentType===t.id?' selected':''}"
+      onclick="gamPickItemType('${iid}','${escH(t.id)}', event)">
+      <span class="gw-type-dropdown-icon">${t.icon}</span>
+      <span>${escH(t.label)}</span>
+      ${currentType===t.id ? '<span class="gw-type-dropdown-check">✓</span>' : ''}
+    </button>`).join('')
+    + (currentType ? `
+      <div class="gw-type-dropdown-divider"></div>
+      <button type="button" class="gw-type-dropdown-item gw-type-dropdown-clear"
+        onclick="gamPickItemType('${iid}','', event)">Clear selection</button>` : '');
+  row.appendChild(dd);
+  // Close when clicking outside
+  _gamTypeCloseHandler = (e)=>{
+    if(!row.contains(e.target)){
+      dd.remove();
+      document.removeEventListener('click', _gamTypeCloseHandler);
+      _gamTypeCloseHandler = null;
+    }
+  };
+  setTimeout(()=>document.addEventListener('click', _gamTypeCloseHandler), 0);
+}
+let _gamTypeCloseHandler = null;
+
+function gamPickItemType(iid, typeId, evt){
+  if(evt) evt.stopPropagation();
+  const row = document.getElementById(`gam-type-selector-${iid}`);
+  const trigger = document.getElementById(`gam-type-trigger-${iid}`);
+  if(!row || !trigger) return;
+  const iconEl = trigger.querySelector('.gw-type-trigger-icon');
+  const labelEl = trigger.querySelector('.gw-type-trigger-label');
+  if(typeId){
+    const t = getItemType(typeId);
+    if(!t) return;
+    row.dataset.selectedType = typeId;
+    if(iconEl)  iconEl.textContent  = t.icon;
+    if(labelEl) labelEl.textContent = t.label;
+    trigger.classList.add('has-value');
+  } else {
+    delete row.dataset.selectedType;
+    if(iconEl)  iconEl.textContent  = '＋';
+    if(labelEl) labelEl.textContent = 'Select type';
+    trigger.classList.remove('has-value');
+  }
+  // Close dropdown
+  row.querySelector('.gw-type-dropdown')?.remove();
+  if(_gamTypeCloseHandler){ document.removeEventListener('click', _gamTypeCloseHandler); _gamTypeCloseHandler = null; }
+}
+
 function gwInlineAdd(catId){
   openAddItemModal(catId);
 }
@@ -9269,25 +9694,44 @@ function openAddItemModal(catId){
   overlay.innerHTML = `
     <div class="gw-add-modal" id="gw-add-modal-${iid}" data-catid="${catId}" autocomplete="off">
       <div class="gw-add-modal-hd">
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-          <span class="gw-add-modal-title">ADD ITEM</span>
-          <button class="gw-cat-pick-btn" id="gam-catbtn-${iid}" 
-            onclick="gwModalPickCategory('${iid}')"
-            title="Change category"
-            style="display:flex;align-items:center;gap:4px;background:transparent;border:1px solid rgba(184,201,163,0.4);border-radius:20px;padding:2px 8px 2px 5px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);transition:all 0.12s;"
-            onmouseover="this.style.borderColor='var(--moss)';this.style.color='var(--forest)'"
-            onmouseout="this.style.borderColor='rgba(184,201,163,0.4)';this.style.color='var(--stone)'">
-            <span id="gam-catdot-${iid}" style="width:8px;height:8px;border-radius:50%;background:${escH(cat.color)};display:inline-block;flex-shrink:0;"></span>
-            <span id="gam-catname-${iid}">${escH(cat.name)}</span>
-            <span style="font-size:0.5rem;opacity:0.6;">▾</span>
-          </button>
-        </div>
+        <span class="gw-add-modal-title">Add Item</span>
         <button class="gw-cancel-btn" style="padding:2px 8px;" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕</button>
       </div>
-      <div class="gw-unified-name-wrap">
+      <div class="gw-unified-name-wrap" id="gam-name-wrap-${iid}">
         <input class="gw-field-inp gw-unified-name-inp" id="gam-name-${iid}" type="text"
           placeholder="Item name…" autocomplete="new-password"
           oninput="gearUnifiedSearch('${iid}',this.value)" autocomplete="off"/>
+      </div>
+
+      <!-- Persistent "Find exact product" row — visible even before typing -->
+      <div class="gw-find-exact-persistent" id="gam-find-exact-${iid}" onclick="openFindExactFlow('${iid}')">
+        <div class="gw-find-exact-persistent-icon">+</div>
+        <div class="gw-find-exact-persistent-text">
+          <div class="gw-find-exact-persistent-title">Want to find your exact product?</div>
+          <div class="gw-find-exact-persistent-sub">Help us add it to the database</div>
+        </div>
+      </div>
+
+      <!-- Category selector — sits just above Item Type for a clean stacked layout -->
+      <div class="gw-type-row">
+        <span class="gw-type-row-lbl">Category</span>
+        <button class="gw-cat-pick-btn gw-type-trigger has-value" id="gam-catbtn-${iid}"
+          onclick="gwModalPickCategory('${iid}')" title="Change category">
+          <span id="gam-catdot-${iid}" class="gw-type-trigger-icon" style="width:10px;height:10px;border-radius:50%;background:${escH(cat.color)};display:inline-block;flex-shrink:0;"></span>
+          <span id="gam-catname-${iid}" class="gw-type-trigger-label">${escH(cat.name)}</span>
+          <span class="gw-type-trigger-caret">▾</span>
+        </button>
+      </div>
+
+      <!-- Item type selector — compact label + trigger pill with dropdown -->
+      <div class="gw-type-row" id="gam-type-selector-${iid}">
+        <span class="gw-type-row-lbl">Item type <span style="opacity:0.5;text-transform:none;letter-spacing:0;">(optional)</span></span>
+        <button type="button" class="gw-type-trigger" id="gam-type-trigger-${iid}"
+          onclick="gamToggleTypeDropdown('${iid}', event)">
+          <span class="gw-type-trigger-icon">＋</span>
+          <span class="gw-type-trigger-label">Select type</span>
+          <span class="gw-type-trigger-caret">▾</span>
+        </button>
       </div>
 
       <div class="gw-field">
@@ -9423,11 +9867,16 @@ function saveAddItemModal(catId, iid, activePack){
     if(val) customFields[inp.dataset.fieldKey] = isNaN(val) ? val : Number(val);
   });
 
+  // Read item type (if selected)
+  const typeSel = document.getElementById(`gam-type-selector-${iid}`);
+  const selectedType = typeSel?.dataset?.selectedType || null;
+
   const newItem = {
     id: iid, name, w, extra, link:'',
     s: [activePack], gwCatId: catId,
     productId: linkedProductId||null,
     _localVerified: localVerified,
+    itemType: selectedType,
     fields: customFields
   };
   cat.items.push(newItem);
@@ -15465,11 +15914,18 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   if(!_sbUser) sbLoadPublicUsers().then(()=>renderPubUsers());
   renderTripsPage();
 
-  // First-time visitors get the guided tour; returning users land on My Kit
+  // ── One-time cleanup of legacy tour-seeded data (runs once per browser) ──
+  // Removes ghost gear/food from older versions that auto-seeded sample data.
+  cleanupLegacyTourSeed();
+
+  // Auto-launch tour if: (a) first-time visitor OR (b) kit is empty (no gear items at all)
   const hasSeenDemo = (()=>{ try{ return localStorage.getItem('bc_demo_seen'); }catch(e){ return true; } })();
   const kitTab = document.querySelector('.nav-tab[onclick*="kit"]');
   if(kitTab) showPage('kit', kitTab);
-  if(!hasSeenDemo){
+  const totalGearItems = (typeof CATS !== 'undefined' && Array.isArray(CATS))
+    ? CATS.reduce((s,c)=>s+((c.items&&c.items.length)||0), 0)
+    : 0;
+  if(!hasSeenDemo || totalGearItems === 0){
     // small delay so the page renders first, then tour kicks in on top of it
     setTimeout(()=>{ try{ startTour(); }catch(e){ console.warn('Tour start failed', e); } }, 400);
   }
@@ -15902,10 +16358,11 @@ function _fieldBaseUnit(fieldKey){
 
 // ── Custom item data fields ──
 const PRESET_FIELDS=[
-  {key:'rvalue',  label:'R-Value',     icon:'Ⓡ',  type:'number', unit:'',    unitOptions:null,               preset:true},
-  {key:'length',  label:'Length',      icon:'📏', type:'number', unit:'cm',  unitOptions:['cm','in','ft'],   preset:true},
-  {key:'volume',  label:'Volume',      icon:'⊔', type:'number', unit:'ml',  unitOptions:['ml','L','fl oz'], preset:true},
-  {key:'battery', label:'Battery Life',icon:'🔋', type:'number', unit:'hrs', unitOptions:null,               preset:true},
+  {key:'rvalue',  label:'R-Value',      icon:'Ⓡ',  type:'number', unit:'',    unitOptions:null,               preset:true},
+  {key:'temp',    label:'Temp Rating',  icon:'🌡️', type:'number', unit:'°C',  unitOptions:['°C','°F'],        preset:true},
+  {key:'length',  label:'Length',       icon:'📏', type:'number', unit:'cm',  unitOptions:['cm','in','ft'],   preset:true},
+  {key:'volume',  label:'Volume',       icon:'⊔', type:'number', unit:'ml',  unitOptions:['ml','L','fl oz'], preset:true},
+  {key:'battery', label:'Battery Life', icon:'🔋', type:'number', unit:'hrs', unitOptions:null,               preset:true},
 ];
 window.CUSTOM_FIELD_DEFS=[...PRESET_FIELDS];
 function getFieldDefs(){const defs=window.CUSTOM_FIELD_DEFS||[...PRESET_FIELDS];PRESET_FIELDS.forEach(p=>{if(!defs.find(d=>d.key===p.key))defs.unshift(p);});return defs;}
@@ -16501,23 +16958,41 @@ async function gearDrawerSelect(iid, productId){
       }, 80);
     }
 
-    // Show small verified banner inside modal
+    // Show pretty product card inside modal (replaces the name input)
     const modal = document.getElementById(`gw-add-modal-${iid}`);
     const existing = modal?.querySelector('.gw-modal-linked');
     if(existing) existing.remove();
     if(modal && p){
-      const banner = document.createElement('div');
-      banner.className = 'gw-modal-linked';
-      banner.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(74,103,65,0.1);border:1px solid rgba(74,103,65,0.3);border-radius:8px;padding:5px 8px;margin-bottom:6px;font-family:Space Mono,monospace;font-size:0.5rem;color:var(--forest);';
-      banner.innerHTML = `<span>✓</span><span>${escH(p.name)}</span><button style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--stone);" onclick="
-        this.closest('.gw-modal-linked').remove();
-        if(window._pendingLink) delete window._pendingLink['${iid}'];
-        if(window._pendingLocalVerified) delete window._pendingLocalVerified['${iid}'];
-        const nw=document.getElementById('gw-add-modal-${iid}')?.querySelector('.gw-unified-name-wrap');
-        if(nw){nw.style.display='';const inp=nw.querySelector('input');if(inp){inp.value='';inp.focus();}}
-      ">✕</button>`;
+      const card = document.createElement('div');
+      card.className = 'gw-modal-linked gw-selected-product';
+      const metaParts = [];
+      if(p.brand) metaParts.push(escH(p.brand));
+      if(p.weight_g) metaParts.push(p.weight_g + 'g');
+      if(p.price){
+        const priceStr = p.price.toString().startsWith('$') ? escH(p.price) : '$'+escH(p.price);
+        metaParts.push(priceStr);
+      }
+      const imgHTML = p.image_url
+        ? `<img src="${escH(p.image_url)}" alt="${escH(p.name)}" onerror="this.parentElement.textContent='🎒'">`
+        : '🎒';
+      const verifiedIcon = p.verified
+        ? `<span class="gw-selected-verified-icon" title="Verified product">✓</span>`
+        : '';
+      card.innerHTML = `
+        <div class="gw-selected-product-img">${imgHTML}</div>
+        <div class="gw-selected-product-info">
+          <div class="gw-selected-product-name">${escH(p.name)}${verifiedIcon}</div>
+          ${metaParts.length ? `<div class="gw-selected-product-meta">${metaParts.join(' · ')}</div>` : ''}
+        </div>
+        <button class="gw-selected-product-clear" title="Clear selection" onclick="
+          this.closest('.gw-modal-linked').remove();
+          if(window._pendingLink) delete window._pendingLink['${iid}'];
+          if(window._pendingLocalVerified) delete window._pendingLocalVerified['${iid}'];
+          const nw=document.getElementById('gam-name-wrap-${iid}');
+          if(nw){nw.style.display='';const inp=nw.querySelector('input');if(inp){inp.value='';inp.focus();}}
+        ">✕</button>`;
       const nameWrap = modal.querySelector('.gw-unified-name-wrap');
-      nameWrap?.parentNode.insertBefore(banner, nameWrap);
+      nameWrap?.parentNode.insertBefore(card, nameWrap);
       nameWrap.style.display = 'none';
     }
     return;
@@ -18239,6 +18714,8 @@ async function authSignOut(){
   _publicUsers = [];
   // Clear all local data so the next user starts fresh
   localStorage.removeItem(SAVE_KEY);
+  // Also clear tour-seen flag so tour re-launches for a fresh login
+  try{ localStorage.removeItem('bc_demo_seen'); }catch(e){}
   _stateLoaded = false; // prevent renderAll from saving empty state
   // Reset in-memory state to blank
   CATS.forEach(c => { c.items = []; c.packs = null; });
@@ -18358,6 +18835,9 @@ async function sbPullData(){
   renderAll();
   renderTripsPage();
   toast('☁️ Data loaded from cloud');
+  // Run the legacy tour-seed cleanup now that cloud data is loaded
+  // (handles the case where user signs in fresh and we pull ghost data)
+  cleanupLegacyTourSeed();
   // Backfill weights for items linked to verified products but w=0
   setTimeout(sbBackfillLinkedWeights, 1500);
   // Load verified product IDs into cache for badge rendering, then re-render so badges appear
