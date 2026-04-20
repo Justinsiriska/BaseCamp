@@ -408,6 +408,175 @@ html.dark .gw-add-modal{background:#0f1a0f;border-color:var(--dm-border);}
 }
 html.dark .gw-add-results-panel{background:#0f1a0f;border-color:var(--dm-border);}
 
+/* ── Item type selector (tent, pack, stove, etc.) ── */
+.gw-type-selector{
+  display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.5rem;
+  padding:0.4rem 0.5rem;
+  background:rgba(184,201,163,0.08);
+  border:1.5px solid rgba(184,201,163,0.3);
+  border-radius:10px;
+}
+html.dark .gw-type-selector{
+  background:rgba(25,40,20,0.5);
+  border-color:rgba(55,85,40,0.4);
+}
+.gw-type-lbl{
+  font-family:'Space Mono',monospace;font-size:0.42rem;
+  text-transform:uppercase;letter-spacing:1px;color:var(--stone);
+  width:100%;margin-bottom:0.15rem;
+}
+.gw-type-chip{
+  display:inline-flex;align-items:center;gap:0.25rem;
+  font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:700;
+  padding:0.25rem 0.6rem;border-radius:14px;cursor:pointer;
+  background:var(--paper);
+  border:1.5px solid rgba(184,201,163,0.5);
+  color:var(--bark);
+  transition:all 0.15s;
+}
+.gw-type-chip:hover{
+  border-color:var(--moss);
+  background:rgba(184,201,163,0.2);
+}
+.gw-type-chip.active{
+  background:var(--moss);
+  color:var(--cream);
+  border-color:var(--moss);
+}
+html.dark .gw-type-chip{
+  background:rgba(15,25,12,0.7);
+  border-color:var(--dm-border);
+  color:#c0d8a8;
+}
+html.dark .gw-type-chip:hover{
+  background:rgba(30,50,25,0.8);
+  border-color:rgba(110,160,80,0.6);
+}
+html.dark .gw-type-chip.active{
+  background:rgba(60,110,50,0.85);
+  border-color:rgba(110,160,80,0.8);
+  color:#e4f5d4;
+}
+
+/* Item type chip shown inline on items (gear wall & pack rows) */
+.item-type-chip{
+  display:inline-flex;align-items:center;gap:3px;
+  font-family:'Space Mono',monospace;font-size:0.5rem;font-weight:700;
+  padding:1px 7px;border-radius:10px;
+  background:rgba(122,167,188,0.18);
+  color:var(--water);
+  border:1px solid rgba(122,167,188,0.35);
+  white-space:nowrap;flex-shrink:0;
+  text-transform:lowercase;letter-spacing:0.3px;
+}
+html.dark .item-type-chip{
+  background:rgba(74,143,168,0.2);
+  color:#7fbad0;
+  border-color:rgba(74,143,168,0.4);
+}
+
+/* ── Selected product card in add modal (replaces the name input once linked) ── */
+.gw-selected-product{
+  display:flex;align-items:center;gap:0.55rem;
+  padding:0.5rem 0.6rem;margin-bottom:0.5rem;
+  background:linear-gradient(135deg, rgba(122,158,110,0.15), rgba(184,201,163,0.2));
+  border:1.5px solid var(--sage);
+  border-radius:12px;
+  position:relative;
+}
+html.dark .gw-selected-product{
+  background:linear-gradient(135deg, rgba(60,110,50,0.35), rgba(40,80,35,0.4));
+  border-color:rgba(110,160,80,0.6);
+}
+.gw-selected-product-img{
+  width:42px;height:42px;border-radius:8px;
+  background:var(--cream);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+  font-size:1.2rem;
+  border:1px solid rgba(184,201,163,0.4);
+}
+html.dark .gw-selected-product-img{
+  background:rgba(8,14,8,0.8);
+  border-color:var(--dm-border);
+}
+.gw-selected-product-img img{width:100%;height:100%;object-fit:cover;}
+.gw-selected-product-info{flex:1;min-width:0;}
+.gw-selected-product-name{
+  font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:800;
+  color:var(--forest);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:0.3rem;
+}
+html.dark .gw-selected-product-name{color:#b8e6a8;}
+.gw-selected-product-meta{
+  font-family:'Space Mono',monospace;font-size:0.46rem;
+  text-transform:uppercase;letter-spacing:0.8px;
+  color:var(--stone);margin-top:2px;
+}
+html.dark .gw-selected-product-meta{color:#7a9f6a;}
+.gw-selected-product-clear{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--stone);font-size:0.9rem;padding:4px 6px;
+  border-radius:6px;transition:all 0.15s;flex-shrink:0;
+}
+.gw-selected-product-clear:hover{
+  background:rgba(200,90,42,0.15);
+  color:var(--ember);
+}
+.gw-selected-verified-icon{
+  color:var(--moss);font-size:0.75rem;flex-shrink:0;
+}
+html.dark .gw-selected-verified-icon{color:#8adf78;}
+
+/* ── Persistent "Find exact product" row in main add modal ── */
+.gw-find-exact-persistent{
+  display:flex;align-items:center;gap:0.5rem;
+  padding:0.45rem 0.6rem;margin-bottom:0.6rem;
+  background:rgba(122,167,188,0.08);
+  border:1.5px dashed rgba(122,167,188,0.45);
+  border-radius:10px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-family:'Nunito',sans-serif;
+}
+.gw-find-exact-persistent:hover{
+  background:rgba(122,167,188,0.15);
+  border-color:var(--water);
+}
+html.dark .gw-find-exact-persistent{
+  background:rgba(40,70,85,0.25);
+  border-color:rgba(100,150,175,0.4);
+}
+html.dark .gw-find-exact-persistent:hover{
+  background:rgba(50,90,110,0.35);
+  border-color:rgba(130,180,200,0.6);
+}
+.gw-find-exact-persistent-icon{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid rgba(122,167,188,0.4);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;color:var(--water);font-size:0.9rem;font-weight:800;
+}
+html.dark .gw-find-exact-persistent-icon{
+  background:rgba(10,20,25,0.8);
+  border-color:rgba(100,150,175,0.5);
+  color:#7fbad0;
+}
+.gw-find-exact-persistent-text{flex:1;min-width:0;}
+.gw-find-exact-persistent-title{
+  font-size:0.68rem;font-weight:700;color:var(--water);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+html.dark .gw-find-exact-persistent-title{color:#8fc0d8;}
+.gw-find-exact-persistent-sub{
+  font-family:'Space Mono',monospace;font-size:0.42rem;
+  color:var(--stone);margin-top:1px;
+  text-transform:uppercase;letter-spacing:0.8px;
+}
+html.dark .gw-find-exact-persistent-sub{color:#7a9f7a;}
+
 /* ── Find exact product overlay ── */
 .find-exact-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;}
 .find-exact-modal{background:var(--paper);border-radius:16px;padding:1.4rem 1.6rem;width:min(480px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.18);position:relative;}
@@ -441,16 +610,41 @@ html.dark .find-exact-thankyou h3{color:#a8d890;}
 .gw-active-field-remove:hover{opacity:0.9;}
 /* Add field toggle row */
 .gw-add-field-toggle{
-  display:flex;align-items:center;gap:0.4rem;
-  font-family:'Space Mono',monospace;font-size:0.42rem;
-  text-transform:uppercase;letter-spacing:1px;color:var(--stone);
-  opacity:0.6;cursor:pointer;padding:0.3rem 0 0.15rem;
-  border:none;background:none;width:100%;text-align:left;
-  transition:opacity 0.15s;
+  display:inline-flex;align-items:center;gap:0.4rem;
+  font-family:'Space Mono',monospace;font-size:0.52rem;
+  text-transform:uppercase;letter-spacing:1px;color:var(--moss);
+  cursor:pointer;padding:0.35rem 0.7rem;
+  border:1.5px solid rgba(184,201,163,0.55);
+  background:rgba(184,201,163,0.13);
+  border-radius:20px;
+  width:auto;text-align:left;
+  margin:0.35rem 0 0.2rem;
+  font-weight:700;
+  transition:all 0.15s;
 }
-.gw-add-field-toggle:hover{opacity:1;}
-.gw-add-field-toggle::before{content:'＋';font-size:0.65rem;line-height:1;}
+.gw-add-field-toggle:hover{
+  background:rgba(184,201,163,0.25);
+  border-color:var(--moss);
+  color:var(--forest);
+}
+.gw-add-field-toggle::before{content:'＋';font-size:0.75rem;line-height:1;font-weight:800;}
+.gw-add-field-toggle.open{
+  background:rgba(184,201,163,0.3);
+  border-color:var(--moss);
+  color:var(--forest);
+}
 .gw-add-field-toggle.open::before{content:'－';}
+html.dark .gw-add-field-toggle{
+  background:rgba(40,70,35,0.35);
+  border-color:rgba(80,120,55,0.5);
+  color:#8ac878;
+}
+html.dark .gw-add-field-toggle:hover,
+html.dark .gw-add-field-toggle.open{
+  background:rgba(55,95,45,0.5);
+  border-color:rgba(110,160,80,0.7);
+  color:#b8dea8;
+}
 /* Chips panel - hidden until toggle opened */
 .gw-field-chips-panel{display:none;padding:0.3rem 0 0.2rem;}
 .gw-field-chips-panel.open{display:block;}
@@ -6486,6 +6680,7 @@ function renderCats(){
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:${cat.color}"></div>
           <span class="pack-item-name">${escH(item.name)}${_renderOwnerVerifiedBadge(item,'pack-item-verified')}</span>
+          ${renderItemTypeChip(item)}
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${buyBtn}${extraTag}<span class="pack-item-name-pills">${renderItemFieldPills(item)}</span>
         </div>
@@ -6531,16 +6726,13 @@ function renderCats(){
               <span class="cat-meta">(${items.length})</span>
             </div>
             <div style="display:flex;align-items:center;gap:0.3rem">
-              <button onclick="event.stopPropagation();addItemFromPack('${cat.id}')"
-                style="background:none;border:1px solid rgba(184,201,163,0.4);border-radius:5px;padding:0px 5px;font-family:'Space Mono',monospace;font-size:0.48rem;font-weight:400;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.5;transition:opacity 0.15s;"
-                onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='0.5'">+ Add</button>
               <div class="cat-pill ${cat.pc}" data-cid="${cat.id}">${dw(w)}</div>
               <button class="caret">▼</button>
             </div>
           </div>
           <div class="cat-body">
             ${items.length===0
-              ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall or click ＋ Add</p>`
+              ?`<p style="color:var(--stone);font-size:0.73rem;padding:0.4rem 0 0.2rem;opacity:0.6;">No items yet — drag from Gear Wall to add</p>`
               :`<div class="pack-items-list">${rows}</div>`
             }
           </div>
@@ -6660,7 +6852,7 @@ function renderCats(){
     // Always show label if cat is visible, items list if any in season
     const ucHdr = document.createElement('div');
     ucHdr.style.cssText = "font-family:'Space Mono',monospace;font-size:0.42rem;text-transform:uppercase;letter-spacing:1px;color:var(--stone);opacity:0.55;padding:0.4rem 0.6rem 0.2rem;display:flex;align-items:center;justify-content:space-between;";
-    ucHdr.innerHTML = '<span>Uncategorised</span><button onclick="addItemFromPack(&apos;uncategorised&apos;)" style="background:none;border:1px solid rgba(184,201,163,0.5);border-radius:6px;padding:1px 7px;font-family:Nunito,sans-serif;font-size:0.6rem;font-weight:700;color:var(--stone);cursor:pointer;line-height:1.6;opacity:0.7;" onmouseover="this.style.opacity=&apos;1&apos;" onmouseout="this.style.opacity=&apos;0.7&apos;">＋ Add</button>';
+    ucHdr.innerHTML = '<span>Uncategorised</span>';
     ucCard.appendChild(ucHdr);
     if(ucItems.length > 0){
       const rows = ucItems.map(item=>`<div class="pack-item-row" data-pack-cid="uncategorised" data-pack-iid="${item.id}">
@@ -6668,6 +6860,7 @@ function renderCats(){
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
           <span class="pack-item-name">${escH(item.name)}${_renderOwnerVerifiedBadge(item,'pack-item-verified')}</span>
+          ${renderItemTypeChip(item)}
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
           ${renderItemFieldPills(item)}
         </div>
@@ -9054,6 +9247,7 @@ function renderGearWall(){
           <div class="gw-item-left">
             <div class="gw-item-dot" style="background:${cat.color};flex-shrink:0;"></div>
             <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
+            ${renderItemTypeChip(item)}
             ${extraTag}
           </div>
           <div class="gw-item-right">
@@ -9163,6 +9357,7 @@ function renderGearWall(){
         <div class="gw-item-left">
           <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
           <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
+          ${renderItemTypeChip(item)}
           ${ucExtraTag}
         </div>
         <div class="gw-item-right">
@@ -9245,6 +9440,36 @@ function gwPromptCategory(){
   if(defaultCat) openAddItemModal(defaultCat.id);
 }
 
+// ── Item types (tent, sleeping bag, etc.) ──
+// Used by the add-item modal and rendered as a chip wherever the item shows.
+const ITEM_TYPES = [
+  {id:'tent',         label:'Tent',         icon:'⛺'},
+  {id:'sleeping_bag', label:'Sleeping Bag', icon:'🛌'},
+  {id:'sleeping_pad', label:'Sleeping Pad', icon:'🟫'},
+  {id:'pack',         label:'Pack',         icon:'🎒'},
+  {id:'stove',        label:'Stove',        icon:'🔥'},
+];
+function getItemType(id){ return ITEM_TYPES.find(t=>t.id===id) || null; }
+function renderItemTypeChip(item){
+  if(!item || !item.itemType) return '';
+  const t = getItemType(item.itemType);
+  if(!t) return '';
+  return `<span class="item-type-chip" title="Item type: ${escH(t.label)}">${t.icon} ${escH(t.label)}</span>`;
+}
+function gamSelectItemType(iid, typeId, btn){
+  const sel = document.getElementById(`gam-type-selector-${iid}`);
+  if(!sel) return;
+  // Toggle: clicking the already-active chip deselects it
+  const alreadyActive = btn.classList.contains('active');
+  sel.querySelectorAll('.gw-type-chip').forEach(c=>c.classList.remove('active'));
+  if(!alreadyActive){
+    btn.classList.add('active');
+    sel.dataset.selectedType = typeId;
+  } else {
+    delete sel.dataset.selectedType;
+  }
+}
+
 function gwInlineAdd(catId){
   openAddItemModal(catId);
 }
@@ -9284,10 +9509,29 @@ function openAddItemModal(catId){
         </div>
         <button class="gw-cancel-btn" style="padding:2px 8px;" onclick="document.getElementById('gw-add-modal-overlay').remove()">✕</button>
       </div>
-      <div class="gw-unified-name-wrap">
+      <div class="gw-unified-name-wrap" id="gam-name-wrap-${iid}">
         <input class="gw-field-inp gw-unified-name-inp" id="gam-name-${iid}" type="text"
           placeholder="Item name…" autocomplete="new-password"
           oninput="gearUnifiedSearch('${iid}',this.value)" autocomplete="off"/>
+      </div>
+
+      <!-- Persistent "Find exact product" row — visible even before typing -->
+      <div class="gw-find-exact-persistent" id="gam-find-exact-${iid}" onclick="openFindExactFlow('${iid}')">
+        <div class="gw-find-exact-persistent-icon">+</div>
+        <div class="gw-find-exact-persistent-text">
+          <div class="gw-find-exact-persistent-title">Want to find your exact product?</div>
+          <div class="gw-find-exact-persistent-sub">Help us add it to the database</div>
+        </div>
+      </div>
+
+      <!-- Item type selector (tent, sleeping bag, etc.) -->
+      <div class="gw-type-selector" id="gam-type-selector-${iid}">
+        <div class="gw-type-lbl">Item type <span style="opacity:0.5;text-transform:none;letter-spacing:0;">(optional)</span></div>
+        ${ITEM_TYPES.map(t=>`
+          <button type="button" class="gw-type-chip" data-type="${escH(t.id)}"
+            onclick="gamSelectItemType('${iid}','${escH(t.id)}',this)">
+            <span>${t.icon}</span><span>${escH(t.label)}</span>
+          </button>`).join('')}
       </div>
 
       <div class="gw-field">
@@ -9423,11 +9667,16 @@ function saveAddItemModal(catId, iid, activePack){
     if(val) customFields[inp.dataset.fieldKey] = isNaN(val) ? val : Number(val);
   });
 
+  // Read item type (if selected)
+  const typeSel = document.getElementById(`gam-type-selector-${iid}`);
+  const selectedType = typeSel?.dataset?.selectedType || null;
+
   const newItem = {
     id: iid, name, w, extra, link:'',
     s: [activePack], gwCatId: catId,
     productId: linkedProductId||null,
     _localVerified: localVerified,
+    itemType: selectedType,
     fields: customFields
   };
   cat.items.push(newItem);
@@ -16501,23 +16750,41 @@ async function gearDrawerSelect(iid, productId){
       }, 80);
     }
 
-    // Show small verified banner inside modal
+    // Show pretty product card inside modal (replaces the name input)
     const modal = document.getElementById(`gw-add-modal-${iid}`);
     const existing = modal?.querySelector('.gw-modal-linked');
     if(existing) existing.remove();
     if(modal && p){
-      const banner = document.createElement('div');
-      banner.className = 'gw-modal-linked';
-      banner.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(74,103,65,0.1);border:1px solid rgba(74,103,65,0.3);border-radius:8px;padding:5px 8px;margin-bottom:6px;font-family:Space Mono,monospace;font-size:0.5rem;color:var(--forest);';
-      banner.innerHTML = `<span>✓</span><span>${escH(p.name)}</span><button style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--stone);" onclick="
-        this.closest('.gw-modal-linked').remove();
-        if(window._pendingLink) delete window._pendingLink['${iid}'];
-        if(window._pendingLocalVerified) delete window._pendingLocalVerified['${iid}'];
-        const nw=document.getElementById('gw-add-modal-${iid}')?.querySelector('.gw-unified-name-wrap');
-        if(nw){nw.style.display='';const inp=nw.querySelector('input');if(inp){inp.value='';inp.focus();}}
-      ">✕</button>`;
+      const card = document.createElement('div');
+      card.className = 'gw-modal-linked gw-selected-product';
+      const metaParts = [];
+      if(p.brand) metaParts.push(escH(p.brand));
+      if(p.weight_g) metaParts.push(p.weight_g + 'g');
+      if(p.price){
+        const priceStr = p.price.toString().startsWith('$') ? escH(p.price) : '$'+escH(p.price);
+        metaParts.push(priceStr);
+      }
+      const imgHTML = p.image_url
+        ? `<img src="${escH(p.image_url)}" alt="${escH(p.name)}" onerror="this.parentElement.textContent='🎒'">`
+        : '🎒';
+      const verifiedIcon = p.verified
+        ? `<span class="gw-selected-verified-icon" title="Verified product">✓</span>`
+        : '';
+      card.innerHTML = `
+        <div class="gw-selected-product-img">${imgHTML}</div>
+        <div class="gw-selected-product-info">
+          <div class="gw-selected-product-name">${escH(p.name)}${verifiedIcon}</div>
+          ${metaParts.length ? `<div class="gw-selected-product-meta">${metaParts.join(' · ')}</div>` : ''}
+        </div>
+        <button class="gw-selected-product-clear" title="Clear selection" onclick="
+          this.closest('.gw-modal-linked').remove();
+          if(window._pendingLink) delete window._pendingLink['${iid}'];
+          if(window._pendingLocalVerified) delete window._pendingLocalVerified['${iid}'];
+          const nw=document.getElementById('gam-name-wrap-${iid}');
+          if(nw){nw.style.display='';const inp=nw.querySelector('input');if(inp){inp.value='';inp.focus();}}
+        ">✕</button>`;
       const nameWrap = modal.querySelector('.gw-unified-name-wrap');
-      nameWrap?.parentNode.insertBefore(banner, nameWrap);
+      nameWrap?.parentNode.insertBefore(card, nameWrap);
       nameWrap.style.display = 'none';
     }
     return;
