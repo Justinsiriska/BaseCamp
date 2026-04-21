@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v9.06 — Gear Organizer</title>
+<title>BaseCamp v9.07 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2883,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v9.06</div>
+      <div class="logo-sub">Gear Organizer · v9.07</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -10755,6 +10755,9 @@ function loadState(){
     });
     // For items that still have item.extra set but whose home cat doesn't use
     // extra anymore (or uses it for temp), move it into fields.temp.
+    // IMPORTANT: item.extra was ALREADY stored in base unit °C by the old
+    // saveDrawer (it did the conversion on write). item.extra_unit was just the
+    // display preference. So we copy straight across — no re-conversion.
     CATS.forEach(cat=>{
       cat.items.forEach(item=>{
         const hasLegacyTempExtra =
@@ -10765,11 +10768,10 @@ function loadState(){
           item.fields = item.fields || {};
           // If fields.temp already set, keep it; otherwise migrate from extra
           if(item.fields.temp === undefined || item.fields.temp === ''){
-            // Convert to °C base if stored in °F
             const raw = parseFloat(item.extra);
             if(!isNaN(raw)){
-              const baseVal = item.extra_unit === '°F' ? ((raw-32)*5/9) : raw;
-              item.fields.temp = Math.round(baseVal*10)/10;
+              // item.extra is ALREADY in °C base unit — just copy it.
+              item.fields.temp = Math.round(raw*10)/10;
               item.fields.temp_unit = item.extra_unit || '°C';
             }
           }
