@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v9.00 — Gear Organizer</title>
+<title>BaseCamp v9.01 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2883,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v9.00</div>
+      <div class="logo-sub">Gear Organizer · v9.01</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -8467,10 +8467,10 @@ function _getThermalRating(){
   if(!sleep) return {level:0, temp:null, tempF:null, confidence:'none'};
   const items = sItems(sleep);
 
-  // Find tagged items
-  const bags   = items.filter(i=>i.itemType==='bag');
-  const pads   = items.filter(i=>i.itemType==='pad');
-  const liners = items.filter(i=>i.itemType==='liner');
+  // Find tagged items (matches both legacy ids 'bag'/'pad'/'liner' and new 'sleeping_bag'/'sleeping_pad'/'liner')
+  const bags   = items.filter(i=>itemIsType(i,'sleeping_bag'));
+  const pads   = items.filter(i=>itemIsType(i,'sleeping_pad'));
+  const liners = items.filter(i=>itemIsType(i,'liner'));
 
   // Also try any sleep item with extra (temp rating) as fallback bag detection
   const anyTempItem = items.find(i=>i.extra&&i.extra.trim()!=='');
@@ -9618,20 +9618,39 @@ function gwPromptCategory(){
 }
 
 // ── Item types (tent, sleeping bag, etc.) ──
-// Used by the add-item modal and rendered as a chip wherever the item shows.
+// Used by the add-item modal, edit drawer, and rendered as a chip wherever the item shows.
+// IMPORTANT: any time you add/remove/rename types here, check the thermal filter
+// aliases below — older items in the cloud may still use the legacy ids bag/pad/liner.
 const ITEM_TYPES = [
   {id:'tent',         label:'Tent',         icon:'⛺'},
   {id:'sleeping_bag', label:'Sleeping Bag', icon:'🛌'},
   {id:'sleeping_pad', label:'Sleeping Pad', icon:'🟫'},
+  {id:'liner',        label:'Liner',        icon:'🧥'},
   {id:'pack',         label:'Pack',         icon:'🎒'},
   {id:'stove',        label:'Stove',        icon:'🔥'},
 ];
-function getItemType(id){ return ITEM_TYPES.find(t=>t.id===id) || null; }
+// Legacy→new id aliases (for items saved under the old drawer-only system)
+const ITEM_TYPE_ALIASES = {
+  bag: 'sleeping_bag',
+  pad: 'sleeping_pad',
+  // 'liner' already matches
+};
+// Resolve stored itemType to a canonical id (handles legacy values)
+function normalizeItemType(id){ return ITEM_TYPE_ALIASES[id] || id || null; }
+function getItemType(id){
+  const canonical = normalizeItemType(id);
+  return ITEM_TYPES.find(t=>t.id===canonical) || null;
+}
 function renderItemTypeChip(item){
   if(!item || !item.itemType) return '';
   const t = getItemType(item.itemType);
   if(!t) return '';
   return `<span class="item-type-chip" title="Item type: ${escH(t.label)}">${t.icon} ${escH(t.label)}</span>`;
+}
+// Returns true if an item is of (or aliases to) the given canonical type
+function itemIsType(item, typeId){
+  if(!item) return false;
+  return normalizeItemType(item.itemType) === typeId;
 }
 function gamToggleTypeDropdown(iid, evt){
   if(evt) evt.stopPropagation();
@@ -9690,6 +9709,105 @@ function gamPickItemType(iid, typeId, evt){
   // Close dropdown
   row.querySelector('.gw-type-dropdown')?.remove();
   if(_gamTypeCloseHandler){ document.removeEventListener('click', _gamTypeCloseHandler); _gamTypeCloseHandler = null; }
+}
+
+// ── Drawer variants: same dropdown UI, but persist directly to the item ──
+// (Add-modal handlers above only update an unsaved form. The drawer edits
+// an existing item, so its pick handler must mutate + save immediately.)
+let _drawerTypeCloseHandler = null;
+function drawerToggleTypeDropdown(iid, evt){
+  if(evt) evt.stopPropagation();
+  const row = document.getElementById(`drawer-type-selector-${iid}`);
+  if(!row) return;
+  const existing = row.querySelector('.gw-type-dropdown');
+  if(existing){
+    existing.remove();
+    if(_drawerTypeCloseHandler){ document.removeEventListener('click', _drawerTypeCloseHandler); _drawerTypeCloseHandler = null; }
+    return;
+  }
+  const currentType = normalizeItemType(row.dataset.selectedType || '');
+  const dd = document.createElement('div');
+  dd.className = 'gw-type-dropdown';
+  dd.innerHTML = ITEM_TYPES.map(t=>`
+    <button type="button" class="gw-type-dropdown-item${currentType===t.id?' selected':''}"
+      onclick="drawerPickItemType('${iid}','${escH(t.id)}', event)">
+      <span class="gw-type-dropdown-icon">${t.icon}</span>
+      <span>${escH(t.label)}</span>
+      ${currentType===t.id ? '<span class="gw-type-dropdown-check">✓</span>' : ''}
+    </button>`).join('')
+    + (currentType ? `
+      <div class="gw-type-dropdown-divider"></div>
+      <button type="button" class="gw-type-dropdown-item gw-type-dropdown-clear"
+        onclick="drawerPickItemType('${iid}','', event)">Clear selection</button>` : '');
+  row.appendChild(dd);
+  _drawerTypeCloseHandler = (e)=>{
+    if(!row.contains(e.target)){
+      dd.remove();
+      document.removeEventListener('click', _drawerTypeCloseHandler);
+      _drawerTypeCloseHandler = null;
+    }
+  };
+  setTimeout(()=>document.addEventListener('click', _drawerTypeCloseHandler), 0);
+}
+
+function drawerPickItemType(iid, typeId, evt){
+  if(evt) evt.stopPropagation();
+  const item = CATS.flatMap(c=>c.items).find(i=>i.id===iid);
+  if(!item) return;
+  const row = document.getElementById(`drawer-type-selector-${iid}`);
+  const trigger = document.getElementById(`drawer-type-trigger-${iid}`);
+  if(!row || !trigger) return;
+
+  // Persist to the item immediately (drawer is editing a live object)
+  item.itemType = typeId || null;
+
+  // Update the trigger's visible state
+  const iconEl  = trigger.querySelector('.gw-type-trigger-icon');
+  const labelEl = trigger.querySelector('.gw-type-trigger-label');
+  if(typeId){
+    const t = getItemType(typeId);
+    if(!t) return;
+    row.dataset.selectedType = typeId;
+    if(iconEl)  iconEl.textContent  = t.icon;
+    if(labelEl) labelEl.textContent = t.label;
+    trigger.classList.add('has-value');
+  } else {
+    delete row.dataset.selectedType;
+    if(iconEl)  iconEl.textContent  = '＋';
+    if(labelEl) labelEl.textContent = 'Select type';
+    trigger.classList.remove('has-value');
+  }
+
+  // Close dropdown
+  row.querySelector('.gw-type-dropdown')?.remove();
+  if(_drawerTypeCloseHandler){ document.removeEventListener('click', _drawerTypeCloseHandler); _drawerTypeCloseHandler = null; }
+
+  // Persist + refresh anything depending on item type (thermal rating, chips)
+  scheduleSave();
+  try{ renderThermal?.(); }catch(e){}
+
+  // Update the item-type chip shown inline on the gear-wall row (next to name)
+  // without nuking the open drawer via a full re-render.
+  try{
+    document.querySelectorAll(`[data-iid="${iid}"] .gw-item-name, [data-pack-iid="${iid}"] .pack-item-name`).forEach(nameEl=>{
+      // Remove existing type chip sibling if present
+      let sib = nameEl.nextElementSibling;
+      while(sib && sib.classList && (sib.classList.contains('gw-item-verified') || sib.classList.contains('pack-item-verified'))){
+        sib = sib.nextElementSibling;
+      }
+      if(sib && sib.classList && sib.classList.contains('item-type-chip')){ sib.remove(); }
+      // Insert fresh chip (or nothing if type cleared) right after the verified/link badge
+      const html = renderItemTypeChip(item);
+      if(html){
+        let anchor = nameEl;
+        const maybeBadge = nameEl.nextElementSibling;
+        if(maybeBadge && maybeBadge.classList && (maybeBadge.classList.contains('gw-item-verified') || maybeBadge.classList.contains('pack-item-verified'))){
+          anchor = maybeBadge;
+        }
+        anchor.insertAdjacentHTML('afterend', html);
+      }
+    });
+  }catch(e){}
 }
 
 function gwInlineAdd(catId){
@@ -17186,14 +17304,15 @@ function buildNewItemDrawer(item, cat, srcCatId){
         placeholder="e.g. ${cat.id==='pack'?'65L':'-7°C'}" autocomplete="off"/>
         ${cat.id==='sleep' ? _fieldUnitSel('extra-inp-'+item.id, {key:'temp',unitOptions:['°C','°F'],unit:'°C'}, item.extra_unit||'°C') : ''}    </div>` : ''}
     ${buildDrawerFieldsSection(item)}
-    ${cat.id==='sleep' ? `<div class="gw-field gw-itemtype-row">
-      <span class="gw-field-lbl">Item Type</span>
-      <div class="gw-itemtype-btns">
-        <button class="gw-itemtype-btn${item.itemType==='bag'?' active':''}" onclick="event.stopPropagation();_setItemType('${item.id}','bag',this)">🛌 Bag</button>
-        <button class="gw-itemtype-btn${item.itemType==='pad'?' active':''}" onclick="event.stopPropagation();_setItemType('${item.id}','pad',this)">🟦 Pad</button>
-        <button class="gw-itemtype-btn${item.itemType==='liner'?' active':''}" onclick="event.stopPropagation();_setItemType('${item.id}','liner',this)">🧥 Liner</button>
-      </div>
-    </div>` : ''}
+    <div class="gw-type-row" id="drawer-type-selector-${item.id}" data-selected-type="${escH(normalizeItemType(item.itemType)||'')}">
+      <span class="gw-type-row-lbl">Item type <span style="opacity:0.5;text-transform:none;letter-spacing:0;">(optional)</span></span>
+      <button type="button" class="gw-type-trigger${item.itemType?' has-value':''}" id="drawer-type-trigger-${item.id}"
+        onclick="drawerToggleTypeDropdown('${item.id}', event)">
+        <span class="gw-type-trigger-icon">${item.itemType && getItemType(item.itemType) ? getItemType(item.itemType).icon : '＋'}</span>
+        <span class="gw-type-trigger-label">${item.itemType && getItemType(item.itemType) ? escH(getItemType(item.itemType).label) : 'Select type'}</span>
+        <span class="gw-type-trigger-caret">▾</span>
+      </button>
+    </div>
     <hr class="gw-drawer-divider"/>
     <div class="gw-confirm-row">
       <button class="gw-confirm-btn" onclick="saveDrawer('${srcCatId}','${item.id}',this)">✓ Save</button>
