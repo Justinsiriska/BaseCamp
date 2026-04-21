@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v9.01 — Gear Organizer</title>
+<title>BaseCamp v9.02 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2883,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v9.01</div>
+      <div class="logo-sub">Gear Organizer · v9.02</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -16510,10 +16510,13 @@ function mergeFieldDefs(saved){const merged=[...PRESET_FIELDS];(saved||[]).forEa
 function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>d.key===def.key)){defs.push(def);window.CUSTOM_FIELD_DEFS=defs;scheduleSave();}}
 function renderItemFieldPills(item){
   let pills = '';
-  // Render item.extra as a temp chip for ANY item that has it set with a numeric value.
-  // (Previously restricted to sleep category, which broke when items were moved
-  // to Uncategorised or when non-sleep items had legacy temp data.)
-  if(item.extra && String(item.extra).trim() !== '' && /^-?[0-9]/.test(String(item.extra).trim())){
+  // Render item.extra as a temp chip ONLY if the item's category uses "extra" for
+  // temperature (e.g., Sleep System: extraLabel='Temp Rating'). Other categories
+  // use item.extra for different things (Pack uses it for Volume in L), so
+  // rendering a 🌡️ pill there would mislabel the value.
+  const _itemCat = CATS.find(cat => Array.isArray(cat.items) && cat.items.some(i=>i===item));
+  const _extraIsTemp = _itemCat && typeof _itemCat.extraLabel === 'string' && /temp/i.test(_itemCat.extraLabel);
+  if(_extraIsTemp && item.extra && String(item.extra).trim() !== '' && /^-?[0-9]/.test(String(item.extra).trim())){
     const unit = item.extra_unit || '°C';
     pills += `<span class="item-field-pill" title="Temp Rating: ${escH(String(item.extra))}${escH(unit)}"><span class="item-field-pill-icon">🌡️</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
   }
