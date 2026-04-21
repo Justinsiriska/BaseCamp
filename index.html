@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v8.98 — Gear Organizer</title>
+<title>BaseCamp v9.00 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -281,6 +281,12 @@ html.dark .gw-unified-name-wrap .gw-product-results{background:#0f1a0f;border-co
 /* ── Verified product badge ── */
 .gw-verified-badge{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.45rem;font-weight:700;margin-left:4px;flex-shrink:0;vertical-align:middle;cursor:pointer;}
 .gw-item-verified{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:#4a8752;color:#fff;font-size:0.4rem;font-weight:700;margin-left:3px;flex-shrink:0;vertical-align:middle;cursor:pointer;line-height:1;}
+/* When the same inline slot is used for a user's product link (not verified) — drop the green circle */
+.gw-item-verified.gw-item-verified-link,
+.pack-item-verified.pack-item-verified-link{
+  width:auto;height:auto;border-radius:0;background:transparent!important;
+  color:inherit;font-size:0.78rem;padding:0;
+}
 .item-field-pill{
   display:inline-flex;align-items:center;gap:3px;
   font-family:'Space Mono',monospace;font-size:0.48rem;
@@ -2877,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v8.98</div>
+      <div class="logo-sub">Gear Organizer · v9.00</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -6702,12 +6708,19 @@ function renderMpGearWall(){
 // badge with a "pending review" tooltip. Approved items are clickable.
 // The `cssClass` argument lets each render site use its existing tree
 // of CSS (e.g. 'pack-item-verified', 'gw-item-verified').
+// Renders the small badge that appears right after the item name.
+// Priority: verified product ✓ > user-supplied link 🔗 > nothing.
+// The verified ✓ opens the product card; the 🔗 opens the user's URL.
 function _renderOwnerVerifiedBadge(item, cssClass){
   if(item.productId){
     return `<span class="${cssClass}" title="View product" onclick="event.stopPropagation();showProductCard('${item.productId}','${item.id}')" style="cursor:pointer">✓</span>`;
   }
   if(item.pendingProductId){
     return `<span class="${cssClass}" title="Pending review — only you can see this ✓ until an admin approves" style="opacity:0.55;cursor:default">✓</span>`;
+  }
+  const link = (item.link||'').trim();
+  if(link){
+    return `<span class="${cssClass} ${cssClass}-link" title="Open product link" onclick="event.stopPropagation();window.open('${escH(link)}','_blank')" style="cursor:pointer;background:transparent;color:inherit;font-size:0.78rem;">🔗</span>`;
   }
   return '';
 }
@@ -7010,20 +7023,24 @@ function renderCats(){
     ucHdr.innerHTML = '<span>Uncategorised</span>';
     ucCard.appendChild(ucHdr);
     if(ucItems.length > 0){
-      const rows = ucItems.map(item=>`<div class="pack-item-row" data-pack-cid="uncategorised" data-pack-iid="${item.id}">
+      const rows = ucItems.map(item=>{
+        const extraTag = '';  // extra (temp rating) now rendered via renderItemFieldPills
+        const buyBtn = '';    // cart removed — verified badge on item name handles product card
+        return `<div class="pack-item-row" data-pack-cid="uncategorised" data-pack-iid="${item.id}">
         <div class="pack-item-left">
           <span class="pack-item-drag-handle" title="Drag to move">⠿</span>
           <div class="g-dot" style="background:#8b8b8b"></div>
           <span class="pack-item-name">${escH(item.name)}${_renderOwnerVerifiedBadge(item,'pack-item-verified')}</span>
           ${renderItemTypeChip(item)}
           <button class="pack-item-edit-btn" title="Edit item" onclick="event.stopPropagation();openItemDrawer('${item.id}')">✏︎</button>
-          ${renderItemFieldPills(item)}
+          ${buyBtn}${extraTag}<span class="pack-item-name-pills">${renderItemFieldPills(item)}</span>
         </div>
         <div class="pack-item-right">
           <span class="item-weight-display" data-iid="${item.id}" onclick="startWeightEdit(this,'uncategorised','${item.id}')">${dw(item.w)}</span>
           <button class="del-btn" onclick="delItem('uncategorised','${item.id}')">✕</button>
         </div>
-      </div>`).join('');
+      </div>`;
+      }).join('');
       const rowsDiv = document.createElement('div');
       rowsDiv.className = 'pack-items-list';
       rowsDiv.innerHTML = rows;
@@ -7927,16 +7944,24 @@ function updLink(cid,iid,val){
   const cat=CATS.find(c=>c.id===cid);
   const item=cat.items.find(i=>i.id===iid);
   if(item) item.link=val;
-  // don't full re-render — just update the link indicator in the chip
   const wrap=document.querySelector(`.gw-item-wrap[data-iid="${iid}"]`);
-  if(wrap){
-    const ind=wrap.querySelector('.gw-link-indicator');
-    if(val.trim()&&!ind){
-      const right=wrap.querySelector('.gw-item-right');
-      const dot=right.querySelector('.gw-season-dots');
-      const badge=document.createElement('span');
-      badge.className='gw-link-indicator';badge.title='Has product link';badge.textContent='🔗';
-      right.insertBefore(badge,dot);
+  if(wrap && item){
+    // Re-render the inline badge that sits right after the item name.
+    // Only touches the badge if the item isn't already verified (✓ takes priority).
+    if(!item.productId && !item.pendingProductId){
+      const nameEl = wrap.querySelector('.gw-item-name');
+      if(nameEl){
+        // Remove existing badge sibling (if any)
+        const existingBadge = nameEl.nextElementSibling;
+        if(existingBadge && existingBadge.classList &&
+           (existingBadge.classList.contains('gw-item-verified') ||
+            existingBadge.classList.contains('pack-item-verified'))){
+          existingBadge.remove();
+        }
+        // Re-insert fresh badge (link or nothing)
+        const html = _renderOwnerVerifiedBadge(item,'gw-item-verified');
+        if(html){ nameEl.insertAdjacentHTML('afterend', html); }
+      }
     }
     // update open link in drawer
     const drawer=wrap.querySelector('.gw-drawer');
@@ -9408,7 +9433,6 @@ function renderGearWall(){
           <div class="gw-item-right">
             ${renderItemFieldPills(item)}
             <span class="gw-item-weight" ${item.wOverride!=null?'title="Custom weight — differs from product spec" style="text-decoration:underline dotted;cursor:help;"':''}>${dw(item.w)}${item.wOverride!=null?'<span style="font-size:0.55em;opacity:0.6;margin-left:2px;">✏</span>':''}</span>
-            ${(!item.productId && !item.pendingProductId && hasLink)?`<span class="gw-link-indicator" title="Has product link" style="font-size:0.7rem;cursor:pointer;" onclick="event.stopPropagation();window.open('${escH(item.link)}','_blank')">🔗</span>`:''}
             <button class="gw-item-edit-btn" title="Edit item"
               style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
             <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
@@ -9507,13 +9531,11 @@ function renderGearWall(){
       wrap.className='gw-item-wrap'; wrap.dataset.iid=item.id; wrap.dataset.cid=srcCatId;
       const chip = document.createElement('div');
       chip.className=`gw-item${inSeason?' in-season':''}`;
-      const ucExtraTag = item.extra ? `<span class="gw-item-extra">${escH(String(item.extra))}</span>` : '';
       chip.innerHTML=`<div class="gw-drag-handle">⠿</div>
         <div class="gw-item-left">
           <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
           <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
           ${renderItemTypeChip(item)}
-          ${ucExtraTag}
         </div>
         <div class="gw-item-right">
           ${renderItemFieldPills(item)}
@@ -16370,11 +16392,12 @@ function mergeFieldDefs(saved){const merged=[...PRESET_FIELDS];(saved||[]).forEa
 function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>d.key===def.key)){defs.push(def);window.CUSTOM_FIELD_DEFS=defs;scheduleSave();}}
 function renderItemFieldPills(item){
   let pills = '';
-  // Render item.extra as temp chip ONLY for sleep category items
-  const _itemCat = CATS.find(cat=>cat.items.some(i=>i===item));
-  if(_itemCat?.id==='sleep' && item.extra && item.extra.trim() !== '' && /^-?[0-9]/.test(item.extra.trim())){
+  // Render item.extra as a temp chip for ANY item that has it set with a numeric value.
+  // (Previously restricted to sleep category, which broke when items were moved
+  // to Uncategorised or when non-sleep items had legacy temp data.)
+  if(item.extra && String(item.extra).trim() !== '' && /^-?[0-9]/.test(String(item.extra).trim())){
     const unit = item.extra_unit || '°C';
-    pills += `<span class="item-field-pill" title="Temp Rating: ${escH(item.extra)}${escH(unit)}"><span class="item-field-pill-icon">🌡️</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
+    pills += `<span class="item-field-pill" title="Temp Rating: ${escH(String(item.extra))}${escH(unit)}"><span class="item-field-pill-icon">🌡️</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
   }
   if(!item.fields||!Object.keys(item.fields).length)return pills;
   const defs=getFieldDefs();
