@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v9.04 — Gear Organizer</title>
+<title>BaseCamp v9.05 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2883,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v9.04</div>
+      <div class="logo-sub">Gear Organizer · v9.05</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -5062,7 +5062,26 @@ function toGrams(val){
   if(U.v==='oz') return Math.round(n * 28.3495);
   return n;
 }
-function sItems(cat){return cat.items.filter(i=>i.s.includes(season));}
+// Items that display in this category, respecting the user's chosen display
+// category (item.gwCatId) with fallback to the item's physical home. Also
+// filters by current season. Returns the actual item references (not clones)
+// so edits go to the real data.
+function sItems(cat){
+  // Own items: physically stored here AND their display target is this cat
+  const own = cat.items.filter(i=>{
+    const displayCat = i.gwCatId || cat.id;
+    return displayCat === cat.id && i.s.includes(season);
+  });
+  // Foreign items: stored in other cats but user dropped them into THIS cat's display
+  const foreign = [];
+  CATS.forEach(c=>{
+    if(c === cat) return;
+    c.items.forEach(i=>{
+      if(i.gwCatId === cat.id && i.s.includes(season)) foreign.push(i);
+    });
+  });
+  return [...own, ...foreign];
+}
 function cw(cat){return sItems(cat).reduce((s,i)=>s+(parseFloat(i.w)||0),0);}
 function total(){return CATS.filter(c=>catInPack(c)).reduce((s,c)=>s+cw(c),0);}
 // Returns true if this category is enabled for the current pack config
@@ -7006,13 +7025,12 @@ function renderCats(){
       let data; try{ data=JSON.parse(e.dataTransfer.getData('pack-item-move')); }catch(_){ return; }
       const {iid, fromCatId} = data;
       const fromCat = CATS.find(c=>c.id===fromCatId);
-      const toCat = CATS.find(c=>c.id==='uncategorised');
-      if(!fromCat || !toCat) return;
+      if(!fromCat) return;
       const item = fromCat.items.find(i=>i.id===iid);
       if(!item) return;
-      fromCat.items = fromCat.items.filter(i=>i.id!==iid);
+      // Only change display category — item stays in its physical home so its
+      // category-specific data (like Sleep System's temp rating) keeps meaning.
       item.gwCatId = 'uncategorised';
-      toCat.items.push(item);
       scheduleSave(); renderAll();
       toast('✅ Moved to Uncategorised');
     });
