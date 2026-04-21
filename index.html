@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v9.03 — Gear Organizer</title>
+<title>BaseCamp v9.04 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2883,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v9.03</div>
+      <div class="logo-sub">Gear Organizer · v9.04</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -9319,6 +9319,95 @@ function showCmp(){}function resetCmp(){}function attachDrag(){}function mkMktHt
 // ============================================================
 // GEAR WALL
 // ============================================================
+
+// Build a single gear-wall item's DOM: wrap > (chip + drawer). Returns the wrap
+// element. Used by BOTH the normal category render and the Uncategorised render
+// so their behavior stays identical. If you add a feature to an item here, it
+// automatically appears in both contexts.
+//
+// `cat`       — the category whose color/extra-label drives display (for
+//               Uncategorised-displayed items, pass the uncategorised cat object)
+// `srcCatId`  — the item's source/home category id (for event handlers that need
+//               to edit the item's real data)
+function _buildGwItemWrap(item, cat, srcCatId){
+  const inSeason = item.s.includes(season);
+  const wrap = document.createElement('div');
+  wrap.className = 'gw-item-wrap';
+  wrap.dataset.iid = item.id;
+  wrap.dataset.cid = cat.id;
+
+  const extraTag = '';  // extra rendering now handled by renderItemFieldPills
+  const hasLink  = item.link && item.link.trim();
+
+  // CHIP
+  const chip = document.createElement('div');
+  const isMpTryout = !!item._fromMarketplace;
+  chip.className = `gw-item${inSeason?' in-season':''}${isMpTryout?' mp-tryout':''}`;
+  chip.title = isMpTryout
+    ? `Marketplace try-out — drag ⊕ into your pack to test it`
+    : (inSeason ? `In your ${season} pack` : `Not in ${season} · click ⊕ to add`);
+  chip.innerHTML = `
+    <div class="gw-drag-handle" title="Drag to add/remove from pack">⠿</div>
+    <div class="gw-item-left">
+      <div class="gw-item-dot" style="background:${cat.color};flex-shrink:0;"></div>
+      <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
+      ${renderItemTypeChip(item)}
+      ${extraTag}
+    </div>
+    <div class="gw-item-right">
+      ${renderItemFieldPills(item)}
+      <span class="gw-item-weight" ${item.wOverride!=null?'title="Custom weight — differs from product spec" style="text-decoration:underline dotted;cursor:help;"':''}>${dw(item.w)}${item.wOverride!=null?'<span style="font-size:0.55em;opacity:0.6;margin-left:2px;">✏</span>':''}</span>
+      <button class="gw-item-edit-btn" title="Edit item"
+        style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
+      <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
+        onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">
+        ${inSeason?'⊖':'⊕'}
+      </button>
+    </div>`;
+
+  // DRAWER — full edit form
+  const drawer = document.createElement('div');
+  drawer.className = 'gw-drawer';
+  const _orig = {name:item.name, w:item.w, extra:item.extra||'', link:item.link||''};
+  drawer.innerHTML = `${buildNewItemDrawer(item, cat, srcCatId)}`;
+  drawer._orig = _orig;
+
+  // EVENT HANDLERS — edit button, double-click, drag
+  chip.addEventListener('mouseenter', ()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0.45'; });
+  chip.addEventListener('mouseleave', ()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0'; });
+  chip.querySelector('.gw-item-edit-btn')?.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(wrap.classList.contains('open')){ autoSaveDrawer(srcCatId, item.id); }
+    else { wrap.classList.add('open'); requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus()); }
+  });
+  chip.addEventListener('click', e=>{ if(e.target.closest('button')) return; });
+  chip.addEventListener('dblclick', e=>{
+    if(e.target.closest('button')) return;
+    if(wrap.classList.contains('open')){ autoSaveDrawer(srcCatId, item.id); }
+    else {
+      wrap.classList.add('open');
+      requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());
+    }
+  });
+  // HTML5 drag for moving items between GW categories
+  chip.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('gw-move', JSON.stringify({iid:item.id,fromCatId:srcCatId}));
+    e.dataTransfer.effectAllowed='move';
+    setTimeout(()=>chip.style.opacity='0.35',0);
+  });
+  chip.addEventListener('dragend', ()=>chip.style.opacity='');
+  // Pointer drag — start immediately on pointerdown for drag-to-pack
+  chip.addEventListener('pointerdown', e=>{
+    if(e.button!==0) return;
+    if(e.target.closest('button')) return;
+    pdStart(e, item, srcCatId, chip);
+  });
+
+  wrap.appendChild(chip);
+  wrap.appendChild(drawer);
+  return wrap;
+}
+
 function renderGearWall(){
   const body=document.getElementById('gear-wall-body');
   if(!body) return;
@@ -9416,96 +9505,8 @@ function renderGearWall(){
       itemsDiv.appendChild(empty);
     } else {
       items.forEach(item=>{
-        const inSeason=item.s.includes(season);
         const srcCatId = item._srcCatId || cat.id;
-
-        // Outer wrap holds chip + drawer together
-        const wrap=document.createElement('div');
-        wrap.className='gw-item-wrap';
-        wrap.dataset.iid=item.id;
-        wrap.dataset.cid=cat.id;
-
-        // season indicator dots
-        const sdots=PACKS.slice(0,6).map(p=>`
-          <span class="gw-sdot${item.s.includes(p.id)?' on':''}" data-ss="${p.id}" title="${p.name}"></span>`).join('');
-
-        const extraTag='';  // extra (temp rating) now rendered via renderItemFieldPills
-        const hasLink=item.link&&item.link.trim();
-
-        // CHIP — drag handle on left, click anywhere else to expand drawer
-        const chip=document.createElement('div');
-        const isMpTryout = !!item._fromMarketplace;
-        chip.className=`gw-item${inSeason?' in-season':''}${isMpTryout?' mp-tryout':''}`;
-        chip.title=isMpTryout?`Marketplace try-out — drag ⊕ into your pack to test it`:(inSeason?`In your ${season} pack`:`Not in ${season} · click ⊕ to add`);
-        chip.innerHTML=`
-          <div class="gw-drag-handle" title="Drag to add/remove from pack">⠿</div>
-          <div class="gw-item-left">
-            <div class="gw-item-dot" style="background:${cat.color};flex-shrink:0;"></div>
-            <span class="gw-item-name" title="${escH(item.name)}">${item.name ? escH(item.name) : '<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
-            ${renderItemTypeChip(item)}
-            ${extraTag}
-          </div>
-          <div class="gw-item-right">
-            ${renderItemFieldPills(item)}
-            <span class="gw-item-weight" ${item.wOverride!=null?'title="Custom weight — differs from product spec" style="text-decoration:underline dotted;cursor:help;"':''}>${dw(item.w)}${item.wOverride!=null?'<span style="font-size:0.55em;opacity:0.6;margin-left:2px;">✏</span>':''}</span>
-            <button class="gw-item-edit-btn" title="Edit item"
-              style="background:none;border:none;cursor:pointer;font-size:0.68rem;opacity:0;transition:opacity 0.15s;color:var(--stone);padding:1px 3px;line-height:1;">✏︎</button>
-            <button class="gw-toggle-btn" title="${inSeason?`Remove from ${season}`:`Add to ${season}`}"
-              onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">
-              ${inSeason?'⊖':'⊕'}
-            </button>
-          </div>`;
-
-        // Click-and-hold anywhere on chip → drag; quick click → expand drawer
-        // Drag between GW categories (HTML5 drag for cat-to-cat)
-        // Note: draggable=true is NOT set here — we use pointer drag (pdStart) for
-        // dragging to the pack, and _gwCatDrop for moving between GW categories.
-        // Drag: start immediately on pointerdown
-        let _pdDidDrag = false;
-        chip.addEventListener('pointerdown', e=>{
-          if(e.button!==0) return;
-          if(e.target.closest('button')) return;
-          console.log('[PD] chip pointerdown item='+item?.name+' srcCatId='+srcCatId);
-          _pdDidDrag = true;
-          pdStart(e, item, srcCatId, chip);
-        });
-        chip.addEventListener('mouseenter',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0.45'; });
-        chip.addEventListener('mouseleave',()=>{ const b=chip.querySelector('.gw-item-edit-btn'); if(b) b.style.opacity='0'; });
-        chip.querySelector('.gw-item-edit-btn')?.addEventListener('click', e=>{
-          e.stopPropagation();
-          if(wrap.classList.contains('open')){ autoSaveDrawer(srcCatId, item.id); }
-          else { wrap.classList.add('open'); requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus()); }
-        });
-        chip.addEventListener('click', e=>{ if(e.target.closest('button')) return; });
-        chip.addEventListener('dblclick', e=>{
-          if(e.target.closest('button')) return;
-          if(wrap.classList.contains('open')){
-            autoSaveDrawer(cat.id, item.id);
-          } else {
-            wrap.classList.add('open');
-            requestAnimationFrame(()=>drawer.querySelector('.gw-edit-name')?.focus());
-          }
-        });
-
-        // DRAWER — full edit form
-        const drawer=document.createElement('div');
-        drawer.className='gw-drawer';
-
-        // Determine the extra field label for this category
-        const extraLabel = cat.hasExtra ? cat.extraLabel : null;
-
-        // Snapshot original values for discard
-        const _orig = {name:item.name, w:item.w, extra:item.extra||'', link:item.link||''};
-
-        drawer.innerHTML=`
-          ${buildNewItemDrawer(item, cat, srcCatId)}
-        `;
-        // If item already linked to a product, load the banner async
-
-        // Store snapshot on the drawer element for discard
-        drawer._orig = _orig;
-        wrap.appendChild(chip);
-        wrap.appendChild(drawer);
+        const wrap = _buildGwItemWrap(item, cat, srcCatId);
         itemsDiv.appendChild(wrap);
       });
     }
@@ -9541,35 +9542,10 @@ function renderGearWall(){
 
     uncatGroup.items.forEach(item=>{
       const srcCatId = item._srcCatId || 'uncategorised';
-      const inSeason = item.s.includes(season);
-      const wrap = document.createElement('div');
-      wrap.className='gw-item-wrap'; wrap.dataset.iid=item.id; wrap.dataset.cid=srcCatId;
-      const chip = document.createElement('div');
-      chip.className=`gw-item${inSeason?' in-season':''}`;
-      chip.innerHTML=`<div class="gw-drag-handle">⠿</div>
-        <div class="gw-item-left">
-          <div class="gw-item-dot" style="background:${uncatGroup.cat.color}"></div>
-          <span class="gw-item-name">${item.name?escH(item.name):'<em style="opacity:0.4;font-style:italic">New item…</em>'}</span>${_renderOwnerVerifiedBadge(item,'gw-item-verified')}
-          ${renderItemTypeChip(item)}
-        </div>
-        <div class="gw-item-right">
-          ${renderItemFieldPills(item)}
-          <span class="gw-item-weight">${dw(item.w)}</span>
-          <button class="gw-toggle-btn" onclick="event.stopPropagation();toggleItemSeason('${srcCatId}','${item.id}')">${inSeason?'⊖':'⊕'}</button>
-        </div>`;
-      chip.addEventListener('dragstart', e=>{
-        e.dataTransfer.setData('gw-move', JSON.stringify({iid:item.id,fromCatId:srcCatId}));
-        e.dataTransfer.effectAllowed='move';
-        setTimeout(()=>chip.style.opacity='0.35',0);
-      });
-      chip.addEventListener('dragend', ()=>chip.style.opacity='');
-      // Pointer drag — start immediately on pointerdown
-      chip.addEventListener('pointerdown', e=>{
-        if(e.button!==0) return;
-        if(e.target.closest('button')) return;
-        pdStart(e, item, srcCatId, chip);
-      });
-      wrap.appendChild(chip); ucItems.appendChild(wrap);
+      // Use the SAME renderer as normal categories, so Uncategorised items
+      // get the edit button, the drawer, the temp chip — everything.
+      const wrap = _buildGwItemWrap(item, uncatGroup.cat, srcCatId);
+      ucItems.appendChild(wrap);
     });
     ucDiv.appendChild(ucItems);
     body.insertBefore(ucDiv, body.firstChild);
