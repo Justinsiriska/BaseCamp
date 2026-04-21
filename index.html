@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v9.02 — Gear Organizer</title>
+<title>BaseCamp v9.03 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2883,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v9.02</div>
+      <div class="logo-sub">Gear Organizer · v9.03</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -7767,16 +7767,26 @@ function autoSaveDrawer(cid, iid){
   item.w = getWeightInGrams(drawer?.querySelector('.gw-edit-w')) ?? toGrams(drawer?.querySelector('.gw-edit-w')?.value||0);
   const extraInp = drawer?.querySelector('.gw-edit-extra');
   if(extraInp){
-    // Convert extra (temp) to base unit before saving
-    const extraUnit = extraInp.dataset.fieldUnit || '°C';
     const rawExtra = extraInp.value.trim();
-    if(extraUnit === '°F' && rawExtra){
-      // Store in °C internally
-      item.extra = String(Math.round((_fieldConvert(rawExtra,'°F','°C','temp'))*10)/10);
+    // Only treat "extra" as a temperature value (with unit conversion) when the
+    // item's category actually uses extra for Temp Rating. For other categories
+    // (Pack uses extra for Volume in L), just store the raw text and leave
+    // extra_unit untouched so we don't falsely tag a volume as °C.
+    const _homeCat = CATS.find(c=>c.items.some(i=>i===item));
+    const _extraIsTempCat = _homeCat && typeof _homeCat.extraLabel === 'string' && /temp/i.test(_homeCat.extraLabel);
+    if(_extraIsTempCat){
+      const extraUnit = extraInp.dataset.fieldUnit || '°C';
+      if(extraUnit === '°F' && rawExtra){
+        item.extra = String(Math.round((_fieldConvert(rawExtra,'°F','°C','temp'))*10)/10);
+      } else {
+        item.extra = rawExtra;
+      }
+      item.extra_unit = extraUnit;
     } else {
       item.extra = rawExtra;
+      // Clear stale extra_unit if this isn't a temp category
+      if(item.extra_unit){ delete item.extra_unit; }
     }
-    item.extra_unit = extraUnit;
   }
   const linkInp = drawer?.querySelector('.gw-edit-link');
   if(linkInp) item.link = linkInp.value.trim();
@@ -7812,16 +7822,21 @@ function saveDrawer(cid, iid, btn){
   item.w = newW;
   const extraInp = drawer.querySelector('.gw-edit-extra');
   if(extraInp){
-    // Convert extra (temp) to base unit before saving
-    const extraUnit = extraInp.dataset.fieldUnit || '°C';
     const rawExtra = extraInp.value.trim();
-    if(extraUnit === '°F' && rawExtra){
-      // Store in °C internally
-      item.extra = String(Math.round((_fieldConvert(rawExtra,'°F','°C','temp'))*10)/10);
+    const _homeCat = CATS.find(c=>c.items.some(i=>i===item));
+    const _extraIsTempCat = _homeCat && typeof _homeCat.extraLabel === 'string' && /temp/i.test(_homeCat.extraLabel);
+    if(_extraIsTempCat){
+      const extraUnit = extraInp.dataset.fieldUnit || '°C';
+      if(extraUnit === '°F' && rawExtra){
+        item.extra = String(Math.round((_fieldConvert(rawExtra,'°F','°C','temp'))*10)/10);
+      } else {
+        item.extra = rawExtra;
+      }
+      item.extra_unit = extraUnit;
     } else {
       item.extra = rawExtra;
+      if(item.extra_unit){ delete item.extra_unit; }
     }
-    item.extra_unit = extraUnit;
   }
   const linkInp = drawer.querySelector('.gw-edit-link');
   if(linkInp) item.link = linkInp.value.trim();
@@ -16510,13 +16525,25 @@ function mergeFieldDefs(saved){const merged=[...PRESET_FIELDS];(saved||[]).forEa
 function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>d.key===def.key)){defs.push(def);window.CUSTOM_FIELD_DEFS=defs;scheduleSave();}}
 function renderItemFieldPills(item){
   let pills = '';
-  // Render item.extra as a temp chip ONLY if the item's category uses "extra" for
-  // temperature (e.g., Sleep System: extraLabel='Temp Rating'). Other categories
-  // use item.extra for different things (Pack uses it for Volume in L), so
-  // rendering a 🌡️ pill there would mislabel the value.
-  const _itemCat = CATS.find(cat => Array.isArray(cat.items) && cat.items.some(i=>i===item));
-  const _extraIsTemp = _itemCat && typeof _itemCat.extraLabel === 'string' && /temp/i.test(_itemCat.extraLabel);
-  if(_extraIsTemp && item.extra && String(item.extra).trim() !== '' && /^-?[0-9]/.test(String(item.extra).trim())){
+  // Render item.extra as a temp chip when:
+  //   (a) the item's home category uses "extra" for temperature (Sleep System), OR
+  //   (b) item.extra_unit is explicitly '°C' or '°F' — meaning the item was a
+  //       temp item at some point and kept its unit even if moved to Uncategorised.
+  // This protects Pack items (whose extra is a volume in L) from being mislabeled.
+  let _itemCat = null;
+  if(item._srcCatId){
+    _itemCat = CATS.find(cat => cat.id === item._srcCatId);
+  }
+  if(!_itemCat){
+    _itemCat = CATS.find(cat => Array.isArray(cat.items) && cat.items.some(i=>i===item));
+  }
+  if(!_itemCat && item.id){
+    _itemCat = CATS.find(cat => Array.isArray(cat.items) && cat.items.some(i=>i.id===item.id));
+  }
+  const _categoryExtraIsTemp = _itemCat && typeof _itemCat.extraLabel === 'string' && /temp/i.test(_itemCat.extraLabel);
+  const _itemExtraIsTemp     = item.extra_unit === '°C' || item.extra_unit === '°F';
+  const _showTempChip        = _categoryExtraIsTemp || _itemExtraIsTemp;
+  if(_showTempChip && item.extra && String(item.extra).trim() !== '' && /^-?[0-9]/.test(String(item.extra).trim())){
     const unit = item.extra_unit || '°C';
     pills += `<span class="item-field-pill" title="Temp Rating: ${escH(String(item.extra))}${escH(unit)}"><span class="item-field-pill-icon">🌡️</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
   }
