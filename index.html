@@ -1,7 +1,7 @@
 <html lang="en" class="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BaseCamp v9.05 — Gear Organizer</title>
+<title>BaseCamp v9.06 — Gear Organizer</title>
 <!-- Apply theme immediately to prevent flash -->
 <script>
 (function(){
@@ -2883,7 +2883,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
     <span style="font-size:1.35rem">⛰️</span>
     <div>
       <div class="logo-text">BaseCamp</div>
-      <div class="logo-sub">Gear Organizer · v9.05</div>
+      <div class="logo-sub">Gear Organizer · v9.06</div>
     </div>
   </div>
   <div class="nav-tabs">
@@ -4565,7 +4565,7 @@ html.dark .trip-stat-trail-name{color:#a8d89a;}
   </div>
 </div>
 
-<script id="tw-data">window.__TW_DATA__={"schema":7,"season":"winter","unit":"g","packs":[{"id":"winter","name":"Winter","icon":"❄️"},{"id":"shoulder","name":"Shoulder Season","icon":"🍂"},{"id":"summer","name":"Summer","icon":"☀️"}],"cats":[{"id":"sleep","name":"Sleep System","icon":"🌙","color":"#4a6741","hasExtra":true,"extraLabel":"Temp Rating","items":[],"packs":["winter","shoulder","summer"]},{"id":"pack","name":"Pack","icon":"🎒","color":"#8b7355","hasExtra":true,"extraLabel":"Volume (L)","items":[],"packs":["winter","shoulder","summer"]},{"id":"cooking","name":"Cooking & Water","icon":"🔥","color":"#c85a2a","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"clothes","name":"Clothes","icon":"🧥","color":"#7ba7bc","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"uncategorised","name":"Uncategorised","icon":"📦","color":"#8b8b8b","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]}],"foodSeason":"winter","foodItems":[],"foodCatsCustom":[],"fridgeCustom":[],"fridgeHistory":[],"trailLibrary":[],"trips":[],"deletedTrips":[],"activeTripId":null,"profile":{"name":"","bio":"","color":"#4a8fa8","photo":null}};</script>
+<script id="tw-data">window.__TW_DATA__={"schema":7,"season":"winter","unit":"g","packs":[{"id":"winter","name":"Winter","icon":"❄️"},{"id":"shoulder","name":"Shoulder Season","icon":"🍂"},{"id":"summer","name":"Summer","icon":"☀️"}],"cats":[{"id":"sleep","name":"Sleep System","icon":"🌙","color":"#4a6741","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"pack","name":"Pack","icon":"🎒","color":"#8b7355","hasExtra":true,"extraLabel":"Volume (L)","items":[],"packs":["winter","shoulder","summer"]},{"id":"cooking","name":"Cooking & Water","icon":"🔥","color":"#c85a2a","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"clothes","name":"Clothes","icon":"🧥","color":"#7ba7bc","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]},{"id":"uncategorised","name":"Uncategorised","icon":"📦","color":"#8b8b8b","hasExtra":false,"extraLabel":"","items":[],"packs":["winter","shoulder","summer"]}],"foodSeason":"winter","foodItems":[],"foodCatsCustom":[],"fridgeCustom":[],"fridgeHistory":[],"trailLibrary":[],"trips":[],"deletedTrips":[],"activeTripId":null,"profile":{"name":"","bio":"","color":"#4a8fa8","photo":null}};</script>
 <script>
 // ============================================================
 // STATE
@@ -4896,7 +4896,7 @@ function _hexToRgba(hex, alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 const CATS=[
-  {id:'sleep',         name:'Sleep System',    icon:'🌙',color:'#4a6741',pc:'pill-sleep',    cc:'cc-sleep',    hasExtra:true, extraLabel:'Temp Rating', items:[],packs:null},
+  {id:'sleep',         name:'Sleep System',    icon:'🌙',color:'#4a6741',pc:'pill-sleep',    cc:'cc-sleep',    hasExtra:false,extraLabel:'',            items:[],packs:null},
   {id:'pack',          name:'Pack',            icon:'🎒',color:'#8b7355',pc:'pill-pack',     cc:'cc-pack',     hasExtra:true, extraLabel:'Volume (L)',     items:[],packs:null},
   {id:'cooking',       name:'Cooking & Water', icon:'🔥',color:'#c85a2a',pc:'pill-cooking',  cc:'cc-cooking',  hasExtra:false,extraLabel:'',               items:[],packs:null},
   {id:'clothes',       name:'Clothes',         icon:'🧥',color:'#7ba7bc',pc:'pill-clothes',  cc:'cc-clothes',  hasExtra:false,extraLabel:'',               items:[],packs:null},
@@ -8505,17 +8505,17 @@ function _getThermalRating(){
   const pads   = items.filter(i=>itemIsType(i,'sleeping_pad'));
   const liners = items.filter(i=>itemIsType(i,'liner'));
 
-  // Also try any sleep item with extra (temp rating) as fallback bag detection
-  const anyTempItem = items.find(i=>i.extra&&i.extra.trim()!=='');
+  // Temp rating now lives in item.fields.temp (stored in base unit °C).
+  // Fallback bag detection: any sleep item that has a temp value set.
+  const hasTemp = it => it && it.fields && it.fields.temp !== undefined && it.fields.temp !== '';
+  const anyTempItem = items.find(hasTemp);
 
   // Get bag comfort temp in °C
   let bagTempC = null;
-  const bagSrc = bags.find(i=>i.extra&&i.extra.trim()!=='') || anyTempItem;
+  const bagSrc = bags.find(hasTemp) || anyTempItem;
   if(bagSrc){
-    const raw = parseFloat(bagSrc.extra);
-    if(!isNaN(raw)){
-      bagTempC = (bagSrc.extra_unit==='°F') ? (raw-32)*5/9 : raw;
-    }
+    const raw = parseFloat(bagSrc.fields.temp);
+    if(!isNaN(raw)) bagTempC = raw; // already stored in °C base unit
   }
 
   // Get pad R-value
@@ -10586,7 +10586,7 @@ async function saveToFile(){
         {id:'summer', name:'Summer', icon:'☀️'}
       ],
       cats: [
-        {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', hasExtra:true, extraLabel:'Temp Rating', items:[], packs:['winter','shoulder','summer']},
+        {id:'sleep', name:'Sleep System', icon:'🌙', color:'#4a6741', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']},
         {id:'pack', name:'Pack', icon:'🎒', color:'#8b7355', hasExtra:true, extraLabel:'Volume (L)', items:[], packs:['winter','shoulder','summer']},
         {id:'cooking', name:'Cooking & Water', icon:'🔥', color:'#c85a2a', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']},
         {id:'clothes', name:'Clothes', icon:'🧥', color:'#7ba7bc', hasExtra:false, extraLabel:'', items:[], packs:['winter','shoulder','summer']},
@@ -10674,7 +10674,7 @@ function loadState(){
         hasExtra: c.hasExtra||false, extraLabel: c.extraLabel||'',
         pc: PC_MAP[c.id] || 'pill-general',
         cc: CC_MAP[c.id] || 'cc-general',
-        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{},_localVerified:i._localVerified||false})),
+        items: (c.items||[]).map(i=>({id:i.id,name:i.name,w:i.w||0,extra:i.extra||'',extra_unit:i.extra_unit,link:i.link||'',s:i.s||[],gwCatId:i.gwCatId||c.id,productId:i.productId||null,wOverride:i.wOverride||null,priceOverride:i.priceOverride||null,fields:i.fields||{},itemType:i.itemType||null,_localVerified:i._localVerified||false})),
         packs: c.packs||null,
         onGearWall: c.onGearWall !== false
       });
@@ -10742,20 +10742,43 @@ function loadState(){
 
     _stateLoaded = true;
     window.CUSTOM_FIELD_DEFS = mergeFieldDefs(d.customFieldDefs||[]);
-    // Migrate: fix stale sleep extraLabel from old "Temp / R-Value" label
+    // Clean up legacy sleep-system extra field: we used to store temp rating in
+    // item.extra (per-category field). Now temp lives in item.fields.temp for
+    // ALL items, unifying the data model. Normalize Sleep System's category
+    // config + migrate any legacy item.extra temp values into item.fields.temp.
     CATS.forEach(cat=>{
-      if(cat.id==='sleep' && cat.extraLabel && cat.extraLabel.includes('R-')){
-        cat.extraLabel = 'Temp Rating';
+      // Force sleep cat to the new schema (no legacy Temp Rating extra field)
+      if(cat.id === 'sleep'){
+        cat.hasExtra = false;
+        cat.extraLabel = '';
       }
     });
-    // Migrate: move fields.temp into item.extra for sleep items (one-time)
+    // For items that still have item.extra set but whose home cat doesn't use
+    // extra anymore (or uses it for temp), move it into fields.temp.
     CATS.forEach(cat=>{
       cat.items.forEach(item=>{
-        if(item.fields && item.fields.temp !== undefined && (item.extra===undefined||item.extra==='')){
-          item.extra = String(item.fields.temp);
-          item.extra_unit = item.fields.temp_unit || '°C';
+        const hasLegacyTempExtra =
+          item.extra !== undefined && item.extra !== null && String(item.extra).trim() !== '' &&
+          /^-?[0-9]/.test(String(item.extra).trim()) &&
+          (item.extra_unit === '°C' || item.extra_unit === '°F' || cat.id === 'sleep');
+        if(hasLegacyTempExtra){
+          item.fields = item.fields || {};
+          // If fields.temp already set, keep it; otherwise migrate from extra
+          if(item.fields.temp === undefined || item.fields.temp === ''){
+            // Convert to °C base if stored in °F
+            const raw = parseFloat(item.extra);
+            if(!isNaN(raw)){
+              const baseVal = item.extra_unit === '°F' ? ((raw-32)*5/9) : raw;
+              item.fields.temp = Math.round(baseVal*10)/10;
+              item.fields.temp_unit = item.extra_unit || '°C';
+            }
+          }
+          // Clear the legacy extra values so they don't render twice
+          if(cat.id === 'sleep' || item.extra_unit === '°C' || item.extra_unit === '°F'){
+            delete item.extra;
+            delete item.extra_unit;
+          }
         }
-        if(item.fields){ delete item.fields.temp; delete item.fields.temp_unit; }
       });
     });
     return true;
@@ -16519,28 +16542,9 @@ function mergeFieldDefs(saved){const merged=[...PRESET_FIELDS];(saved||[]).forEa
 function registerCustomFieldDef(def){const defs=getFieldDefs();if(!defs.find(d=>d.key===def.key)){defs.push(def);window.CUSTOM_FIELD_DEFS=defs;scheduleSave();}}
 function renderItemFieldPills(item){
   let pills = '';
-  // Render item.extra as a temp chip when:
-  //   (a) the item's home category uses "extra" for temperature (Sleep System), OR
-  //   (b) item.extra_unit is explicitly '°C' or '°F' — meaning the item was a
-  //       temp item at some point and kept its unit even if moved to Uncategorised.
-  // This protects Pack items (whose extra is a volume in L) from being mislabeled.
-  let _itemCat = null;
-  if(item._srcCatId){
-    _itemCat = CATS.find(cat => cat.id === item._srcCatId);
-  }
-  if(!_itemCat){
-    _itemCat = CATS.find(cat => Array.isArray(cat.items) && cat.items.some(i=>i===item));
-  }
-  if(!_itemCat && item.id){
-    _itemCat = CATS.find(cat => Array.isArray(cat.items) && cat.items.some(i=>i.id===item.id));
-  }
-  const _categoryExtraIsTemp = _itemCat && typeof _itemCat.extraLabel === 'string' && /temp/i.test(_itemCat.extraLabel);
-  const _itemExtraIsTemp     = item.extra_unit === '°C' || item.extra_unit === '°F';
-  const _showTempChip        = _categoryExtraIsTemp || _itemExtraIsTemp;
-  if(_showTempChip && item.extra && String(item.extra).trim() !== '' && /^-?[0-9]/.test(String(item.extra).trim())){
-    const unit = item.extra_unit || '°C';
-    pills += `<span class="item-field-pill" title="Temp Rating: ${escH(String(item.extra))}${escH(unit)}"><span class="item-field-pill-icon">🌡️</span><span class="item-field-pill-val">${escH(String(item.extra))}</span><span class="item-field-pill-unit">${escH(unit)}</span></span>`;
-  }
+  // Temp Rating, R-Value, Length, Volume, Battery — all unified under item.fields.
+  // The per-item extra field is only used for Pack's Volume (L), which is a
+  // display-only string, not a data chip.
   if(!item.fields||!Object.keys(item.fields).length)return pills;
   const defs=getFieldDefs();
   const result = Object.entries(item.fields).filter(([key])=>!key.endsWith('_unit')).map(([key,val])=>{
