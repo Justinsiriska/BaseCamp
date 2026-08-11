@@ -4885,6 +4885,7 @@ let _isDirty = false;
 let _lastSavedAt = 0;
 let _stateLoaded = false; // true after first loadState() completes
 let _lastCloudPushAt = 0;
+let _cloudBaseSavedAt = 0; // savedAt of the cloud version this device last synced from (v3.47 data-loss fix)
 let _sbCloudDebounce = null;
 let _sbUser = null;  // forward-declare so markDirty can reference it safely
 let _sb = null;
@@ -10539,6 +10540,7 @@ function markDirty(){
 // even after the page starts unloading. Falls back to regular sbPushData.
 function sbPushDataSync(){
   if(!_sbUser) return;
+  if(!_isDirty) return; // v3.47: an idle/stale tab must not overwrite the cloud on close
   saveState();
   const payload = getPayload();
   if(!payload.profile.photo && MY_PROFILE._userUploadedPhoto){
@@ -18913,6 +18915,60 @@ async function authSignOut(){
 }
 
 // ── Cloud sync ──
+// ── Recency-safe state merge (v3.47 data-loss fix) ──
+// Combines two saved-state blobs WITHOUT dropping anything. The blob with the
+// newer savedAt wins for structure, metadata and per-item conflicts; any items,
+// trips, food or packs that exist ONLY in the other blob are added in (union by
+// id). This is what stops a stale device from wiping newer data: on load we merge
+// the cloud into local instead of ignoring it, so a device always ends up holding
+// the union of both. Known limitation (until per-item tombstones exist): a delete
+// on one device can be undone if another device still has that item and syncs later.
+function bcItemKey(i, fallbackCat){
+  return (i && i.id) ? ('id:'+i.id)
+                     : ('nm:'+((i&&i.name)||'')+'|'+((i&&i.gwCatId)||fallbackCat||''));
+}
+function bcMergeState(a, b){
+  if(!a) return b; if(!b) return a;
+  const newer = (a.savedAt||0) >= (b.savedAt||0) ? a : b;
+  const older = newer === a ? b : a;
+  let merged;
+  try { merged = JSON.parse(JSON.stringify(newer)); }
+  catch(e){ return newer; }
+  merged.savedAt = Math.max(a.savedAt||0, b.savedAt||0);
+
+  // Gear wall: union categories, then union each category's items by id
+  const catById = {};
+  (merged.cats||[]).forEach(c=>{ catById[c.id] = c; });
+  (older.cats||[]).forEach(oc=>{
+    let mc = catById[oc.id];
+    if(!mc){
+      mc = JSON.parse(JSON.stringify(oc));
+      catById[oc.id] = mc;
+      (merged.cats = merged.cats||[]).push(mc);
+      return;
+    }
+    const have = new Set((mc.items||[]).map(i=>bcItemKey(i, mc.id)));
+    (oc.items||[]).forEach(oi=>{
+      if(!have.has(bcItemKey(oi, oc.id))){ (mc.items = mc.items||[]).push(oi); }
+    });
+  });
+
+  // Trips (union by id)
+  const tripIds = new Set((merged.trips||[]).map(t=>t.id));
+  (older.trips||[]).forEach(t=>{ if(!tripIds.has(t.id)){ (merged.trips = merged.trips||[]).push(t); } });
+
+  // Packs (union by id)
+  const packIds = new Set((merged.packs||[]).map(p=>p.id));
+  (older.packs||[]).forEach(p=>{ if(!packIds.has(p.id)){ (merged.packs = merged.packs||[]).push(p); } });
+
+  // Food items (union by id / fridgeId / name)
+  const foodKey = i => (i && (i.id||i.fridgeId)) ? String(i.id||i.fridgeId) : ('nm:'+((i&&i.name)||''));
+  const foodHave = new Set((merged.foodItems||[]).map(foodKey));
+  (older.foodItems||[]).forEach(i=>{ if(!foodHave.has(foodKey(i))){ (merged.foodItems = merged.foodItems||[]).push(i); } });
+
+  return merged;
+}
+
 async function sbPushData(){
   const sb = sbClient();
   if(!sb || !_sbUser) return;
@@ -18933,12 +18989,25 @@ async function sbPushData(){
     if(!payload.profile) payload.profile = {};
     payload.profile.photo = MY_PROFILE._userUploadedPhoto;
   }
+  // Concurrency guard (v3.47): if the cloud changed since the version this device
+  // last synced from, merge the cloud in FIRST so we never drop another device's items.
+  try {
+    const { data: cur } = await sb.from('profiles').select('gear_data').eq('id', _sbUser.id).single();
+    const cloudGD = cur && cur.gear_data;
+    if(cloudGD && cloudGD.cats && (cloudGD.savedAt||0) > (_cloudBaseSavedAt||0)){
+      console.log('[BaseCamp] sbPushData: cloud is newer than our base — merging before push');
+      payload = bcMergeState(payload, cloudGD);
+      payload.userId = _sbUser.id;
+    }
+  } catch(e){ /* pre-read failed — fall through to a plain push */ }
+
   const { error } = await sb.from('profiles')
     .upsert({ id: _sbUser.id, gear_data: payload }, { onConflict: 'id' });
   if(error){
     console.error('[BaseCamp] Push error:', error);
   } else {
     _lastCloudPushAt = payload.savedAt||Date.now();
+    _cloudBaseSavedAt = payload.savedAt || _cloudBaseSavedAt;
     _isDirty = false;
     const el = document.getElementById('auth-sync-status');
     if(el) el.textContent = '✓ Synced ' + new Date().toLocaleTimeString();
@@ -18972,9 +19041,34 @@ async function sbPullData(){
   const hasLocal2 = !!localStorage.getItem(SAVE_KEY);
 
   if(hasLocal2){
-    // Local gear data exists — only push to cloud if user made changes since last push
-    // Don't blindly push on every startup as it can overwrite cloud with stale in-memory state
-    if(_isDirty) await sbPushData();
+    // v3.47 data-loss fix: MERGE the cloud copy into local instead of ignoring it.
+    // Previously an existing device kept its local data and never pulled the cloud,
+    // which let a STALE device push its old data back over everyone's newer work.
+    // Now we union cloud+local so a device can neither lose newer cloud items nor
+    // overwrite them.
+    let localGD = null;
+    try { localGD = JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); } catch(e){}
+    const cloudGD = (data && data.gear_data && data.gear_data.cats && data.gear_data.cats.length) ? data.gear_data : null;
+    if(cloudGD && localGD && localGD.cats){
+      const beforeItems = (localGD.cats||[]).reduce((s,c)=>s+(c.items||[]).length,0);
+      const cloudItems  = (cloudGD.cats||[]).reduce((s,c)=>s+(c.items||[]).length,0);
+      const merged = bcMergeState(localGD, cloudGD);
+      const afterItems  = (merged.cats||[]).reduce((s,c)=>s+(c.items||[]).length,0);
+      _cloudBaseSavedAt = merged.savedAt || 0;
+      localStorage.setItem(SAVE_KEY, JSON.stringify(merged));
+      loadState();
+      renderAll(); renderTripsPage();
+      if(afterItems > beforeItems){
+        console.log('[BaseCamp] sbPullData MERGE restored +'+(afterItems-beforeItems)+' item(s) from cloud');
+        toast('☁️ Restored '+(afterItems-beforeItems)+' item(s) from the cloud');
+      }
+      // Only push if this device holds items the cloud is missing (or has unsaved edits)
+      if(afterItems > cloudItems || _isDirty){ _isDirty = true; await sbPushData(); }
+    } else if(_isDirty){
+      await sbPushData();
+    } else if(cloudGD){
+      _cloudBaseSavedAt = cloudGD.savedAt || 0;
+    }
     // Apply the cloud profile (name/photo/color) so identity is always correct
     if(data?.gear_data?.profile){
       const p = data.gear_data.profile;
@@ -19000,6 +19094,7 @@ async function sbPullData(){
   if(error || !data?.gear_data) return;
   const cloud = data.gear_data;
   const migrated = migratePayload({...cloud});
+  _cloudBaseSavedAt = migrated.savedAt || 0;
   console.log('[BaseCamp] sbPullData RESTORE: cloud trips='+( migrated.trips||[]).length+', items='+(migrated.cats||[]).reduce((s,c)=>s+(c.items||[]).length,0));
   console.trace('[BaseCamp] sbPullData called from:');
   localStorage.setItem(SAVE_KEY, JSON.stringify(migrated));
