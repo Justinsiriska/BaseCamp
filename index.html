@@ -4886,6 +4886,7 @@ let _lastSavedAt = 0;
 let _stateLoaded = false; // true after first loadState() completes
 let _lastCloudPushAt = 0;
 let _cloudBaseSavedAt = 0; // savedAt of the cloud version this device last synced from (v3.47 data-loss fix)
+let _chatChannel = null; // active trip-chat realtime channel (v3.48)
 let _sbCloudDebounce = null;
 let _sbUser = null;  // forward-declare so markDirty can reference it safely
 let _sb = null;
@@ -15572,6 +15573,113 @@ function renderTripsPage(){
       map.fitBounds(poly.getBounds(),{padding:[10,10]});
     }
   });
+
+  // ── Trip group chat (v3.48) — shared/collaborative trips only ──
+  try { if(trip && (trip._shared || (trip.memberIds && trip.memberIds.length))) renderTripChat(root, trip); }
+  catch(e){ console.warn('[BaseCamp] trip chat render failed', e); }
+}
+
+// ── Trip group chat: a realtime, members-only message thread per shared trip ──
+function renderTripChat(root, trip){
+  const sb = sbClient();
+  const tripId = trip.id;
+
+  const panel = document.createElement('div');
+  panel.className = 'trip-chat-panel';
+  panel.style.cssText = 'margin-top:1.5rem;border:1.5px solid rgba(184,201,163,0.5);border-radius:12px;background:rgba(250,247,242,0.6);overflow:hidden;max-width:760px;';
+  panel.innerHTML =
+    '<div style="padding:0.5rem 0.8rem;border-bottom:1px solid rgba(184,201,163,0.4);font-family:\'Nunito\',sans-serif;font-weight:800;font-size:0.78rem;color:var(--forest);display:flex;align-items:center;gap:0.4rem;">'
+      + '💬 Trip Chat <span style="font-family:\'Space Mono\',monospace;font-weight:400;font-size:0.42rem;color:var(--stone);opacity:0.7;">members only</span>'
+    + '</div>'
+    + '<div id="trip-chat-msgs" style="height:280px;overflow-y:auto;padding:0.7rem 0.8rem;display:flex;flex-direction:column;gap:0.5rem;"></div>'
+    + '<div style="display:flex;gap:0.5rem;padding:0.6rem 0.8rem;border-top:1px solid rgba(184,201,163,0.4);">'
+      + '<input id="trip-chat-input" type="text" placeholder="Message your crew…" maxlength="2000" autocomplete="off" '
+        + 'style="flex:1;background:var(--cream);border:1.5px solid rgba(184,201,163,0.6);border-radius:10px;padding:0.45rem 0.7rem;font-family:\'Nunito\',sans-serif;font-size:0.72rem;color:var(--bark);outline:none;box-sizing:border-box;">'
+      + '<button id="trip-chat-send" class="gw-confirm-btn" style="font-size:0.62rem;padding:0.35rem 0.95rem;">Send</button>'
+    + '</div>';
+  root.appendChild(panel);
+
+  const msgsEl = panel.querySelector('#trip-chat-msgs');
+  const inputEl = panel.querySelector('#trip-chat-input');
+  const sendEl  = panel.querySelector('#trip-chat-send');
+
+  if(!sb || !_sbUser){
+    msgsEl.innerHTML = '<div data-empty style="font-family:\'Space Mono\',monospace;font-size:0.5rem;color:var(--stone);opacity:0.7;text-align:center;padding:1.2rem;">Sign in to chat with your crew.</div>';
+    inputEl.disabled = true; sendEl.disabled = true;
+    return;
+  }
+
+  const nameFor = (m)=> m.sender_id === _sbUser.id ? 'You'
+      : ((m.profiles && m.profiles.full_name) || (_friends.find(f=>f.id===m.sender_id)||{}).full_name || 'Crew');
+  const fmtTime = (ts)=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }catch(e){ return ''; } };
+
+  function buildRow(m){
+    const mine = m.sender_id === _sbUser.id;
+    const row = document.createElement('div');
+    row.setAttribute('data-mid', m.id);
+    row.style.cssText = 'display:flex;flex-direction:column;' + (mine?'align-items:flex-end;':'align-items:flex-start;');
+    row.innerHTML =
+      '<div style="font-family:\'Space Mono\',monospace;font-size:0.4rem;color:var(--stone);opacity:0.75;margin-bottom:1px;">' + escH(nameFor(m)) + ' · ' + fmtTime(m.created_at) + '</div>'
+      + '<div style="max-width:82%;padding:0.4rem 0.65rem;border-radius:12px;font-family:\'Nunito\',sans-serif;font-size:0.72rem;line-height:1.35;white-space:pre-wrap;word-break:break-word;color:var(--bark);'
+        + (mine ? 'background:rgba(74,143,168,0.18);border-bottom-right-radius:3px;' : 'background:rgba(184,201,163,0.28);border-bottom-left-radius:3px;')
+      + '">' + escH(m.content) + '</div>';
+    return row;
+  }
+
+  function showEmpty(){
+    msgsEl.innerHTML = '<div data-empty style="font-family:\'Space Mono\',monospace;font-size:0.5rem;color:var(--stone);opacity:0.7;text-align:center;padding:1.2rem;">No messages yet — say hi to your crew 👋</div>';
+  }
+  function appendRow(m){
+    if(msgsEl.querySelector('[data-mid="'+m.id+'"]')) return;
+    const ph = msgsEl.querySelector('[data-empty]'); if(ph) ph.remove();
+    msgsEl.appendChild(buildRow(m));
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  async function loadMessages(){
+    const { data, error } = await sb.from('messages')
+      .select('id, content, created_at, sender_id, profiles(full_name)')
+      .eq('trip_id', tripId)
+      .order('created_at', { ascending:true })
+      .limit(300);
+    if(error){ console.warn('[BaseCamp] chat load error', error); msgsEl.innerHTML='<div style="font-family:\'Space Mono\',monospace;font-size:0.5rem;color:var(--ember);text-align:center;padding:1.2rem;">Couldn\'t load chat.</div>'; return; }
+    if(!data || !data.length){ showEmpty(); return; }
+    msgsEl.innerHTML='';
+    data.forEach(m=>msgsEl.appendChild(buildRow(m)));
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  async function sendMessage(){
+    const text = (inputEl.value||'').trim();
+    if(!text) return;
+    inputEl.value=''; inputEl.focus();
+    const { data, error } = await sb.from('messages')
+      .insert({ trip_id: tripId, sender_id: _sbUser.id, content: text })
+      .select('id, content, created_at, sender_id')
+      .single();
+    if(error){ console.warn('[BaseCamp] chat send error', error); toast('⚠️ Message didn\'t send'); inputEl.value = text; return; }
+    if(data) appendRow(data);
+  }
+
+  sendEl.onclick = sendMessage;
+  inputEl.onkeydown = e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } };
+
+  // Realtime: drop any previous chat channel (trip switch / re-render), then subscribe to this trip
+  if(_chatChannel){ try{ sb.removeChannel(_chatChannel); }catch(e){} _chatChannel = null; }
+  _chatChannel = sb.channel('trip_chat_'+tripId)
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages', filter:'trip_id=eq.'+tripId },
+      async (payload)=>{
+        const m = payload.new; if(!m || !m.id) return;
+        if(msgsEl.querySelector('[data-mid="'+m.id+'"]')) return; // already shown (e.g. our own optimistic row)
+        let row = m;
+        if(m.sender_id !== _sbUser.id && !(_friends.find(f=>f.id===m.sender_id))){
+          try{ const { data:pr } = await sb.from('profiles').select('full_name').eq('id', m.sender_id).single(); row = Object.assign({}, m, { profiles: pr }); }catch(e){}
+        }
+        appendRow(row);
+      })
+    .subscribe();
+
+  loadMessages();
 }
 
 function renderMemberGear(body, member, trip){
